@@ -46,6 +46,12 @@ enum class VaultLockState {
     RECOVERING
 }
 
+enum class VaultSortOption(val label: String) {
+    FAVORITES_FIRST("Favorites first"),
+    TITLE("Title A–Z"),
+    RECENT("Recently updated"),
+}
+
 enum class VaultNavTab {
     VAULT,
     GENERATOR,
@@ -82,7 +88,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedTypeFilter = MutableStateFlow<VaultType?>(null)
     val selectedTypeFilter: StateFlow<VaultType?> = _selectedTypeFilter.asStateFlow()
 
+    private val _sortOption = MutableStateFlow(VaultSortOption.FAVORITES_FIRST)
     private val _favoritesOnly = MutableStateFlow(false)
+    val sortOption: StateFlow<VaultSortOption> = _sortOption.asStateFlow()
     val favoritesOnly: StateFlow<Boolean> = _favoritesOnly.asStateFlow()
 
     private val _authError = MutableStateFlow<String?>(null)
@@ -182,8 +190,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         allItems,
         _searchQuery,
         _selectedTypeFilter,
-        _favoritesOnly
-    ) { items, query, typeFilter, favsOnly ->
+        _favoritesOnly,
+        _sortOption,
+    ) { items, query, typeFilter, favsOnly, sortOption ->
         val cleanQuery = query.trim()
         items.filter { item ->
             val matchesQuery = if (cleanQuery.isEmpty()) true else {
@@ -214,6 +223,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             val matchesType = typeFilter == null || item.type == typeFilter
             val matchesFav = !favsOnly || item.isFavorite
             matchesQuery && matchesType && matchesFav
+        }.let { filtered ->
+            when (sortOption) {
+                VaultSortOption.FAVORITES_FIRST -> filtered.sortedWith(
+                    compareByDescending<VaultItem> { it.isFavorite }.thenBy { it.title.lowercase() },
+                )
+                VaultSortOption.TITLE -> filtered.sortedBy { it.title.lowercase() }
+                VaultSortOption.RECENT -> filtered.sortedByDescending { it.updatedAt }
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -485,11 +502,27 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setTypeFilter(type: VaultType?) {
         _selectedTypeFilter.value = type
+        // Category and favorites are mutually exclusive views. Leaving both on
+        // ANDs them and shows an empty screen, which reads as a broken filter.
+        if (type != null) _favoritesOnly.value = false
         onUserInteraction()
     }
 
     fun toggleFavoritesFilter() {
-        _favoritesOnly.value = !_favoritesOnly.value
+        val next = !_favoritesOnly.value
+        _favoritesOnly.value = next
+        if (next) _selectedTypeFilter.value = null
+        onUserInteraction()
+    }
+
+    fun setSortOption(option: VaultSortOption) {
+        _sortOption.value = option
+        onUserInteraction()
+    }
+
+    fun clearFilters() {
+        _selectedTypeFilter.value = null
+        _favoritesOnly.value = false
         onUserInteraction()
     }
 

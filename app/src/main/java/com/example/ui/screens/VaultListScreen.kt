@@ -1,9 +1,14 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.example.ui.VaultSortOption
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -95,6 +100,15 @@ fun VaultListScreen(
     val clipboardStatus by viewModel.clipboardStatus.collectAsState()
 
     var showCreateMenu by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
+    val sortOption by viewModel.sortOption.collectAsState()
+    val listState = rememberLazyListState()
+
+    // A shorter filtered list must start at the top: keeping the scroll offset
+    // was the "category changed but the screen still shows something else" bug.
+    LaunchedEffect(searchQuery, selectedType, favoritesOnly, sortOption) {
+        listState.scrollToItem(0)
+    }
     val fabBottomPadding by animateDpAsState(
         targetValue = if (clipboardStatus != null) 72.dp else 20.dp,
         label = "fabBottomPadding"
@@ -134,6 +148,45 @@ fun VaultListScreen(
                     }
                 }
 
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                Box {
+                    IconButton(
+                        onClick = { showSortMenu = true },
+                        modifier = Modifier.size(40.dp).testTag("sort_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Sort and view options",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
+                    ) {
+                        VaultSortOption.entries.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option.label) },
+                                onClick = {
+                                    viewModel.setSortOption(option)
+                                    showSortMenu = false
+                                },
+                                trailingIcon = {
+                                    if (option == sortOption) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
                 IconButton(
                     onClick = { viewModel.lockVault() },
                     modifier = Modifier
@@ -146,6 +199,7 @@ fun VaultListScreen(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
+                }
                 }
             }
 
@@ -257,6 +311,18 @@ fun VaultListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val emptyTitle = when {
+                            searchQuery.isNotEmpty() -> "No matches for \"$searchQuery\""
+                            favoritesOnly -> "No favorites yet"
+                            selectedType != null -> "No ${selectedType?.displayName?.lowercase()} yet"
+                            else -> "Your vault is empty"
+                        }
+                        val emptyBody = when {
+                            searchQuery.isNotEmpty() -> "Try a different search term or clear the filter."
+                            favoritesOnly -> "Tap the heart on any item to pin it here."
+                            selectedType != null -> "Add an item of this type with the + button."
+                            else -> "Tap the + button below to securely store your logins, cards, and secrets."
+                        }
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -273,13 +339,13 @@ fun VaultListScreen(
                         }
                         Spacer(modifier = Modifier.height(14.dp))
                         Text(
-                            text = if (searchQuery.isNotEmpty()) "No items matching query" else "Your vault is empty",
+                            text = emptyTitle,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Tap the + button below to securely store your logins, cards, and cryptographic secrets.",
+                            text = emptyBody,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -288,6 +354,7 @@ fun VaultListScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
