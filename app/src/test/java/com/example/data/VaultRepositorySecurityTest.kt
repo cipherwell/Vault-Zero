@@ -499,6 +499,43 @@ class VaultRepositorySecurityTest {
         assertTrue("kdf metadata travels with the envelope", backup.contains("\"kdfIterations\": 600000"))
     }
 
+    // ---- view-state persistence ----
+
+    @Test
+    fun `markUsed updates the last-used timestamp and survives a reload`() = runTest {
+        repository.saveItem(login("row-used", "Used", "pw"))
+        repository.markUsed("row-used")
+        val loaded = repository.getVaultItemsFlow().first().single { it.id == "row-used" }
+        assertTrue("lastUsedAt must be set", loaded.lastUsedAt > 0L)
+        // Re-open through a new repository instance to prove the column persisted.
+        val reopened = VaultRepository(db.vaultDao(), prefs)
+        assertTrue("reopened repository must unlock", reopened.unlock(password))
+        val reloaded = reopened.getVaultItemsFlow().first().single { it.id == "row-used" }
+        assertEquals(loaded.lastUsedAt, reloaded.lastUsedAt)
+    }
+
+    @Test
+    fun `setFavorite marks only the requested ids`() = runTest {
+        repository.saveItem(login("row-fav-1", "Fav One", "pw1"))
+        repository.saveItem(login("row-fav-2", "Fav Two", "pw2"))
+        repository.setFavorite(listOf("row-fav-1"), true)
+        val items = repository.getVaultItemsFlow().first().associateBy { it.id }
+        assertTrue(items.getValue("row-fav-1").isFavorite)
+        assertFalse(items.getValue("row-fav-2").isFavorite)
+    }
+
+    @Test
+    fun `backup export and import preserve the last-used timestamp`() = runTest {
+        repository.saveItem(login("row-usage", "Usage", "pw"))
+        repository.markUsed("row-usage")
+        val usedAt = repository.getVaultItemsFlow().first().single().lastUsedAt
+        val backup = repository.exportEncryptedBackup()
+        repository.deleteItem("row-usage")
+        val report = repository.importEncryptedBackup(backup)
+        assertEquals(1, report.imported)
+        assertEquals(usedAt, repository.getVaultItemsFlow().first().single().lastUsedAt)
+    }
+
     // ---- recovery ----
 
     @Test

@@ -119,8 +119,10 @@ fun VaultListScreen(
     val selectionActive by viewModel.selectionActive.collectAsState()
     val selectedIds by viewModel.selectedIds.collectAsState()
     val groupByType by viewModel.groupByType.collectAsState()
+    val allVaultItems by viewModel.allItems.collectAsState()
 
     var showCreateMenu by remember { mutableStateOf(false) }
+    var showTotpSheet by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     var showBulkDelete by remember { mutableStateOf(false) }
 
@@ -168,6 +170,19 @@ fun VaultListScreen(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(
+                        onClick = { viewModel.setSelectedFavorite(true) },
+                        enabled = selectedIds.isNotEmpty(),
+                        modifier = Modifier.testTag("bulk_favorite_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "Mark selected as favourite",
+                            tint = if (selectedIds.isNotEmpty()) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     IconButton(
                         onClick = { if (selectedIds.isNotEmpty()) showBulkDelete = true },
                         enabled = selectedIds.isNotEmpty(),
@@ -283,6 +298,13 @@ fun VaultListScreen(
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("2FA codes") },
+                            onClick = {
+                                showTotpSheet = true
+                                showSortMenu = false
                             }
                         )
                         DropdownMenuItem(
@@ -527,8 +549,11 @@ fun VaultListScreen(
                                         else viewModel.enterSelectionMode(item.id)
                                     },
                                     onToggleFavorite = { item -> viewModel.toggleFavorite(item) },
-                                    onCopyPrimary = { label, value ->
-                                        viewModel.copySecurely(label, value, isSensitive = true)
+                                    onCopyPrimary = { item, label, value ->
+                                        viewModel.copySecurely(label, value, isSensitive = true, itemId = item.id)
+                                    },
+                                    onCopyTotp = { item, code ->
+                                        viewModel.copySecurely("2FA code", code, isSensitive = true, itemId = item.id)
                                     },
                                 )
                             }
@@ -548,8 +573,11 @@ fun VaultListScreen(
                                     else viewModel.enterSelectionMode(item.id)
                                 },
                                 onToggleFavorite = { item -> viewModel.toggleFavorite(item) },
-                                onCopyPrimary = { label, value ->
-                                    viewModel.copySecurely(label, value, isSensitive = true)
+                                onCopyPrimary = { item, label, value ->
+                                    viewModel.copySecurely(label, value, isSensitive = true, itemId = item.id)
+                                },
+                                onCopyTotp = { item, code ->
+                                    viewModel.copySecurely("2FA code", code, isSensitive = true, itemId = item.id)
                                 },
                             )
                         }
@@ -583,6 +611,17 @@ fun VaultListScreen(
             )
         }
 
+        if (showTotpSheet) {
+            TotpDashboardDialog(
+                items = allVaultItems,
+                clockTicker = clockTicker,
+                onCopy = { item, code ->
+                    viewModel.copySecurely("2FA code", code, isSensitive = true, itemId = item.id)
+                },
+                onDismiss = { showTotpSheet = false },
+            )
+        }
+
         // Type Selection Modal Bottom Sheet / Dialog
         if (showCreateMenu) {
             CreateTypeSelectorDialog(
@@ -605,7 +644,8 @@ private fun OneUiVaultCard(
     onTapItem: (VaultItem) -> Unit,
     onLongItem: (VaultItem) -> Unit,
     onToggleFavorite: (VaultItem) -> Unit,
-    onCopyPrimary: (String, String) -> Unit,
+    onCopyPrimary: (VaultItem, String, String) -> Unit,
+    onCopyTotp: (VaultItem, String) -> Unit,
 ) {
     // One UI groups rows into one generously rounded container with hairline
     // dividers instead of a stack of separate cards.
@@ -625,6 +665,7 @@ private fun OneUiVaultCard(
                     onLongClick = { onLongItem(item) },
                     onToggleFavorite = { onToggleFavorite(item) },
                     onCopyPrimary = onCopyPrimary,
+                    onCopyTotp = onCopyTotp,
                 )
                 if (index != items.lastIndex) {
                     HorizontalDivider(
@@ -665,7 +706,8 @@ private fun OneUiVaultRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onCopyPrimary: (String, String) -> Unit,
+    onCopyPrimary: (VaultItem, String, String) -> Unit,
+    onCopyTotp: (VaultItem, String) -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
     Row(
@@ -712,7 +754,15 @@ private fun OneUiVaultRow(
                 } else null
                 if (totp != null) {
                     Spacer(modifier = Modifier.height(3.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(
+                                onClickLabel = "Copy 2FA code",
+                            ) { onCopyTotp(item, totp.code) }
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = "2FA",
                             style = MaterialTheme.typography.labelSmall,
@@ -732,6 +782,13 @@ private fun OneUiVaultRow(
                             text = "${totp.remainingSeconds}s",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy 2FA code for ${item.title}",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(12.dp)
                         )
                     }
                 }
@@ -773,7 +830,7 @@ private fun OneUiVaultRow(
             val (copyLabel, copyValue) = vaultItemCopyTarget(item)
             if (copyValue.isNotEmpty()) {
                 IconButton(
-                    onClick = { onCopyPrimary(copyLabel, copyValue) },
+                    onClick = { onCopyPrimary(item, copyLabel, copyValue) },
                     modifier = Modifier.size(32.dp).testTag("quick_copy_${item.id}")
                 ) {
                     Icon(

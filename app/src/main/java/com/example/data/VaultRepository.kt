@@ -98,6 +98,13 @@ class VaultRepository(
         prefs.autoLockSeconds = seconds
     }
 
+    val backgroundLockSeconds: Int
+        get() = prefs.backgroundLockSeconds
+
+    fun setBackgroundLockSeconds(seconds: Int) {
+        prefs.backgroundLockSeconds = seconds
+    }
+
     val clipboardTimeoutSeconds: Int
         get() = prefs.clipboardTimeoutSeconds
 
@@ -426,6 +433,7 @@ class VaultRepository(
                     isFavorite = entity.isFavorite,
                     createdAt = entity.createdAt,
                     updatedAt = entity.updatedAt,
+                    lastUsedAt = entity.lastUsedAt,
                     tags = decryptedTags,
                     payload = payload
                 )
@@ -493,6 +501,7 @@ class VaultRepository(
             isFavorite = item.isFavorite,
             createdAt = if (item.createdAt == 0L) now else item.createdAt,
             updatedAt = if (item.updatedAt > 0L) item.updatedAt else now,
+            lastUsedAt = item.lastUsedAt,
             tagsJson = REDACTED_TAGS_JSON
         )
         dao.insertOrUpdate(entity)
@@ -501,6 +510,17 @@ class VaultRepository(
     suspend fun toggleFavorite(id: String, isFavorite: Boolean) = withContext(Dispatchers.IO) {
         if (!isUnlocked) throw IllegalStateException("Vault is locked")
         dao.updateFavorite(id, isFavorite)
+    }
+
+    suspend fun setFavorite(ids: Collection<String>, favorite: Boolean) = withContext(Dispatchers.IO) {
+        if (!isUnlocked) throw IllegalStateException("Vault is locked")
+        if (ids.isNotEmpty()) dao.updateFavoriteAll(ids.toList(), favorite)
+    }
+
+    /** Record when a secret was last viewed or copied (drives the "Recently used" sort). */
+    suspend fun markUsed(id: String) = withContext(Dispatchers.IO) {
+        if (!isUnlocked) return@withContext
+        runCatching { dao.updateLastUsed(id, System.currentTimeMillis()) }
     }
 
     suspend fun deleteItem(id: String) = withContext(Dispatchers.IO) {
@@ -559,6 +579,7 @@ class VaultRepository(
                 put("isFavorite", entity.isFavorite)
                 put("createdAt", entity.createdAt)
                 put("updatedAt", entity.updatedAt)
+                put("lastUsedAt", entity.lastUsedAt)
                 put("tagsJson", REDACTED_TAGS_JSON)
             }
             itemsArray.put(itemObj)
@@ -701,6 +722,7 @@ class VaultRepository(
                     isFavorite = itemObj.optBoolean("isFavorite", false),
                     createdAt = itemObj.optLong("createdAt", System.currentTimeMillis()),
                     updatedAt = itemObj.optLong("updatedAt", System.currentTimeMillis()),
+                    lastUsedAt = itemObj.optLong("lastUsedAt", 0L),
                     tagsJson = itemObj.optString("tagsJson", REDACTED_TAGS_JSON)
                 )
 
@@ -788,6 +810,7 @@ class VaultRepository(
                     isFavorite = item.isFavorite,
                     createdAt = item.createdAt,
                     updatedAt = item.updatedAt,
+                    lastUsedAt = item.lastUsedAt,
                     tagsJson = REDACTED_TAGS_JSON
                 )
             )

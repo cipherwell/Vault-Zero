@@ -97,6 +97,9 @@ fun SettingsScreen(
     val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
     val clipboardSeconds by viewModel.clipboardTimeoutSeconds.collectAsState()
     val backupBusy by viewModel.backupBusy.collectAsState()
+    val backgroundLockSeconds by viewModel.backgroundLockSeconds.collectAsState()
+    val importOutcome by viewModel.importOutcome.collectAsState()
+    val vaultItems by viewModel.allItems.collectAsState()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -305,6 +308,37 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text("Lock in Background", style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    listOf(0 to "Off", 15 to "15s", 30 to "30s", 60 to "1m").forEach { (sec, label) ->
+                        SecurityOptionChip(
+                            label = label,
+                            selected = backgroundLockSeconds == sec,
+                            modifier = Modifier.weight(1f),
+                        ) { viewModel.updateBackgroundLock(sec) }
+                    }
+                }
+                Text(
+                    text = if (backgroundLockSeconds == 0) {
+                        "Off: the vault stays unlocked when you leave the app or turn the screen off."
+                    } else {
+                        "Locks after $backgroundLockSeconds s away or immediately when the screen turns off. Not applied while the file picker is open."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (backgroundLockSeconds == 0) WarningAmber else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -726,6 +760,44 @@ fun SettingsScreen(
         )
     }
 
+    importOutcome?.let { outcome ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissImportOutcome() },
+            title = { Text("Import complete") },
+            text = {
+                Column {
+                    Text(
+                        text = outcome.summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    val rows = buildList {
+                        if (outcome.imported > 0) add("New entries: ${outcome.imported}")
+                        if (outcome.updated > 0) add("Updated: ${outcome.updated}")
+                        if (outcome.duplicatesSkipped > 0) add("Duplicates skipped: ${outcome.duplicatesSkipped}")
+                        if (outcome.skippedInvalid > 0) add("Unreadable records skipped: ${outcome.skippedInvalid}")
+                    }
+                    rows.forEach { line ->
+                        Text(
+                            text = "· $line",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "The backup was verified before any record was written.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissImportOutcome() }) { Text("OK") }
+            }
+        )
+    }
+
     if (showExportDialog) {
         AlertDialog(
             onDismissRequest = { showExportDialog = false },
@@ -737,6 +809,18 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (vaultItems.isNotEmpty()) {
+                        val summary = vaultItems.groupingBy { it.type.displayName }
+                            .eachCount().entries
+                            .sortedByDescending { it.value }
+                            .joinToString(" · ") { "${it.value} ${it.key.lowercase()}" }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Preview: ${vaultItems.size} encrypted ${if (vaultItems.size == 1) "entry" else "entries"} ($summary)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         modifier = Modifier

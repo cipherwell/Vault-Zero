@@ -34,6 +34,12 @@ interface VaultDao {
     @Query("UPDATE vault_items SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun updateFavorite(id: String, isFavorite: Boolean)
 
+    @Query("UPDATE vault_items SET isFavorite = :isFavorite WHERE id IN (:ids)")
+    suspend fun updateFavoriteAll(ids: List<String>, isFavorite: Boolean)
+
+    @Query("UPDATE vault_items SET lastUsedAt = :timestamp WHERE id = :id")
+    suspend fun updateLastUsed(id: String, timestamp: Long)
+
     @Query("DELETE FROM vault_items")
     suspend fun clearAll()
 }

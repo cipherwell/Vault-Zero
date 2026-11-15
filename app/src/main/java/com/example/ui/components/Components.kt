@@ -263,6 +263,14 @@ fun SensitiveValueRow(
     var isRevealed by remember { mutableStateOf(!isMaskable) }
     var justCopied by remember { mutableStateOf(false) }
 
+    // A revealed secret re-hides itself so it can't be left on screen indefinitely.
+    LaunchedEffect(isRevealed) {
+        if (isRevealed) {
+            delay(15_000L)
+            isRevealed = false
+        }
+    }
+
     LaunchedEffect(justCopied) {
         if (justCopied) {
             delay(1400L)

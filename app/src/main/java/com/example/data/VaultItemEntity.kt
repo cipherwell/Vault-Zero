@@ -1,5 +1,6 @@
 package com.example.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -14,5 +15,7 @@ data class VaultItemEntity(
     val isFavorite: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
+    @ColumnInfo(defaultValue = "0")
+    val lastUsedAt: Long = 0L,
     val tagsJson: String
 )

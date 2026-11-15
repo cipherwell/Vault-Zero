@@ -1,5 +1,12 @@
 package com.example
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
+import android.os.SystemClock
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
+import com.example.ui.ShortcutAction
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
@@ -38,6 +45,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
@@ -92,6 +100,22 @@ class MainActivity : FragmentActivity() {
 
     private val viewModel: VaultViewModel by viewModels()
 
+    private var backgroundedAtElapsed = 0L
+    private var pickerActive = false
+    private var pendingShortcutAction: ShortcutAction? = null
+
+    /** Screen-off is a strong "stop looking at secrets" signal: lock immediately. */
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != Intent.ACTION_SCREEN_OFF) return
+            if (pickerActive) return
+            if (viewModel.backgroundLockSeconds.value <= 0) return
+            if (viewModel.lockState.value == VaultLockState.UNLOCKED) {
+                viewModel.lockVault(autoLocked = true)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Protect all sensitive vault screens from screenshots, screen recording, and
@@ -128,6 +152,7 @@ class MainActivity : FragmentActivity() {
                             )
                         }
                     }
+                    pickerActive = true
                     @Suppress("DEPRECATION")
                     startActivityForResult(
                         intent,
@@ -146,6 +171,20 @@ class MainActivity : FragmentActivity() {
             setRecentsScreenshotEnabled(false)
         }
         enableEdgeToEdge()
+        // Shortcut actions taken while the vault is locked are applied right after
+        // a successful unlock instead of being dropped.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.lockState.collect { state ->
+                    val pending = pendingShortcutAction
+                    if (state == VaultLockState.UNLOCKED && pending != null) {
+                        pendingShortcutAction = null
+                        viewModel.handleShortcut(pending)
+                    }
+                }
+            }
+        }
+        handleShortcutIntent(intent)
 
         // Listen for Biometric Prompt trigger events from ViewModel
         lifecycleScope.launch {
@@ -182,6 +221,7 @@ class MainActivity : FragmentActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        pickerActive = false
         when (requestCode) {
             REQUEST_EXPORT -> BackupPickerChannel.deliver(
                 BackupPickerChannel.Result(BackupPickerChannel.Kind.EXPORT, data?.data),
@@ -196,6 +236,56 @@ class MainActivity : FragmentActivity() {
     private companion object {
         const val REQUEST_EXPORT = 5101
         const val REQUEST_IMPORT = 5102
+        const val ACTION_SHORTCUT_NEW_LOGIN = "com.aistudio.vaultzero.secvlt.SHORTCUT_NEW_LOGIN"
+        const val ACTION_SHORTCUT_GENERATOR = "com.aistudio.vaultzero.secvlt.SHORTCUT_GENERATOR"
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleShortcutIntent(intent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        ContextCompat.registerReceiver(
+            this,
+            screenOffReceiver,
+            IntentFilter(Intent.ACTION_SCREEN_OFF),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        if (backgroundedAtElapsed > 0L) {
+            val threshold = viewModel.backgroundLockSeconds.value
+            val elapsed = SystemClock.elapsedRealtime() - backgroundedAtElapsed
+            if (!pickerActive && threshold > 0 &&
+                viewModel.lockState.value == VaultLockState.UNLOCKED &&
+                elapsed >= threshold * 1000L
+            ) {
+                viewModel.lockVault(autoLocked = true)
+            }
+            backgroundedAtElapsed = 0L
+        }
+    }
+
+    override fun onStop() {
+        // The SAF picker also stops the activity; that round-trip must not lock the
+        // vault and strand the pending export/import.
+        if (!pickerActive) backgroundedAtElapsed = SystemClock.elapsedRealtime()
+        runCatching { unregisterReceiver(screenOffReceiver) }
+        super.onStop()
+    }
+
+    private fun handleShortcutIntent(intent: Intent?) {
+        val action = when (intent?.action) {
+            ACTION_SHORTCUT_NEW_LOGIN -> ShortcutAction.NEW_LOGIN
+            ACTION_SHORTCUT_GENERATOR -> ShortcutAction.GENERATOR
+            else -> return
+        }
+        if (viewModel.lockState.value == VaultLockState.UNLOCKED) {
+            viewModel.handleShortcut(action)
+        } else {
+            pendingShortcutAction = action
+        }
     }
 
     override fun onResume() {
@@ -294,6 +384,7 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun VaultZeroApp(viewModel: VaultViewModel) {
     val lockState by viewModel.lockState.collectAsState()
+    val recentlyDeleted by viewModel.recentlyDeleted.collectAsState()
     val currentTab by viewModel.currentTab.collectAsState()
     val viewingItem by viewModel.viewingItem.collectAsState()
     val editingItem by viewModel.editingItem.collectAsState()
@@ -380,6 +471,54 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
                 onDismiss = { viewModel.dismissEditItem() },
                 initialFocus = editFocus
             )
+        }
+
+        // Undo window for the last delete (kept in memory for a few seconds).
+        AnimatedVisibility(
+            visible = recentlyDeleted != null && lockState == VaultLockState.UNLOCKED,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(
+                    bottom = if (clipboardStatus != null) 148.dp else 92.dp,
+                    start = 20.dp,
+                    end = 20.dp
+                )
+        ) {
+            recentlyDeleted?.let { batch ->
+                Surface(
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shadowElevation = 3.dp,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(start = 16.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = batch.label,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        TextButton(onClick = { viewModel.undoDelete() }) {
+                            Text("Undo", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                        }
+                        IconButton(
+                            onClick = { viewModel.dismissDeletedBatch() },
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Dismiss undo",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Non-intrusive Bottom Floating Pill for Clipboard & Status Feedback
