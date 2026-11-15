@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:width="66dp"
-        android:height="66dp"
-        android:drawable="@drawable/vault_zero_icon_1792106445008"
-        android:gravity="center" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#4DA6FF"
+        android:fillType="evenOdd"
+        android:pathData="M54,26 C65,31 74,32 84,32 C84,48 82,63 74,73 C67,81 60,85 54,88 C48,85 41,81 34,73 C26,63 24,48 24,32 C34,32 43,31 54,26 Z M54,45 A5.5,5.5 0 1 0 54.01,45 Z M51,50 L57,50 L58,64 L50,64 Z" />
+</vector>
