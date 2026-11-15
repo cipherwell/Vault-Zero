@@ -202,6 +202,192 @@ class VaultRepository(
         Pair(recoveryPhrase, vmkHex)
     }
 
+    /**
+     * Restores a complete vault during first-run setup, for phone-to-phone migration.
+     *
+     * The backup's VMK is unwrapped with the user's existing 12-word recovery phrase, every
+     * record is authenticated before any write, and the records are installed with their
+     * original ciphertext. The recovery phrase is preserved (no new kit is generated); the
+     * original master password is preserved for standard backups unless [newMasterPassword]
+     * is supplied. A phrase-only backup has no password envelope, so a new local master
+     * password is required in that case.
+     *
+     * Existing vaults are never overwritten: the caller must be in the uninitialized setup
+     * state, and migration between already-created vaults uses the normal import path.
+     */
+    suspend fun restoreBackupAtSetup(
+        jsonString: String,
+        recoveryPhrase: String,
+        newMasterPassword: String? = null,
+    ): SetupRestoreReport = withContext(Dispatchers.Default) {
+        require(!prefs.isInitialized) {
+            "A vault already exists on this device. Use Settings → Restore / Import Encrypted Backup instead."
+        }
+
+        val cleanPhrase = VaultCrypto.normalizeRecoveryPhrase(recoveryPhrase)
+        require(VaultCrypto.validateRecoveryPhrase(cleanPhrase, enforceChecksum = false)) {
+            "The recovery phrase must contain 12 valid words."
+        }
+        require(VaultCrypto.verifyRecoveryPhraseChecksum(cleanPhrase)) {
+            "Recovery phrase checksum does not match — check for a mistyped or reordered word."
+        }
+
+        val backup = try {
+            JSONObject(jsonString)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("file is not valid JSON")
+        }
+        if (backup.optString("format", "") != BACKUP_FORMAT) {
+            throw IllegalArgumentException("not a VaultZero encrypted backup envelope")
+        }
+        val itemsArray = backup.optJSONArray("items")
+            ?: throw IllegalArgumentException("backup has no items array")
+        if (itemsArray.length() == 0) {
+            throw IllegalArgumentException("backup contains no entries")
+        }
+
+        // kdfIterations is attacker-controlled until validated: clamp to values this app
+        // has produced so a crafted backup cannot weaken or CPU-DoS the migration.
+        val iterations = backup.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
+        if (iterations < VaultCrypto.MIN_ACCEPTED_ITERATIONS ||
+            iterations > VaultCrypto.DEFAULT_ITERATIONS
+        ) {
+            throw IllegalArgumentException("backup uses an unsupported KDF iteration count")
+        }
+
+        val recoverySaltB64 = backup.optString("recoverySalt", "")
+        val encryptedVmkByRecovery = backup.optString("encryptedVmkByRecovery", "")
+        if (recoverySaltB64.isEmpty() || encryptedVmkByRecovery.isEmpty()) {
+            throw IllegalArgumentException("this backup has no recovery-phrase key material")
+        }
+        validateBackupKeyEnvelope(encryptedVmkByRecovery)
+        val recoverySalt = decodeBackupSalt(recoverySaltB64, "recovery")
+
+        val vmk: SecretKey
+        try {
+            val recoveryKey = VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, iterations)
+            val vmkHex = VaultCrypto.decrypt(encryptedVmkByRecovery, recoveryKey)
+            val vmkBytes = VaultCrypto.hexToBytes(vmkHex)
+            require(vmkBytes.size == VaultCrypto.KEY_LENGTH_BYTES) {
+                "recovered vault key has an invalid length"
+            }
+            vmk = SecretKeySpec(vmkBytes, "AES")
+        } catch (e: IllegalArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            throw IllegalArgumentException("the recovery phrase does not match this backup")
+        }
+        val vmkHex = VaultCrypto.bytesToHex(vmk.encoded)
+
+        // Authenticate every record before writing anything. The original ciphertext is
+        // preserved; no re-encryption or metadata downgrade occurs during migration.
+        val seenIds = HashSet<String>()
+        val entities = ArrayList<VaultItemEntity>(itemsArray.length())
+        for (i in 0 until itemsArray.length()) {
+            try {
+                val itemObj = itemsArray.optJSONObject(i)
+                    ?: throw IllegalArgumentException("entry ${i + 1} is not an object")
+                val id = itemObj.optString("id", "")
+                if (id.isBlank()) throw IllegalArgumentException("entry ${i + 1} has no record id")
+                if (!seenIds.add(id)) {
+                    throw IllegalArgumentException("entry ${i + 1} has a duplicate record id")
+                }
+                val typeStr = itemObj.optString("type", "")
+                val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull()
+                    ?: throw IllegalArgumentException("entry ${i + 1} has an unknown item type")
+                val encPayload = itemObj.optString("encryptedPayload", "")
+                if (encPayload.isEmpty()) {
+                    throw IllegalArgumentException("entry ${i + 1} has no encrypted payload")
+                }
+
+                val entity = VaultItemEntity(
+                    id = id,
+                    title = REDACTED_TITLE,
+                    type = validType.name,
+                    category = REDACTED_CATEGORY,
+                    encryptedPayload = encPayload,
+                    isFavorite = itemObj.optBoolean("isFavorite", false),
+                    createdAt = itemObj.optLong("createdAt", System.currentTimeMillis()),
+                    updatedAt = itemObj.optLong("updatedAt", System.currentTimeMillis()),
+                    lastUsedAt = itemObj.optLong("lastUsedAt", 0L),
+                    tagsJson = REDACTED_TAGS_JSON,
+                )
+                decryptRecordEntity(entity, vmk)
+                entities.add(entity)
+            } catch (e: IllegalArgumentException) {
+                throw e
+            } catch (e: Exception) {
+                throw IllegalArgumentException(
+                    "entry ${i + 1} failed authentication (wrong recovery phrase or corrupted file)"
+                )
+            }
+        }
+
+        val protection = BackupProtection.fromStorage(backup.optString("protection", null))
+        val sourceSaltB64 = backup.optString("salt", "")
+        val sourceEncVmk = backup.optString("encryptedVmkByPassword", "")
+        val sourceVerifier = backup.optString("verifier", "")
+        val hasOriginalPassword = protection == BackupProtection.STANDARD &&
+            sourceSaltB64.isNotEmpty() && sourceEncVmk.isNotEmpty() && sourceVerifier.isNotEmpty()
+
+        val cleanNewPassword = newMasterPassword?.trim().orEmpty()
+        val passwordEnvelope: Triple<String, String, String> = if (cleanNewPassword.isNotEmpty()) {
+            require(cleanNewPassword.length >= 8) {
+                "New master password must be at least 8 characters"
+            }
+            val salt = VaultCrypto.generateSalt()
+            val key = VaultCrypto.deriveKey(cleanNewPassword, salt, iterations)
+            Triple(
+                Base64.encodeToString(salt, Base64.NO_WRAP),
+                VaultCrypto.encrypt(vmkHex, key),
+                VaultCrypto.createKeyVerifier(key, "PASSWORD"),
+            )
+        } else {
+            require(hasOriginalPassword) {
+                "This is a phrase-only backup with no master password. " +
+                    "Enter a new master password for this device."
+            }
+            validateBackupKeyEnvelope(sourceEncVmk)
+            decodeBackupSalt(sourceSaltB64, "password")
+            require(sourceVerifier.isNotEmpty()) { "backup password verifier is missing" }
+            Triple(sourceSaltB64, sourceEncVmk, sourceVerifier)
+        }
+
+        // Keep the existing recovery kit: reuse its salt/envelope and only refresh the
+        // VMK-encrypted copy of the phrase plus the verifier derived from the supplied phrase.
+        val recoveryVerifier = VaultCrypto.createKeyVerifier(
+            VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, iterations),
+            "RECOVERY",
+        )
+        val encryptedRecoveryPhrase = VaultCrypto.encrypt(cleanPhrase, vmk)
+        val fingerprint = backup.optString("fingerprint", "")
+            .takeIf { it.length in 4..64 }
+            ?: VaultCrypto.generateFingerprint(vmkHex)
+
+        // Records first, then the atomic credential commit: if preferences fail, the app
+        // remains uninitialized and the restore can simply be retried (the DB is replaced).
+        dao.replaceAllForRestore(entities)
+        prefs.saveEnvelopeCredentials(
+            passwordHash = passwordEnvelope.third,
+            saltBase64 = passwordEnvelope.first,
+            recoverySaltBase64 = recoverySaltB64,
+            encryptedVmkByPassword = passwordEnvelope.second,
+            encryptedVmkByRecovery = encryptedVmkByRecovery,
+            encryptedRecoveryPhrase = encryptedRecoveryPhrase,
+            recoveryPhraseHash = recoveryVerifier,
+            keyFingerprint = fingerprint,
+            kdfIterations = iterations,
+        )
+
+        activeSecretKey = vmk
+        resetRateLimiter()
+        SetupRestoreReport(
+            itemCount = entities.size,
+            keptOriginalPassword = cleanNewPassword.isEmpty(),
+            phraseOnlyBackup = !hasOriginalPassword,
+        )
+    }
+
     fun getActiveVmkHex(): String? {
         val key = activeSecretKey ?: return null
         return VaultCrypto.bytesToHex(key.encoded)

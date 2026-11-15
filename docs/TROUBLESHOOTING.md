@@ -4,7 +4,7 @@
 
 **`INSTALL_FAILED_UPDATE_INCOMPATIBLE` / "App not installed" after downloading a new build**
 The APK is signed with a different key than the installed app. The `v1.0.0` preview was
-debug-signed; uninstall it first (export a backup if needed), then install `v1.1.0`. Never install
+debug-signed; uninstall it first (export a backup if needed), then install the current release. Never install
 an APK re-signed by a third party.
 
 **`INSTALL_FAILED_VERSION_DOWNGRADE`**
@@ -13,6 +13,15 @@ The installed build has a higher versionCode. Uninstall or install the same/newe
 **Play Protect warning when sideloading**
 Expected for sideloaded apps. Verify the SHA-256 and signing certificate against the release
 notes before choosing "Install anyway".
+
+**"Restore from Backup" says a vault already exists**
+The device is already initialized. Use Settings → **Restore / Import Encrypted Backup** to merge
+records instead; the first-run restore is intentionally not allowed to overwrite a vault.
+
+**Setup restore rejected: recovery phrase / tampered file**
+Only backups from the matching vault open with its 12-word phrase. Check word order/checksum,
+make sure the file was not modified in transit, and retry. Nothing is written when verification
+fails. Phrase-only backups require a new master password on the new device.
 
 ## Lock/unlock
 

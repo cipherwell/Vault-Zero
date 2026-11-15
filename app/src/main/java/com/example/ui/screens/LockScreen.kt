@@ -28,10 +28,12 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,6 +48,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -67,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crypto.VaultCrypto
 import com.example.ui.VaultLockState
+import com.example.ui.backup.BackupPickerChannel
 import com.example.ui.VaultViewModel
 import com.example.ui.components.StrengthMeter
 import com.example.ui.components.ZeroKnowledgeSecurityBadge
@@ -76,6 +82,7 @@ import com.example.ui.theme.CyberEmeraldMuted
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
+import kotlinx.coroutines.launch
 
 @Composable
 fun LockScreen(
@@ -114,6 +121,9 @@ fun LockScreen(
                         authError = authError,
                         isAuthenticating = isAuthenticating,
                         onSetup = { p, c -> viewModel.setupMasterPassword(p, c) },
+                        onRestoreBackup = { json, phrase, newPassword, confirm ->
+                            viewModel.restoreBackupAtSetup(json, phrase, newPassword, confirm)
+                        },
                         onClearError = { viewModel.clearAuthError() }
                     )
                 }
@@ -153,6 +163,7 @@ private fun SetupMasterKeyScreen(
     authError: String?,
     isAuthenticating: Boolean,
     onSetup: (String, String) -> Unit,
+    onRestoreBackup: (String, String, String?, String) -> Unit,
     onClearError: () -> Unit
 ) {
     var password by remember { mutableStateOf("") }
@@ -160,6 +171,37 @@ private fun SetupMasterKeyScreen(
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     val strength = remember(password) { VaultCrypto.calculateStrength(password) }
+
+    // Existing-phone migration: pick the encrypted backup with the system picker, then
+    // collect the 12-word kit in a dialog. The kit is kept; no new phrase is generated.
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var restoreJson by remember { mutableStateOf<String?>(null) }
+    var restoreFileName by remember { mutableStateOf("") }
+    var restoreFileError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        BackupPickerChannel.results.collect { result ->
+            if (result.kind == BackupPickerChannel.Kind.IMPORT) {
+                result.uri?.let { uri ->
+                    scope.launch {
+                        val text = BackupFileIo.readText(context, uri)
+                        if (text == null) {
+                            restoreFileError =
+                                "Could not read that file (or it is larger than 8 MiB)."
+                        } else {
+                            restoreJson = text
+                            restoreFileName = BackupFileIo.displayName(context, uri)
+                            restoreFileError = null
+                            onClearError()
+                            showRestoreDialog = true
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -361,9 +403,262 @@ private fun SetupMasterKeyScreen(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        restoreFileError = null
+                        onClearError()
+                        BackupPickerChannel.requestImport()
+                    },
+                    enabled = !isAuthenticating,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .testTag("restore_from_backup_button"),
+                    shape = RoundedCornerShape(999.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = CyberCyan),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        CyberCyan.copy(alpha = 0.55f),
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Upload,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Restore from Backup",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Moving from another phone? Choose your encrypted backup and enter " +
+                        "its existing 12-word recovery kit. No new seed phrase is created.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (restoreFileError != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = restoreFileError!!,
+                        color = DangerRed,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
+
+    val pendingJson = restoreJson
+    if (showRestoreDialog && pendingJson != null) {
+        RestoreBackupDialog(
+            fileName = restoreFileName,
+            authError = authError,
+            isAuthenticating = isAuthenticating,
+            onRestore = { phrase, newPassword, confirm ->
+                onRestoreBackup(pendingJson, phrase, newPassword, confirm)
+            },
+            onCancel = {
+                showRestoreDialog = false
+                onClearError()
+            },
+            onClearError = onClearError,
+        )
+    }
+}
+
+@Composable
+private fun RestoreBackupDialog(
+    fileName: String,
+    authError: String?,
+    isAuthenticating: Boolean,
+    onRestore: (String, String?, String) -> Unit,
+    onCancel: () -> Unit,
+    onClearError: () -> Unit,
+) {
+    var phrase by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!isAuthenticating) onCancel() },
+        modifier = Modifier.testTag("restore_backup_dialog"),
+        title = { Text("Restore Existing Vault", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Backup: $fileName",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Enter the 12-word recovery phrase that belongs to this backup. " +
+                        "Your existing recovery kit is kept — VaultZero will not generate a " +
+                        "new seed phrase.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = phrase,
+                    onValueChange = {
+                        phrase = it
+                        onClearError()
+                    },
+                    enabled = !isAuthenticating,
+                    label = { Text("12-Word Recovery Phrase") },
+                    placeholder = { Text("word1 word2 … word12") },
+                    minLines = 3,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("setup_restore_phrase_input"),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(
+                    text = "New Master Password (optional)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "Leave blank to keep the backup's original master password " +
+                        "(standard backups). Phrase-only backups require a new password " +
+                        "on this device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = {
+                        newPassword = it
+                        onClearError()
+                    },
+                    enabled = !isAuthenticating,
+                    label = { Text("New Master Password") },
+                    singleLine = true,
+                    visualTransformation = if (showPassword) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(
+                                imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (showPassword) "Hide password" else "Show password"
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        autoCorrectEnabled = false,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("restore_new_password_input"),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                if (newPassword.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = {
+                            confirmPassword = it
+                            onClearError()
+                        },
+                        enabled = !isAuthenticating,
+                        label = { Text("Confirm New Master Password") },
+                        singleLine = true,
+                        visualTransformation = if (showPassword) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            autoCorrectEnabled = false,
+                            imeAction = ImeAction.Done
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("restore_confirm_password_input"),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+                if (authError != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = DangerRed,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = authError,
+                            color = DangerRed,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onRestore(
+                        phrase.trim(),
+                        newPassword.trim().ifBlank { null },
+                        confirmPassword.trim(),
+                    )
+                },
+                enabled = !isAuthenticating && phrase.isNotBlank(),
+                modifier = Modifier.testTag("restore_vault_confirm_button"),
+                shape = RoundedCornerShape(999.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CyberEmerald,
+                    contentColor = Color.Black,
+                )
+            ) {
+                if (isAuthenticating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.Black,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Restore Vault", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel, enabled = !isAuthenticating) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

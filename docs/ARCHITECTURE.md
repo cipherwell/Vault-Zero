@@ -74,6 +74,14 @@ wrapped by the password/recovery envelopes and per-record ciphertext. The UI wri
 SAF. Import runs verify → classify (new/updated/duplicate) → encrypt surviving records → single
 Room transaction. Format details: [BACKUP-FORMAT.md](BACKUP-FORMAT.md).
 
+### First-run restore
+`LockScreen` requests the SAF import picker, reads the envelope through `BackupFileIo`, and passes
+it plus the recovery phrase to `VaultViewModel.restoreBackupAtSetup`. `VaultRepository` validates
+the envelope, unwraps the source VMK from the recovery envelope, authenticates every record, and
+calls `VaultDao.replaceAllForRestore` (one Room transaction). Credentials are committed after the
+records through the atomic `saveEnvelopeCredentials` write; the active VMK is installed only after
+both complete, so a failure leaves the app uninitialized and retryable.
+
 ## Database schema (Room v2)
 
 `vault_items` — one row per record; all sensitive metadata is inside `encryptedPayload`.

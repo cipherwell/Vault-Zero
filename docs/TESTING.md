@@ -5,7 +5,7 @@ VaultZero has a large JVM/Robolectric security suite, a set of on-device instrum
 
 ## Test inventory (release 1.1.0)
 
-### JVM / Robolectric — 90 tests
+### JVM / Robolectric — 96 tests
 
 | Test class | Tests | Focus |
 | --- | ---: | --- |
@@ -15,6 +15,7 @@ VaultZero has a large JVM/Robolectric security suite, a set of on-device instrum
 | `core/SearchQueryTest` | 7 | search operators/aliases/combinations |
 | `core/GeneratorHistoryTest` | 6 | session history cap/format |
 | `ExampleUnitTest` | 6 | small utility/format checks |
+| `data/VaultRepositorySetupRestoreTest` | 6 | first-run migration: standard/phrase-only restore, password keep/rotate, wrong phrase, tampered record, no-overwrite |
 | `data/VaultRepositoryKdfMigrationTest` | 5 | 100k→600k re-wrap, atomicity, recovery path |
 | `core/AuditFilterTest` | 4 | audit search filters/index semantics |
 | `crypto/SecurityAuditEngineTest` | 3 | weak/reused/stale/2FA findings |

@@ -418,6 +418,68 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         resetAutoLockTimer()
     }
 
+    /**
+     * First-run migration: restore a complete backup using the existing 12-word recovery
+     * phrase. The recovery kit is preserved (no new phrase is generated). For standard
+     * backups the original master password keeps working unless [newPassword] is supplied;
+     * phrase-only backups require a new password because they carry no password envelope.
+     */
+    fun restoreBackupAtSetup(
+        json: String,
+        recoveryPhrase: String,
+        newPassword: String?,
+        confirmPassword: String,
+    ) {
+        if (recoveryPhrase.trim().isEmpty()) {
+            _authError.value = "Enter the 12-word recovery phrase for this backup"
+            return
+        }
+        val cleanNewPassword = newPassword?.trim().orEmpty()
+        if (cleanNewPassword.isNotEmpty()) {
+            if (cleanNewPassword.length < 8) {
+                _authError.value = "New Master Password must be at least 8 characters"
+                return
+            }
+            if (cleanNewPassword != confirmPassword.trim()) {
+                _authError.value = "New Master Passwords do not match"
+                return
+            }
+        }
+
+        viewModelScope.launch {
+            _isAuthenticating.value = true
+            try {
+                val report = repository.restoreBackupAtSetup(
+                    jsonString = json,
+                    recoveryPhrase = recoveryPhrase,
+                    newMasterPassword = cleanNewPassword.ifBlank { null },
+                )
+                _newRecoveryPhrase.value = null
+                _lockState.value = VaultLockState.UNLOCKED
+                _authError.value = null
+                resetAutoLockTimer()
+                val passwordNote = when {
+                    report.phraseOnlyBackup -> "new master password set"
+                    report.keptOriginalPassword -> "your original master password still works"
+                    else -> "new master password set"
+                }
+                postStatusMessage(
+                    "Vault restored · ${report.itemCount} " +
+                        (if (report.itemCount == 1) "entry" else "entries") +
+                        " · recovery kit unchanged · $passwordNote",
+                    durationMs = 6000L,
+                )
+            } catch (e: IllegalArgumentException) {
+                _authError.value = "Restore failed: ${e.message}"
+            } catch (e: Exception) {
+                _authError.value = "Restore failed: ${e.message ?: "invalid backup"}"
+            } finally {
+                _isAuthenticating.value = false
+            }
+        }
+    }
+
+
     fun unlockVault(password: String) {
         if (password.isBlank()) {
             _authError.value = "Please enter your Master Password"

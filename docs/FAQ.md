@@ -32,6 +32,13 @@ inside encrypted payloads.
 No. Standard backups remain openable with the old password or the unchanged recovery phrase.
 Phrase-only backups open with the recovery phrase. Records are not re-encrypted by a password change.
 
+**How do I move my vault to a new phone?**
+Export an encrypted backup on the old phone. On the new phone, install VaultZero, tap **Restore
+from Backup** on the first-run screen, pick the backup, and enter the old phone's 12-word recovery
+phrase. Your existing kit and key fingerprint are preserved — no new seed phrase is created.
+Standard backups keep the original master password unless you set a new one; phrase-only backups
+require a new local password. Biometrics must be re-enabled on the new device.
+
 **Can biometrics unlock my backup on another phone?**
 No. Biometrics are device-local and cannot decrypt a foreign file; the phrase/password is the
 portable credential. Biometrics simply unlock this device's vault key through a hardware gate.
@@ -74,7 +81,7 @@ saved them. Export before uninstalling/upgrading signatures.
 
 **Why must I uninstall the v1.0.0 preview?**
 It was debug-signed (non-production key). Android blocks updates with a different signature;
-uninstall and install v1.1.0, then import your backup.
+uninstall and install the current release, then restore your backup.
 
 **Does it work on rooted devices?**
 It runs, but root/OS compromise can read memory and bypass app protections. Rooted devices are

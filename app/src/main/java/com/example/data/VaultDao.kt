@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -42,4 +43,11 @@ interface VaultDao {
 
     @Query("DELETE FROM vault_items")
     suspend fun clearAll()
+
+    /** First-run restore: replace the empty vault with the backup's records atomically. */
+    @Transaction
+    suspend fun replaceAllForRestore(entities: List<VaultItemEntity>) {
+        clearAll()
+        insertOrUpdateAll(entities)
+    }
 }

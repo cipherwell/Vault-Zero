@@ -75,7 +75,7 @@ Checklist:
 Copy APK/AAB + checksums + notes to a local distribution directory (do not commit binaries):
 
 ```bash
-VERSION=1.1.0
+VERSION=<version>
 DIST=$HOME/VaultZero-Release/v$VERSION
 mkdir -p "$DIST"
 cp "$APK" "$DIST/VaultZero-v$VERSION.apk"

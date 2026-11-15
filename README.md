@@ -31,7 +31,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.1.0** (`versionCode 2`). Self-tested and pentested; an
+> **Status:** production release **v1.2.0** (`versionCode 3`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -78,6 +78,8 @@ More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 - Local security audit (weak/reused/stale/2FA), offline by construction.
 
 ### Backups
+- **First-run migration:** a new phone can restore a full backup with the existing 12-word recovery
+  phrase — no new seed phrase — keeping the original master password (or setting a new one).
 - Versioned encrypted envelope via Android's Storage Access Framework only.
 - Restore with the source master password **or** 12-word recovery phrase; optional **phrase-only** export (password envelope stripped).
 - Verified imports before any write: duplicate-safe merges, in-place updates, atomic Room transaction, explicit salvage of readable records from a damaged file.
@@ -107,25 +109,25 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.1.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.2.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.1.0.apk` (sideload) | 1,844,971 B | `407c23e56666764ff874c60ceb5afe57a20828c44b41bd79a55a48114b0d3d82` |
-| `VaultZero-v1.1.0.aab` (store upload) | 4,004,032 B | `bbfdad31fd459347a2100e3d1eae63d37a57abb86b0351687cb7317e83411bc3` |
+| `VaultZero-v1.2.0.apk` (sideload) | 1,861,355 B | `1ea83362c53d54df10272690d7e954e2c621c712c79f6b2022b7ad27b90f15e1` |
+| `VaultZero-v1.2.0.aab` (store upload) | 4,033,502 B | `cccd472cd14d40c734b5e1c11b0e584f544404bec80c450ca7d90e6a10d83601` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `c54ed94be9f5d4f00ea7a9e8d7f1f5eb4d0eafc8f456055b6130d85b38ae831d`
 
 ```bash
-sha256sum -c VaultZero-v1.1.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.1.0.apk
+sha256sum -c VaultZero-v1.2.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.2.0.apk
 ```
 
 See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for installation and first-run steps.
 
 > **Upgrading from v1.0.0 preview:** that build was debug-signed with a public key.
-> Uninstall it (export a backup first) before installing v1.1.0; Android will reject an
+> Uninstall it (export a backup first) before installing v1.2.0; Android will reject an
 > in-place update. Old backup files remain importable with their master password or recovery phrase.
 
 ### Requirements
@@ -152,7 +154,7 @@ instructions: [docs/BUILDING.md](docs/BUILDING.md).
 ## Testing
 
 ```bash
-./gradlew :app:testDebugUnitTest       # 90 JVM/Robolectric tests
+./gradlew :app:testDebugUnitTest       # 96 JVM/Robolectric tests
 ./gradlew :app:lintDebug               # Android Lint
 ```
 

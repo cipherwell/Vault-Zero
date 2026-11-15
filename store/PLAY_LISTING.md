@@ -59,7 +59,7 @@ fresh first upload there.
 1. Enable GitHub Pages (`main` → `/docs`) so the privacy URL resolves.
 2. Create the app; complete App content (privacy policy, data safety, content
    rating, target audience, ads = no).
-3. Upload `VaultZero-v1.1.0.aab` to the internal testing track first.
+3. Upload the current `VaultZero-v<version>.aab` to the internal testing track first.
 4. Add store listing assets/text from this folder.
 5. Install from internal testing on a device and complete the checklist in
    `../docs/RELEASING.md` before promoting to production.
