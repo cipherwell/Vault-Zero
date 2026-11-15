@@ -88,6 +88,8 @@ fun SettingsScreen(
     var pendingImportJson by remember { mutableStateOf<String?>(null) }
     var pendingImportName by remember { mutableStateOf<String?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    val importPrompt by viewModel.importVerificationPrompt.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
     val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
     val clipboardSeconds by viewModel.clipboardTimeoutSeconds.collectAsState()
@@ -352,6 +354,40 @@ fun SettingsScreen(
                         colors = SwitchDefaults.colors(checkedThumbColor = CyberCyan, checkedTrackColor = CyberCyan.copy(alpha = 0.3f))
                     )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Rotate the password-derived envelope without re-keying records.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showChangePasswordDialog = true }
+                        .padding(vertical = 10.dp)
+                        .testTag("change_master_password_row"),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Change Master Password", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Records stay encrypted · recovery kit keeps working",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = "Change",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
@@ -402,9 +438,11 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .clickable {
-                            BackupPickerChannel.requestExport(
-                                "vaultzero-backup-${System.currentTimeMillis()}.json"
-                            )
+                            val stamp = java.text.SimpleDateFormat(
+                                "yyyyMMdd-HHmm",
+                                java.util.Locale.US,
+                            ).format(java.util.Date())
+                            BackupPickerChannel.requestExport("vaultzero-backup-$stamp.json")
                         }
                         .padding(vertical = 10.dp)
                         .testTag("export_backup_row"),
@@ -627,6 +665,103 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showImportDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    importPrompt?.let { prompt ->
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelPartialImport() },
+            title = { Text("Backup needs attention") },
+            text = {
+                Column {
+                    Text(
+                        text = prompt.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "${prompt.unreadableRecords} unreadable " +
+                            (if (prompt.unreadableRecords == 1) "record will be skipped. " else "records will be skipped. ") +
+                            "The readable records can still be imported; the file itself is not modified.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarningAmber
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmPartialImport() },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                ) {
+                    Text("Import readable records")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelPartialImport() }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showChangePasswordDialog) {
+        var currentPw by remember { mutableStateOf("") }
+        var newPw by remember { mutableStateOf("") }
+        var confirmPw by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showChangePasswordDialog = false },
+            title = { Text("Change Master Password") },
+            text = {
+                Column {
+                    Text(
+                        text = "Your records are encrypted with the vault key, not the password, so they are not re-encrypted. The vault key is re-wrapped with the new password; your 12-word recovery kit remains valid.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = currentPw,
+                        onValueChange = { currentPw = it },
+                        label = { Text("Current Master Password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newPw,
+                        onValueChange = { newPw = it },
+                        label = { Text("New Master Password (min 8)") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmPw,
+                        onValueChange = { confirmPw = it },
+                        label = { Text("Confirm New Password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.changeMasterPassword(currentPw, newPw, confirmPw) { ok ->
+                            if (ok) showChangePasswordDialog = false
+                        }
+                    },
+                    enabled = currentPw.isNotBlank() && newPw.isNotBlank() && confirmPw.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                ) {
+                    Text("Change Password")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showChangePasswordDialog = false }) { Text("Cancel") }
             }
         )
     }

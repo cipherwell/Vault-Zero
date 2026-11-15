@@ -11,6 +11,7 @@ data class BackupImportReport(
     val imported: Int,
     val updated: Int,
     val duplicatesSkipped: Int,
+    val skippedInvalid: Int = 0,
 ) {
     val totalNew: Int get() = imported + updated
     val totalCandidates: Int get() = imported + updated + duplicatesSkipped

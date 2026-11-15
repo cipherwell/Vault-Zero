@@ -101,6 +101,16 @@ class VaultPreferences(
         get() = prefs.getBoolean("is_biometric_enabled", false)
         set(value) = prefs.edit(commit = true) { putBoolean("is_biometric_enabled", value) }
 
+    /** Vault list sort order, persisted across sessions. */
+    var sortOption: String
+        get() = prefs.getString("vault_sort_option", "FAVORITES_FIRST") ?: "FAVORITES_FIRST"
+        set(value) = prefs.edit { putString("vault_sort_option", value) }
+
+    /** Whether the vault list groups by item type, persisted across sessions. */
+    var groupByType: Boolean
+        get() = prefs.getBoolean("vault_group_by_type", false)
+        set(value) = prefs.edit { putBoolean("vault_group_by_type", value) }
+
     /** One UI appearance: "system" (default), "light" or "dark". */
     var themeMode: String
         get() = prefs.getString("theme_mode", "system") ?: "system"
@@ -134,6 +144,25 @@ class VaultPreferences(
             putString("recovery_phrase_hash", recoveryPhraseHash)
             putString("key_fingerprint", keyFingerprint)
             putBoolean("is_initialized", true)
+        }
+    }
+
+    /**
+     * Atomically replace the password-derived envelope after a master password
+     * change. The recovery envelope and the encrypted recovery phrase are derived
+     * from the VMK and stay untouched, so the emergency kit keeps working.
+     */
+    fun rotatePasswordEnvelope(
+        passwordVerifier: String,
+        saltBase64: String,
+        encryptedVmkByPassword: String,
+        kdfIterations: Int = VaultCrypto.DEFAULT_ITERATIONS,
+    ) {
+        prefs.edit(commit = true) {
+            putString("master_password_hash", passwordVerifier)
+            putString("master_salt_b64", saltBase64)
+            putString("encrypted_vmk_by_password", encryptedVmkByPassword)
+            putInt("kdf_iterations", kdfIterations)
         }
     }
 

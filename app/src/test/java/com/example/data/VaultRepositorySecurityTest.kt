@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.model.LoginPayload
+import org.junit.Assert.assertThrows
 import com.example.model.NotePayload
 import com.example.model.VaultItem
 import com.example.model.VaultType
@@ -300,6 +301,115 @@ class VaultRepositorySecurityTest {
         }
         assertTrue(rejected)
         assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `partially unreadable backup imports only the readable records when allowed`() = runTest {
+        repository.saveItem(login("row-p", "Pi", "secret-pi"))
+        repository.saveItem(login("row-q", "Rho", "secret-rho"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        val items = backup.getJSONArray("items")
+        // Corrupt exactly one of the two records.
+        val victim = items.getJSONObject(1)
+        val victimId = victim.getString("id")
+        val expectedSurvivor = if (victimId == "row-p") "Rho" else "Pi"
+        val payload = victim.getString("encryptedPayload")
+        victim.put("encryptedPayload", payload.dropLast(2) + if (payload.takeLast(2) == "A=") "B=" else "A=")
+        repository.deleteItem("row-p")
+        repository.deleteItem("row-q")
+        assertEquals(0, db.vaultDao().getAllList().size)
+
+        // Strict mode: rejected and nothing written.
+        val verification = assertThrows(BackupVerificationException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup.toString())
+            }
+        }
+        assertEquals(1, verification.unreadableRecords)
+        assertEquals(0, db.vaultDao().getAllList().size)
+
+        // Explicit partial salvage: readable record imported, corrupt one skipped.
+        val report = repository.importEncryptedBackup(backup.toString(), skipInvalidRecords = true)
+        assertEquals(1, report.imported)
+        assertEquals(1, report.skippedInvalid)
+        assertEquals(1, db.vaultDao().getAllList().size)
+        assertEquals(expectedSurvivor, repository.getVaultItemsFlow().first().single().title)
+    }
+
+    @Test
+    fun `fully unreadable backup imports nothing in partial mode`() = runTest {
+        repository.saveItem(login("row-r", "Sigma", "secret-sigma"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        val item = backup.getJSONArray("items").getJSONObject(0)
+        val payload = item.getString("encryptedPayload")
+        item.put("encryptedPayload", payload.dropLast(2) + if (payload.takeLast(2) == "A=") "B=" else "A=")
+        repository.deleteItem("row-r")
+
+        val report = repository.importEncryptedBackup(backup.toString(), skipInvalidRecords = true)
+        assertEquals(0, report.imported)
+        assertEquals(1, report.skippedInvalid)
+        assertEquals(0, db.vaultDao().getAllList().size)
+    }
+
+    // ---- master password rotation ----
+
+    @Test
+    fun `changing the master password keeps records and the recovery kit valid`() = runTest {
+        repository.saveItem(login("row-s", "Tau", "secret-tau"))
+        val phrase = repository.getDecryptedRecoveryPhrase()
+        repository.changeMasterPassword(password, "NewMasterPass#2026")
+
+        repository.lock()
+        assertFalse("old password no longer unlocks", repository.unlock(password))
+        assertFalse("new password unlocks the same vault", repository.unlock("NewMasterPass#2026") == false)
+        assertTrue(repository.unlock("NewMasterPass#2026"))
+        assertEquals(
+            "records still decrypt after rotation",
+            "secret-tau",
+            (repository.getVaultItemsFlow().first().single().payload as LoginPayload).password,
+        )
+
+        // Recovery kit is derived from the VMK, so it still restores the vault.
+        repository.lock()
+        assertTrue(repository.recoverWithPhrase(phrase, "RecoveredPass#2026"))
+        repository.lock()
+        assertTrue(repository.unlock("RecoveredPass#2026"))
+    }
+
+    @Test
+    fun `wrong current password is rejected without changing the envelope`() = runTest {
+        repository.saveItem(login("row-t", "Upsilon", "secret-upsilon"))
+        val saltBefore = prefs.saltBase64
+        val hashBefore = prefs.masterPasswordHash
+
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.changeMasterPassword("definitely-wrong", "AnotherPass#2026")
+            }
+        }
+        assertEquals("salt must not rotate on a failed change", saltBefore, prefs.saltBase64)
+        assertEquals("verifier must not change on a failed change", hashBefore, prefs.masterPasswordHash)
+
+        repository.lock()
+        assertTrue("old password still works", repository.unlock(password))
+    }
+
+    @Test
+    fun `new password must differ from the current one`() = runTest {
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.changeMasterPassword(password, password)
+            }
+        }
+    }
+
+    @Test
+    fun `vault list sort and grouping survive repository re-instantiation`() = runTest {
+        repository.setSortOption("RECENT")
+        repository.setGroupByType(true)
+        val reopened = VaultRepository(db.vaultDao(), prefs)
+        assertEquals("RECENT", reopened.sortOption)
+        assertTrue(reopened.groupByType)
     }
 
     @Test
