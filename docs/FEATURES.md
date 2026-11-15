@@ -3,6 +3,22 @@
 This is the user-facing reference for release `1.1.0`. For security internals see
 [CRYPTO-SPEC.md](CRYPTO-SPEC.md); for installation see [GETTING-STARTED.md](GETTING-STARTED.md).
 
+## First-run restore (phone-to-phone migration)
+
+A fresh install offers two paths: create a new vault, or **Restore from Backup**.
+
+- Choose an encrypted VaultZero `.json` backup through the system picker.
+- Enter the existing 12-word recovery phrase. The source vault's key fingerprint and recovery
+  phrase are preserved; VaultZero never generates a second seed phrase during migration.
+- A **new master password is optional for standard backups** (leave blank to keep the old one) and
+  required for phrase-only backups, which deliberately carry no password envelope.
+- The whole file is verified first: envelope/format, bounded KDF parameters, salts/key envelopes,
+  and every record's AES-GCM authentication. Nothing is written unless all records authenticate.
+- Records keep their ciphertext, favourites, timestamps and last-used values; the restore refuses
+  to overwrite an already-initialized vault (use Settings import to merge into an existing vault).
+- After restore the vault opens directly; biometrics must be re-enabled because they are
+  device-local.
+
 ## Lock screen
 
 - Shows the vault key fingerprint, master-password field, **Unlock Vault**, biometric button

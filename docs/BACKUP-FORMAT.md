@@ -91,6 +91,27 @@ readable records are written, unreadable ones are counted and skipped. The file 
 **Phrase-only files** require their recovery phrase (or the same vault's current session for its
 own backup). They cannot be opened with the source password.
 
+## First-run setup restore (phone migration)
+
+Release 1.2.0 adds a bootstrap path on the uninitialized setup screen. It uses the same envelope
+but installs a complete vault instead of merging records:
+
+1. The envelope is validated exactly like an import (format, item array, KDF bounds, salt/key
+   envelope sizes) and the VMK is unwrapped from `encryptedVmkByRecovery` using the supplied
+   12-word phrase.
+2. Every record must decrypt with that VMK (AAD included); the original ciphertext/metadata flags
+   and timestamps are preserved, not re-encrypted.
+3. Recovery material is preserved: the backup's `recoverySalt` and `encryptedVmkByRecovery` stay,
+   the phrase is re-encrypted under the recovered VMK for in-app viewing, and the verifier is
+   recomputed from the phrase. **The recovery phrase is unchanged.**
+4. Password material:
+   - standard backup + no new password ⇒ the backup's `salt`/`encryptedVmkByPassword`/`verifier`
+     are preserved, so the old master password still unlocks;
+   - a new password supplied ⇒ a fresh salt/KEK wraps the same VMK (phrase remains valid);
+   - phrase-only backup ⇒ a new password is mandatory (there is no password envelope to restore).
+5. The setup restore writes records atomically and only then commits credentials; it refuses to
+   run if the device already has an initialized vault. Unlike regular import, it is not a merge.
+
 ## Compatibility and edge cases
 
 - Backups from a vault with a *different* master password/recovery phrase require that vault's

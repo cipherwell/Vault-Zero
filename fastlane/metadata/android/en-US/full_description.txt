@@ -16,6 +16,7 @@ BACKUPS
 • Versioned AES-256-GCM envelope written through the system file picker (no cloud integration).
 • Restore with the source master password or 12-word recovery phrase; optional phrase-only export.
 • Verified imports: duplicate-safe merges, in-place updates, and an explicit option to salvage readable records from a damaged file.
+• Phone-to-phone migration: a fresh install can restore a full backup with your existing 12-word recovery kit — no new seed phrase — while keeping the original master password (or setting a new one).
 
 EXTRAS
 • Password and passphrase generator (session history held in memory only), live 2FA dashboard, audit-backed search (is:weak, is:reused, is:stale, is:no2fa), undo delete, recently-used sort, launcher shortcuts, and light/dark/system appearance with an One UI-inspired design.

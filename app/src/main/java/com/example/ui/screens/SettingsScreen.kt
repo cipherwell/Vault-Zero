@@ -617,7 +617,7 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "VaultZero v1.0.0 (Build 1) • 100% FOSS Air-Gapped Build",
+            text = "VaultZero v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE}) • 100% FOSS Air-Gapped Build",
             fontFamily = JetBrainsMonoFamily,
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),

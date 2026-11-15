@@ -52,7 +52,7 @@ Start here. Documents are grouped by intent; every file is self-contained and li
 
 ## Documentation conventions
 
-- **Version:** documents describe release `1.1.0` unless noted.
+- **Version:** documents describe release `1.2.0` unless noted.
 - Commands are copy-pasteable from the repository root unless a path is shown.
 - Security claims must be reproducible: link to a test, command or source file.
 - When behavior changes, update the relevant doc in the same PR (see [CONTRIBUTING.md](../CONTRIBUTING.md)).

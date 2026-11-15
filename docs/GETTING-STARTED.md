@@ -1,16 +1,34 @@
 # Getting started with VaultZero
 
 This guide takes you from a new phone to a working, locked-down vault. It assumes the
-production release `1.1.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
+production release `1.2.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
 (or a Play/F-Droid build once published).
 
 ## 1. Install
 
-- **Sideload:** download `VaultZero-v1.1.0.apk`, allow installation from your browser/file manager,
+- **Sideload:** download `VaultZero-v1.2.0.apk`, allow installation from your browser/file manager,
   open the APK and install. Verify the checksum/certificate if you can
   ([instructions](../releases/README.md)).
 - **Upgrading from the `v1.0.0` preview:** uninstall it first. The preview was debug-signed and
   Android will refuse an in-place update. Export a backup beforehand if the preview holds data.
+
+### Migrating from your old phone (no new seed phrase)
+
+If you are moving an existing VaultZero vault to this phone, do **not** create a new vault:
+
+1. On the old phone: Settings → **Export Encrypted Vault Backup** (keep it standard if you want
+   the original master password preserved, or phrase-only if you prefer phrase-only portability).
+2. On the new phone at the first-run screen, tap **Restore from Backup**.
+3. Choose the encrypted `.json` backup with the system file picker.
+4. Enter the **12-word recovery phrase** from the old phone.
+5. Optional: enter a new master password for this phone. Leave it blank to keep the backup's
+   original master password (standard backups only). Phrase-only backups require a new password.
+6. Tap **Restore Vault**. The app verifies and decrypts every record before writing, then opens
+   your existing vault.
+
+Your recovery phrase and key fingerprint stay the same — **no new seed phrase is generated**.
+Biometric unlock is device-local, so it is disabled on the new device; unlock once with the
+password/phrase and re-enable it in Settings. Restoring never overwrites an existing vault.
 
 ## 2. Create your vault
 

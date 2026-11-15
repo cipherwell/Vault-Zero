@@ -1,12 +1,13 @@
 # VaultZero security policy
 
-**Version:** 1.1.0 (`versionCode 2`) · **Last updated:** 15 November 2026
+**Version:** 1.2.0 (`versionCode 3`) · **Last updated:** 15 November 2026
 
 ## Supported versions
 
 | Version | Supported |
 | --- | --- |
-| `1.1.x` (production, release-signed) | ✅ security fixes |
+| `1.2.x` (production, release-signed) | ✅ security fixes |
+| `1.1.x` (production, release-signed) | ⚠️ upgrade to 1.2.x |
 | `1.0.0` (public preview, debug-signed) | ❌ upgrade to 1.1.0 (uninstall required) |
 
 ## Reporting a vulnerability
@@ -45,7 +46,8 @@ Full algorithm details: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md).
 | Biometric unlock | Keystore AES-GCM key, `setUserAuthenticationRequired(true)`, `AUTH_BIOMETRIC_STRONG`, 0-second validity, `setInvalidatedByBiometricEnrollment(true)`, StrongBox attempted; `BiometricPrompt.CryptoObject` for use | `BiometricKeyBindingTest` on Pixel 9 Pro XL (Android 17): 3/3; auth-required/per-use/invalidated, unauth `doFinal` rejected |
 | Auto biometric prompt | On launch/resume when enabled; one attempt per lock; cancel falls back to password; still a CryptoObject prompt | phone run confirmed `isCrypto: true`, `StrengthRequested: 15` |
 | Backup export | SAF only, no cloud API, no share sheet, 8 MiB cap; AES-GCM envelope; supports password **or** recovery phrase restore; optional phrase-only mode strips password envelope | `VaultRepositorySecurityTest`, `BackupFileIo`, live picker runs |
-| Backup import | Verify-before-write: format/id/type/decryption checks; bounded KDF iterations (10k–600k), salts 16–64 B, key blobs ≤4 KiB; duplicates skipped by id or SHA-256 content fingerprint; same-id changed records update; atomic single Room transaction; optional explicit salvage of unreadable records | 90 JVM tests incl. hostile backup inputs; see [docs/BACKUP-FORMAT.md](docs/BACKUP-FORMAT.md) |
+| First-run migration | Setup-screen restore: envelope/KDF/salt validation, recovery-phrase unwrap, every record AAD-authenticated, atomic DB replace + credential commit, refuses to overwrite an initialized vault; phrase preserved, original password optionally preserved | `VaultRepositorySetupRestoreTest` (6 tests), on-device migration run |
+| Backup import | Verify-before-write: format/id/type/decryption checks; bounded KDF iterations (10k–600k), salts 16–64 B, key blobs ≤4 KiB; duplicates skipped by id or SHA-256 content fingerprint; same-id changed records update; atomic single Room transaction; optional explicit salvage of unreadable records | 96 JVM tests incl. hostile backup inputs; see [docs/BACKUP-FORMAT.md](docs/BACKUP-FORMAT.md) |
 | Screen capture | `FLAG_SECURE` on every normal build; recents thumbnails disabled on API 33+; dev flag only for automation builds | release run: `screencap` returns 0 bytes |
 | Clipboard | `EXTRA_IS_SENSITIVE`, ownership-aware clearing on timeout/lock; configurable Off still wipes on vault lock | Robolectric test + device runs |
 | Background/auto lock | Configurable inactivity lock (30 s–15 m or Off); background lock (Off/15/30/60 s, default 30); `ACTION_SCREEN_OFF` locks immediately; SAF picker exempt | emulator: 35 s background → lock screen |
@@ -84,8 +86,8 @@ intents and log leakage all held.
 ## Release verification
 
 ```bash
-sha256sum -c VaultZero-v1.1.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.1.0.apk
+sha256sum -c VaultZero-v1.2.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.2.0.apk
 # expected certificate SHA-256:
 # 6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7
 ```

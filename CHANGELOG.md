@@ -4,6 +4,34 @@ All notable changes to VaultZero are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-11-15 — first-run migration restore
+
+### Added
+- **Restore from Backup on first run**: a fresh install can now choose an encrypted backup and
+  enter the existing 12-word recovery phrase instead of creating a new vault/seed phrase.
+  - The source recovery phrase and key fingerprint are preserved; no new kit is generated.
+  - Standard backups keep their original master password by default, or the user can set a new
+    one during restore. Phrase-only backups require a new local master password.
+  - Every record is authenticated and decrypted before anything is written; records keep their
+    original ciphertext, favourites, timestamps and last-used values.
+  - The restore refuses to overwrite an initialized vault; existing-vault merging remains in
+    Settings → Restore / Import Encrypted Backup.
+- Six new JVM/Robolectric tests cover standard restore, password rotation, phrase-only backups,
+  wrong phrases, tampered records and the no-overwrite rule (suite now 96 tests).
+- Settings footer now reports the real `BuildConfig.VERSION_NAME`/`VERSION_CODE` instead of a
+  hardcoded preview version.
+
+### Security
+- Bootstrap restore validates the envelope format, KDF iteration bounds (10k–600k), salt/key
+  envelope sizes and every record's AES-GCM authentication before the atomic DB/credential write.
+- The untrusted backup fingerprint is bounded; malformed values are replaced with a locally
+  derived fingerprint.
+
+### Upgrade notes
+- Upgrading in place from 1.1.0 preserves vault data and signing identity (`versionCode` 3).
+- Migrating to a new phone: install 1.2.0, choose **Restore from Backup**, pick the `.json` backup
+  and enter the old phone's 12-word recovery kit.
+
 ## [1.1.0] — 2026-11-15 — first production-signed release
 
 ### Added
@@ -57,6 +85,7 @@ All notable changes to VaultZero are documented here. Format based on
 Initial preview: encrypted vault, AES-256-GCM records, PBKDF2 100k, 12-word recovery phrase,
 TOTP, audit, generator, encrypted backups. Superseded by 1.1.0; do not use for updates.
 
-[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/cipherwell/Vault-Zero/releases/tag/v1.0.0
