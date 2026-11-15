@@ -72,6 +72,7 @@ import com.example.ui.components.StrengthMeter
 import com.example.ui.components.ZeroKnowledgeSecurityBadge
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
+import com.example.ui.theme.CyberEmeraldMuted
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
@@ -223,7 +224,10 @@ private fun SetupMasterKeyScreen(
                 Text(
                     text = "Initialize Master Password",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    // The card's content colour is derived from its translucent
+                    // surfaceVariant container, which dimmed the headline.
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -328,7 +332,7 @@ private fun SetupMasterKeyScreen(
                         containerColor = CyberEmerald,
                         contentColor = Color.Black,
                         disabledContainerColor = CyberEmerald.copy(alpha = 0.35f),
-                        disabledContentColor = Color.DarkGray
+                        disabledContentColor = CyberEmeraldMuted
                     )
                 ) {
                     if (isAuthenticating) {
@@ -669,7 +673,7 @@ private fun UnlockVaultScreen(
                         containerColor = CyberEmerald,
                         contentColor = Color.Black,
                         disabledContainerColor = CyberEmerald.copy(alpha = 0.35f),
-                        disabledContentColor = Color.DarkGray
+                        disabledContentColor = CyberEmeraldMuted
                     )
                 ) {
                     if (isAuthenticating) {
