@@ -57,6 +57,24 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.aistudio.vaultzero.secvlt/com.example.MainActivity
 ```
 
+## Instrumented tests on the live emulator
+
+`./gradlew :app:connectedDebugAndroidTest` **uninstalls both APKs when it
+finishes**, which deletes the app's vault (SharedPreferences + SQLite). When the
+device state matters, install and run the instrumentation by hand:
+
+```bash
+./gradlew :app:assembleDebug :app:assembleDebugAndroidTest -PallowScreenshots=true
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -e class com.example.data.VaultSetupDeviceTest \
+  com.aistudio.vaultzero.secvlt.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+`VaultSetupDeviceTest` drives the real repository end to end (setup, wrong
+password rejected, correct password unlocks at 600k) and intentionally leaves a
+usable vault behind on the emulator.
+
 ## Screenshot protection and UI automation
 
 `MainActivity` sets `FLAG_SECURE` on **every normal build**, so `adb screencap`
