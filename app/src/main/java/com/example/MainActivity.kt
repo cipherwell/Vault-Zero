@@ -103,6 +103,7 @@ class MainActivity : FragmentActivity() {
     private var backgroundedAtElapsed = 0L
     private var pickerActive = false
     private var pendingShortcutAction: ShortcutAction? = null
+    private var autoBiometricPromptedForThisLock = false
 
     /** Screen-off is a strong "stop looking at secrets" signal: lock immediately. */
     private val screenOffReceiver = object : BroadcastReceiver() {
@@ -176,10 +177,13 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.lockState.collect { state ->
-                    val pending = pendingShortcutAction
-                    if (state == VaultLockState.UNLOCKED && pending != null) {
-                        pendingShortcutAction = null
-                        viewModel.handleShortcut(pending)
+                    if (state == VaultLockState.UNLOCKED) {
+                        autoBiometricPromptedForThisLock = false
+                        val pending = pendingShortcutAction
+                        if (pending != null) {
+                            pendingShortcutAction = null
+                            viewModel.handleShortcut(pending)
+                        }
                     }
                 }
             }
@@ -265,6 +269,25 @@ class MainActivity : FragmentActivity() {
             }
             backgroundedAtElapsed = 0L
         }
+        maybeAutoPromptBiometric()
+    }
+
+    /**
+     * If biometric unlock is enabled and enrolled, pop the system fingerprint prompt
+     * automatically whenever the app opens/resumes on the lock screen. One attempt
+     * per lock: cancelling falls back to the master password (or the lock-screen
+     * biometric button) instead of nagging in a loop.
+     */
+    private fun maybeAutoPromptBiometric() {
+        if (autoBiometricPromptedForThisLock) return
+        if (viewModel.lockState.value != VaultLockState.LOCKED) return
+        if (!viewModel.isAutoBiometricUnlockAvailable()) return
+        autoBiometricPromptedForThisLock = true
+        window.decorView.postDelayed({
+            if (viewModel.lockState.value == VaultLockState.LOCKED) {
+                launchNativeBiometricPrompt(BiometricPurpose.UNLOCK)
+            }
+        }, 450L)
     }
 
     override fun onStop() {

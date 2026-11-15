@@ -39,6 +39,8 @@ class VaultRepository(
     companion object {
         const val MAX_FAILED_ATTEMPTS_BEFORE_COOLDOWN = 5
         private const val BACKUP_FORMAT = "VaultZero_Encrypted_Envelope"
+        private const val MAX_BACKUP_SALT_BASE64 = 256
+        private const val MAX_BACKUP_KEY_ENVELOPE_CHARS = 4096
         const val COOLDOWN_DURATION_MS = 30_000L
         const val REDACTED_TITLE = "[ENCRYPTED]"
         const val REDACTED_CATEGORY = "Encrypted"
@@ -648,7 +650,15 @@ class VaultRepository(
         }
         var foreignBackupKey: SecretKey? = null
         if (secretText.isNotEmpty()) {
+            // The iteration count travels inside an untrusted file. Clamp it to the
+            // range this app has ever produced so a crafted backup cannot turn an
+            // import into a CPU-denial-of-service or weaken the credential KDF.
             val iterations = backupJson.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
+            if (iterations < VaultCrypto.MIN_ACCEPTED_ITERATIONS ||
+                iterations > VaultCrypto.DEFAULT_ITERATIONS
+            ) {
+                throw IllegalArgumentException("backup uses an unsupported KDF iteration count")
+            }
             val phraseCandidate = VaultCrypto.normalizeRecoveryPhrase(secretText)
             val looksLikePhrase = VaultCrypto.validateRecoveryPhrase(
                 phraseCandidate,
@@ -665,8 +675,9 @@ class VaultRepository(
                 if (recoverySaltB64.isEmpty() || recoveryEncVmk.isEmpty()) {
                     throw IllegalArgumentException("this backup has no recovery-phrase key material")
                 }
+                validateBackupKeyEnvelope(recoveryEncVmk)
                 try {
-                    val salt = Base64.decode(recoverySaltB64, Base64.NO_WRAP)
+                    val salt = decodeBackupSalt(recoverySaltB64, "recovery")
                     val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phraseCandidate, salt, iterations)
                     val vmkHex = VaultCrypto.decrypt(recoveryEncVmk, recoveryKey)
                     SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
@@ -684,8 +695,9 @@ class VaultRepository(
                 if (backupSaltB64.isEmpty() || backupEncVmk.isEmpty()) {
                     throw IllegalArgumentException("backup has no password envelope to unlock")
                 }
+                validateBackupKeyEnvelope(backupEncVmk)
                 try {
-                    val salt = Base64.decode(backupSaltB64, Base64.NO_WRAP)
+                    val salt = decodeBackupSalt(backupSaltB64, "password")
                     val passKey = VaultCrypto.deriveKey(secretText, salt, iterations)
                     val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
                     SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
@@ -835,6 +847,23 @@ class VaultRepository(
      * same content (local favourite is preserved), while any real field change is
      * recognised as an update rather than a duplicate.
      */
+    private fun decodeBackupSalt(raw: String, label: String): ByteArray {
+        if (raw.length > MAX_BACKUP_SALT_BASE64) {
+            throw IllegalArgumentException("$label salt in the backup is too large")
+        }
+        val salt = Base64.decode(raw, Base64.NO_WRAP)
+        if (salt.size < VaultCrypto.SALT_LENGTH_BYTES || salt.size > 64) {
+            throw IllegalArgumentException("$label salt in the backup has an unsupported length")
+        }
+        return salt
+    }
+
+    private fun validateBackupKeyEnvelope(raw: String) {
+        if (raw.length > MAX_BACKUP_KEY_ENVELOPE_CHARS) {
+            throw IllegalArgumentException("backup key envelope is unreasonably large")
+        }
+    }
+
     private fun contentFingerprint(item: VaultItem): String {
         val payloadJson = item.payload.toJson()
         val canonicalPayload = payloadJson.keys().asSequence().sorted()

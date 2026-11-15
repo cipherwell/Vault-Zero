@@ -427,6 +427,49 @@ class VaultRepositorySecurityTest {
         assertEquals("rejected phrase must not write", 0, db.vaultDao().getAllList().size)
     }
 
+    // ---- hostile backup inputs ----
+
+    @Test
+    fun `backup with an absurd KDF iteration count is rejected before key derivation`() = runTest {
+        repository.saveItem(login("row-kdf", "Kdf", "pw"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        backup.put("kdfIterations", 50_000_000)
+
+        val failure = assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup.toString(), backupPassword = password)
+            }
+        }
+        assertTrue(
+            "the hostile iteration count must be rejected as unsupported KDF settings",
+            failure.message.orEmpty().contains("KDF", ignoreCase = true),
+        )
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `backup with an oversized salt or key envelope is rejected`() = runTest {
+        repository.saveItem(login("row-salt", "Salt", "pw"))
+        val oversizedSalt = JSONObject(repository.exportEncryptedBackup()).apply {
+            put("salt", "A".repeat(900))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(oversizedSalt.toString(), backupPassword = password)
+            }
+        }
+
+        val oversizedEnvelope = JSONObject(repository.exportEncryptedBackup()).apply {
+            put("encryptedVmkByPassword", "A".repeat(5_000))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(oversizedEnvelope.toString(), backupPassword = password)
+            }
+        }
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
     // ---- master password rotation ----
 
     @Test

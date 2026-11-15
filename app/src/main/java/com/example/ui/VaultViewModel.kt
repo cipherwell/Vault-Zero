@@ -498,6 +498,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _authError.value = message
     }
 
+    /** True when the lock screen should offer an automatic fingerprint prompt. */
+    fun isAutoBiometricUnlockAvailable(): Boolean =
+        _lockState.value == VaultLockState.LOCKED &&
+            repository.isBiometricEnabled() &&
+            BiometricKeyManager.hasCurrentEnrollment(getApplication())
+
     fun recoverVault(phrase: String, newPass: String, confirmPass: String) {
         val cleanPhrase = VaultCrypto.normalizeRecoveryPhrase(phrase)
         val cleanNewPass = newPass.trim()

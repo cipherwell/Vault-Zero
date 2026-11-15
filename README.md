@@ -145,8 +145,10 @@ apksigner verify --print-certs VaultZero-v1.0.0.apk
   - **Launcher shortcuts**: long-press the app icon → *New login* or *Generator*; taps taken while locked are deferred until unlock.
   - **Lock in background**: configurable Off/15s/30s/1m; the screen-off receiver locks immediately, and the SAF picker is exempt so backups never lock out mid-flow.
   - **Auto-hide secrets**: a revealed password re-masks itself after 15 s.
+  - **Adversarial assessment**: a documented self-pentest (`docs/PENTEST-2026-11-15.md`) covers tampering, brute force, capture, hostile intents and backup abuse.
   - **Backup dialogs**: export shows an entry/type preview, imports end with a verified result dialog (new/updated/duplicates/unreadable counts).
   - **Passphrase options**: separator (`-`, `.`, `_`, space) and word capitalisation.
+- **Automatic biometric prompt**: on launch/resume the fingerprint prompt appears by itself when biometric unlock is enabled (one attempt per lock; cancel falls back to the password screen).
 - **Hardened Runtime Hygiene**:
   - `FLAG_SECURE` screenshot/screen-recording blocking, Android 13+ `ClipData.EXTRA_IS_SENSITIVE` clipboard masking with a 30-second auto-scrub timer, background auto-lock timeout, and Optional **Panic Wipe** after 5 consecutive failed unlock attempts.
 
@@ -204,7 +206,7 @@ gradle :app:assembleRelease
 ```
 
 ### Run Unit & Robolectric Security Suite
-VaultZero includes a comprehensive JUnit 4 + Robolectric test suite (88 tests) verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and verified/duplicate-safe `.vzero` backup recovery (repeated imports, mixed repeat+new files, in-place updates, tamper rejection, partial-salvage imports, atomic fail-closed writes), recovery-phrase restore and phrase-only exports, master-password rotation (records and recovery kit preserved), audit-backed list filters, and the unsaved-editor guard:
+VaultZero includes a comprehensive JUnit 4 + Robolectric test suite (90 tests) verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and verified/duplicate-safe `.vzero` backup recovery (repeated imports, mixed repeat+new files, in-place updates, tamper rejection, partial-salvage imports, atomic fail-closed writes), recovery-phrase restore and phrase-only exports, master-password rotation (records and recovery kit preserved), audit-backed list filters, and the unsaved-editor guard:
 
 ```bash
 gradle :app:testDebugUnitTest
