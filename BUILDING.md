@@ -73,7 +73,22 @@ adb shell am instrument -w -e class com.example.data.VaultSetupDeviceTest \
 
 `VaultSetupDeviceTest` drives the real repository end to end (setup, wrong
 password rejected, correct password unlocks at 600k) and intentionally leaves a
-usable vault behind on the emulator.
+usable vault behind on the emulator. `VaultSetupOnlyDeviceTest` creates a clean
+vault (master password `test1234`, no demo items) and is the one to use before
+manual biometric testing on a physical phone.
+
+On a **physical device** the hardware-backed biometric binding is proven by:
+
+```bash
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -e class com.example.crypto.BiometricKeyBindingTest \
+  com.aistudio.vaultzero.secvlt.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+It checks the Keystore key is per-use auth-required, that `doFinal` is rejected
+without a prompt (`Key user not authenticated` on Android 17 / Keystore2), and
+that no enrolment can be persisted without an authenticated cipher. Manual
+enrol/unlock on the lock screen exercises the `BiometricPrompt.CryptoObject` path.
 
 ## Screenshot protection and UI automation
 

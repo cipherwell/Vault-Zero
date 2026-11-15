@@ -52,6 +52,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.example.core.ThemeMode
+import com.example.ui.BiometricPurpose
+import com.example.crypto.BiometricKeyManager
 import androidx.core.view.WindowCompat
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -148,8 +150,8 @@ class MainActivity : FragmentActivity() {
         // Listen for Biometric Prompt trigger events from ViewModel
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.biometricPromptEvent.collect {
-                    launchNativeBiometricPrompt()
+                viewModel.biometricPromptEvent.collect { purpose ->
+                    launchNativeBiometricPrompt(purpose)
                 }
             }
         }
@@ -201,50 +203,86 @@ class MainActivity : FragmentActivity() {
         viewModel.checkAutoLockTimeout()
     }
 
-    private fun launchNativeBiometricPrompt() {
-        val biometricManager = BiometricManager.from(this)
-        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        val canAuth = biometricManager.canAuthenticate(authenticators)
+    /**
+     * Show the biometric prompt with a Keystore CryptoObject for the requested
+     * purpose. The key is per-use auth-gated, so the prompt is not cosmetic: the
+     * cipher handed to [viewModel] only becomes usable after a successful
+     * authentication of that exact cipher.
+     */
+    private fun launchNativeBiometricPrompt(purpose: BiometricPurpose) {
+        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
+        val canAuth = BiometricManager.from(this).canAuthenticate(authenticators)
+        if (canAuth == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+            viewModel.onBiometricError(
+                "No fingerprint or face enrolled. Add one in system Settings, then try again."
+            )
+            return
+        }
+        if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+            viewModel.onBiometricError("Biometrics unavailable right now. Use your Master Password.")
+            return
+        }
 
-        if (canAuth == BiometricManager.BIOMETRIC_SUCCESS) {
-            val executor = ContextCompat.getMainExecutor(this)
-            val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Unlock VaultZero")
-                .setSubtitle("Confirm device fingerprint, face, or screen lock")
-                .setAllowedAuthenticators(authenticators)
-                .build()
-
-            val prompt = BiometricPrompt(
-                this,
-                executor,
-                object : BiometricPrompt.AuthenticationCallback() {
-                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                        super.onAuthenticationSucceeded(result)
-                        viewModel.onBiometricVerified(result.cryptoObject?.cipher)
-                    }
-
-                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                        super.onAuthenticationError(errorCode, errString)
-                        if (errorCode != BiometricPrompt.ERROR_USER_CANCELED &&
-                            errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
-                            errorCode != BiometricPrompt.ERROR_CANCELED
-                        ) {
-                            viewModel.onBiometricError(errString.toString())
-                        }
-                    }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                        // Biometric not recognized, system prompt stays visible for retry
-                    }
+        val cipher = when (purpose) {
+            BiometricPurpose.UNLOCK -> BiometricKeyManager.getDecryptCipher(this)
+            BiometricPurpose.ENROLL -> BiometricKeyManager.getEncryptCipher(this)
+        }
+        if (cipher == null) {
+            viewModel.onBiometricError(
+                if (purpose == BiometricPurpose.UNLOCK) {
+                    "Biometric key is no longer valid (re-enrolled or removed). " +
+                        "Unlock with your Master Password and enable it again."
+                } else {
+                    "Could not prepare the secure biometric key. Check device security settings."
                 }
             )
-            prompt.authenticate(promptInfo)
-        } else if (canAuth == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
-            viewModel.onBiometricError("No biometric or screen lock enrolled. Please set up a fingerprint or screen lock in device Settings.")
-        } else {
-            viewModel.onBiometricError("Biometrics currently unavailable. Enter your Master Password to unlock.")
+            return
         }
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(if (purpose == BiometricPurpose.ENROLL) "Enable biometric unlock" else "Unlock VaultZero")
+            .setSubtitle(
+                if (purpose == BiometricPurpose.ENROLL) {
+                    "Authenticate to wrap your vault key with this device"
+                } else {
+                    "Authenticate to unwrap your vault key"
+                }
+            )
+            .setAllowedAuthenticators(authenticators)
+            .setNegativeButtonText("Use Master Password")
+            .build()
+
+        val executor = ContextCompat.getMainExecutor(this)
+        val prompt = BiometricPrompt(
+            this,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    val authenticated = result.cryptoObject?.cipher
+                    when (purpose) {
+                        BiometricPurpose.UNLOCK -> viewModel.onBiometricVerified(authenticated)
+                        BiometricPurpose.ENROLL -> viewModel.onBiometricEnrollmentVerified(authenticated)
+                    }
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    if (errorCode != BiometricPrompt.ERROR_USER_CANCELED &&
+                        errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
+                        errorCode != BiometricPrompt.ERROR_CANCELED
+                    ) {
+                        viewModel.onBiometricError(errString.toString())
+                    }
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    // Not recognised; the system prompt stays open for a retry.
+                }
+            }
+        )
+        prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
     }
 
     override fun onUserInteraction() {

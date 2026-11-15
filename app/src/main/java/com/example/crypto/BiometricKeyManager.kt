@@ -1,11 +1,12 @@
 package com.example.crypto
 
 import android.content.Context
-import androidx.core.content.edit
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import androidx.core.content.edit
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -13,87 +14,139 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+/**
+ * Hardware-backed wrapping of the Vault Master Key with a per-use biometric gate.
+ *
+ * The Keystore key is created with `setUserAuthenticationRequired(true)` and a
+ * per-operation validity (`AUTH_BIOMETRIC_STRONG` on API 30+, 0-second validity
+ * below that), and is invalidated when biometrics are re-enrolled. That means
+ * `Cipher.doFinal` fails with `UserNotAuthenticatedException` until a fresh
+ * `BiometricPrompt` has authorised that exact `Cipher` through a `CryptoObject`.
+ *
+ * Consequences, all deliberate:
+ *  - enrolling requires a biometric prompt (encrypt is authenticated too)
+ *  - unlocking requires a biometric prompt every time (no silent decrypt path)
+ *  - clearing the app data is not enough to recover the wrapped VMK: the wrapping
+ *    key lives in the TEE/StrongBox and dies with the key alias
+ *  - re-enrolling a fingerprint invalidates the key, so the user must re-enable
+ *    biometric unlock with the master password once
+ */
 object BiometricKeyManager {
 
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
-    private const val KEY_ALIAS = "VaultZero_Biometric_Key"
+    private const val KEY_ALIAS = "VaultZero_Biometric_Key_v2"
+    private const val LEGACY_KEY_ALIAS = "VaultZero_Biometric_Key"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val PREFS_NAME = "vaultzero_biometric_secure_prefs"
-    private const val PREF_KEY_ENCRYPTED_VMK = "encrypted_vault_master_key"
+    private const val PREF_KEY_ENCRYPTED_VMK = "encrypted_vault_master_key_v2"
+    private const val PREF_KEY_LEGACY_ENCRYPTED_VMK = "encrypted_vault_master_key"
+    private const val IV_LENGTH_BYTES = 12
+    private const val TAG_LENGTH_BITS = 128
 
+    private fun keyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+
+    /** One builder for both TEE and StrongBox paths; per-API auth params applied conditionally. */
+    private fun buildSpec(strongBox: Boolean): KeyGenParameterSpec {
+        val builder = KeyGenParameterSpec.Builder(
+            KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(256)
+            .setUserAuthenticationRequired(true)
+            .setInvalidatedByBiometricEnrollment(true)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Per-use authentication: the key works only for the cipher a fresh
+            // biometric prompt has authorised.
+            builder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
+        } else {
+            @Suppress("DEPRECATION")
+            builder.setUserAuthenticationValidityDurationSeconds(-1)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            builder.setUnlockedDeviceRequired(true)
+            if (strongBox) builder.setIsStrongBoxBacked(true)
+        }
+        return builder.build()
+    }
+
+    /** Create the auth-required key, preferring StrongBox and falling back to the TEE. */
     private fun getOrCreateSecretKey(): SecretKey {
-        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-        keyStore.load(null)
+        val store = keyStore()
+        (store.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
 
-        if (!keyStore.containsAlias(KEY_ALIAS)) {
-            val keyGenerator = KeyGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_AES,
-                ANDROID_KEYSTORE
-            )
-            // Attempt StrongBox hardware security module first on API 28+, fallback to standard TEE Keystore
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                try {
-                    val strongBoxSpec = KeyGenParameterSpec.Builder(
-                        KEY_ALIAS,
-                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                    )
-                        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                        .setKeySize(256)
-                        .setIsStrongBoxBacked(true)
-                        .apply {
-                            // The wrapped VMK must not be usable while the device is locked.
-                            setUnlockedDeviceRequired(true)
-                        }
-                        .build()
-                    keyGenerator.init(strongBoxSpec)
-                    return keyGenerator.generateKey()
-                } catch (e: Exception) {
-                    // Fallback to standard TEE Keystore if StrongBox is not present on device
-                }
-            }
-
-            val spec = KeyGenParameterSpec.Builder(
-                KEY_ALIAS,
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .setKeySize(256)
-                .apply {
-                    // API 28+: key material is unusable until the user unlocks once.
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        setUnlockedDeviceRequired(true)
-                    }
-                }
-                .build()
-
-            keyGenerator.init(spec)
-            return keyGenerator.generateKey()
+        // Drop any legacy (non-auth-gated) key so it can never be used again.
+        if (store.containsAlias(LEGACY_KEY_ALIAS)) {
+            runCatching { store.deleteEntry(LEGACY_KEY_ALIAS) }
         }
 
-        return keyStore.getKey(KEY_ALIAS, null) as SecretKey
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            runCatching {
+                generator.init(buildSpec(strongBox = true))
+                return generator.generateKey()
+            }
+        }
+        generator.init(buildSpec(strongBox = false))
+        return generator.generateKey()
     }
 
     /**
-     * Store the Vault Master Key (VMK hex string) encrypted using the hardware-backed Keystore
+     * ENCRYPT_MODE cipher for enrolling: pass it to BiometricPrompt as a
+     * CryptoObject, then hand the authenticated cipher back to
+     * [storeVmkWithCipher].
      */
-    fun storeVmk(context: Context, vmkHex: String): Boolean {
+    fun getEncryptCipher(context: Context): Cipher? = try {
+        val key = getOrCreateSecretKey()
+        Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, key) }
+    } catch (e: Exception) {
+        null
+    }
+
+    /**
+     * DECRYPT_MODE cipher bound to the stored IV. Returns null when there is no
+     * enrolment or the key was invalidated (biometric re-enrolment / lock-screen
+     * change), in which case the user must re-enable biometric unlock.
+     */
+    fun getDecryptCipher(context: Context): Cipher? {
         return try {
-            val secretKey = getOrCreateSecretKey()
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val encoded = prefs.getString(PREF_KEY_ENCRYPTED_VMK, null) ?: return null
+            val combined = Base64.decode(encoded, Base64.NO_WRAP)
+            if (combined.size < IV_LENGTH_BYTES + 16) return null
 
-            val iv = cipher.iv
-            val cipherText = cipher.doFinal(vmkHex.toByteArray(Charsets.UTF_8))
+            val iv = ByteArray(IV_LENGTH_BYTES)
+            System.arraycopy(combined, 0, iv, 0, IV_LENGTH_BYTES)
 
+            val key = keyStore().getKey(KEY_ALIAS, null) as? SecretKey ?: return null
+            Cipher.getInstance(TRANSFORMATION).apply {
+                init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_LENGTH_BITS, iv))
+            }
+        } catch (invalidated: KeyPermanentlyInvalidatedException) {
+            clearBiometricKey(context)
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** Persist the VMK wrapped by an already-authenticated ENCRYPT_MODE cipher. */
+    fun storeVmkWithCipher(context: Context, vmkHex: String, authenticatedCipher: Cipher?): Boolean {
+        if (authenticatedCipher == null) return false
+        return try {
+            val iv = authenticatedCipher.iv
+            val cipherText = authenticatedCipher.doFinal(vmkHex.toByteArray(Charsets.UTF_8))
             val buffer = ByteBuffer.allocate(iv.size + cipherText.size)
             buffer.put(iv)
             buffer.put(cipherText)
-
             val encoded = Base64.encodeToString(buffer.array(), Base64.NO_WRAP)
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit(commit = true) { putString(PREF_KEY_ENCRYPTED_VMK, encoded) }
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit(commit = true) {
+                    putString(PREF_KEY_ENCRYPTED_VMK, encoded)
+                    remove(PREF_KEY_LEGACY_ENCRYPTED_VMK)
+                }
             true
         } catch (e: Exception) {
             false
@@ -101,106 +154,47 @@ object BiometricKeyManager {
     }
 
     /**
-     * Initializes and returns a DECRYPT_MODE Cipher bound to the stored IV for use with BiometricPrompt.CryptoObject.
-     */
-    fun getDecryptCipher(context: Context): Cipher? {
-        return try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val encoded = prefs.getString(PREF_KEY_ENCRYPTED_VMK, null) ?: return null
-            val combined = Base64.decode(encoded, Base64.NO_WRAP)
-            if (combined.size < 12 + 16) return null
-
-            val iv = ByteArray(12)
-            System.arraycopy(combined, 0, iv, 0, 12)
-
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-            keyStore.load(null)
-            val secretKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey ?: return null
-
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            val spec = GCMParameterSpec(128, iv)
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
-            cipher
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Decrypts the stored VMK using an authenticated BiometricPrompt CryptoObject Cipher if provided,
-     * or falls back to direct Keystore decryption when Device Credential fallback was used.
+     * Decrypt the wrapped VMK with the authenticated DECRYPT_MODE cipher. There is
+     * deliberately no fallback path: without a biometric-authorised cipher the
+     * key cannot be used at all.
      */
     fun decryptVmkWithCipher(context: Context, authenticatedCipher: Cipher?): String? {
-        if (authenticatedCipher == null) {
-            return getDecryptedVmk(context)
-        }
+        if (authenticatedCipher == null) return null
         return try {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val encoded = prefs.getString(PREF_KEY_ENCRYPTED_VMK, null) ?: return null
             val combined = Base64.decode(encoded, Base64.NO_WRAP)
-            if (combined.size < 12 + 16) return null
+            if (combined.size < IV_LENGTH_BYTES + 16) return null
 
-            val cipherTextSize = combined.size - 12
-            val cipherText = ByteArray(cipherTextSize)
-            System.arraycopy(combined, 12, cipherText, 0, cipherTextSize)
-
-            val decryptedBytes = authenticatedCipher.doFinal(cipherText)
-            String(decryptedBytes, Charsets.UTF_8)
-        } catch (e: Exception) {
-            getDecryptedVmk(context)
-        }
-    }
-
-    /**
-     * Retrieve and decrypt the Vault Master Key using the Keystore key
-     */
-    fun getDecryptedVmk(context: Context): String? {
-        return try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val encoded = prefs.getString(PREF_KEY_ENCRYPTED_VMK, null) ?: return null
-
-            val combined = Base64.decode(encoded, Base64.NO_WRAP)
-            if (combined.size < 12 + 16) return null
-
-            val iv = ByteArray(12)
-            System.arraycopy(combined, 0, iv, 0, 12)
-
-            val cipherTextSize = combined.size - 12
-            val cipherText = ByteArray(cipherTextSize)
-            System.arraycopy(combined, 12, cipherText, 0, cipherTextSize)
-
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-            keyStore.load(null)
-            val secretKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey ?: return null
-
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            val spec = GCMParameterSpec(128, iv)
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
-
-            val decryptedBytes = cipher.doFinal(cipherText)
-            String(decryptedBytes, Charsets.UTF_8)
+            val cipherText = ByteArray(combined.size - IV_LENGTH_BYTES)
+            System.arraycopy(combined, IV_LENGTH_BYTES, cipherText, 0, cipherText.size)
+            String(authenticatedCipher.doFinal(cipherText), Charsets.UTF_8)
         } catch (e: Exception) {
             null
         }
     }
 
-    fun hasBiometricKey(context: Context): Boolean {
+    /** True only when a current (v2, auth-gated) enrolment exists. */
+    fun hasCurrentEnrollment(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return !prefs.getString(PREF_KEY_ENCRYPTED_VMK, null).isNullOrEmpty()
     }
 
-    fun clearBiometricKey(context: Context) {
-        try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit(commit = true) { remove(PREF_KEY_ENCRYPTED_VMK) }
+    /** Public shim kept for the existing call sites. */
+    fun hasBiometricKey(context: Context): Boolean = hasCurrentEnrollment(context)
 
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-            keyStore.load(null)
-            if (keyStore.containsAlias(KEY_ALIAS)) {
-                keyStore.deleteEntry(KEY_ALIAS)
+    /** Drop the enrolment material and any legacy key so a stale wrap can't linger. */
+    fun clearBiometricKey(context: Context) {
+        runCatching {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit(commit = true) {
+                    remove(PREF_KEY_ENCRYPTED_VMK)
+                    remove(PREF_KEY_LEGACY_ENCRYPTED_VMK)
+                }
+            val store = keyStore()
+            listOf(KEY_ALIAS, LEGACY_KEY_ALIAS).forEach { alias ->
+                if (store.containsAlias(alias)) store.deleteEntry(alias)
             }
-        } catch (e: Exception) {
-            // ignore
         }
     }
 }

@@ -333,8 +333,9 @@ fun SettingsScreen(
                             Text("Quickly unlock with device biometrics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
+                    val biometricEnabled by viewModel.biometricEnabled.collectAsState()
                     Switch(
-                        checked = viewModel.isBiometricEnabled,
+                        checked = biometricEnabled,
                         onCheckedChange = { viewModel.toggleBiometric(it) },
                         colors = SwitchDefaults.colors(checkedThumbColor = CyberCyan, checkedTrackColor = CyberCyan.copy(alpha = 0.3f))
                     )
