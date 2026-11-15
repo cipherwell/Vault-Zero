@@ -43,7 +43,7 @@ app's release notes. Because the app has no network permission, policy updates
 are delivered with app releases, not remotely.
 
 ## Contact
-Cipherwell — contact via GitHub: <https://github.com/cipherwell> or open an issue at
+Cipherwell — contact via email: <mailto:cipherwell@proton.me> or GitHub: <https://github.com/cipherwell> or open an issue at
 <https://github.com/cipherwell/Vault-Zero/issues>. Security reports: use the private advisory
 flow at <https://github.com/cipherwell/Vault-Zero/security/advisories/new>.
 Repository: <https://github.com/cipherwell/Vault-Zero>

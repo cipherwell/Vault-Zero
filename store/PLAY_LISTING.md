@@ -10,7 +10,7 @@ Assets in this folder / fastlane:
 ## App details
 - App name: **VaultZero** (≤30)
 - Category: Tools
-- Contact email: **[add your contact email in Play Console / privacy page]** (required by Play)
+- Contact email: **cipherwell@proton.me** (required by Play)
 - Website: `https://cipherwell.github.io/Vault-Zero/`
 - Privacy policy URL: `https://cipherwell.github.io/Vault-Zero/privacy.html`
   (enable GitHub Pages for the `docs/` folder on `main`; the files are in `docs/`)
