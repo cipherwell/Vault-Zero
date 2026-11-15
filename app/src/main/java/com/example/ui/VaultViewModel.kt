@@ -10,6 +10,7 @@ import android.os.PersistableBundle
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.crypto.BiometricBackupKeyManager
 import com.example.crypto.BiometricKeyManager
 import com.example.core.GeneratedCredential
 import com.example.core.ThemeMode
@@ -56,7 +57,18 @@ enum class VaultLockState {
 }
 
 /** What a biometric prompt is being shown for. */
-enum class BiometricPurpose { UNLOCK, ENROLL }
+enum class BiometricPurpose { UNLOCK, ENROLL, RESTORE_BACKUP, ENROLL_BACKUP }
+
+/** A biometric prompt request; [backupFingerprint] identifies a saved backup entry. */
+data class BiometricPromptRequest(
+    val purpose: BiometricPurpose,
+    val backupFingerprint: String? = null,
+)
+
+/** Offer to remember a backup under the biometric backup key. */
+data class BackupEnrollOffer(
+    val fingerprint: String,
+)
 
 /** Which editor field an external action (e.g. the audit "Fix" button) should focus. */
 enum class EditFocus { PASSWORD, TOTP, CARD_NUMBER, NOTE_CONTENT, SEED_PHRASE, API_KEY, ID_NUMBER }
@@ -155,8 +167,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _isAuthenticating = MutableStateFlow(false)
     val isAuthenticating: StateFlow<Boolean> = _isAuthenticating.asStateFlow()
 
-    private val _biometricPromptEvent = MutableSharedFlow<BiometricPurpose>(extraBufferCapacity = 1)
-    val biometricPromptEvent: SharedFlow<BiometricPurpose> = _biometricPromptEvent
+    private val _biometricPromptEvent = MutableSharedFlow<BiometricPromptRequest>(extraBufferCapacity = 1)
+    val biometricPromptEvent: SharedFlow<BiometricPromptRequest> = _biometricPromptEvent
+
+    private val _backupEnrollOffer = MutableStateFlow<BackupEnrollOffer?>(null)
+    val backupEnrollOffer: StateFlow<BackupEnrollOffer?> = _backupEnrollOffer.asStateFlow()
+
+    private val _biometricBackupCount = MutableStateFlow(0)
+    val biometricBackupCount: StateFlow<Int> = _biometricBackupCount.asStateFlow()
+
+    private var pendingBackupVmkHex: String? = null
+    private var pendingBiometricRestoreJson: String? = null
+    private var pendingBackupFingerprintForEnroll: String? = null
+    private var pendingEnrollJson: String? = null
+    private var pendingEnrollSecret: String? = null
 
     private val _biometricEnabled = MutableStateFlow(false)
     val biometricEnabled: StateFlow<Boolean> = _biometricEnabled.asStateFlow()
@@ -221,6 +245,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             repository.setBiometricEnabled(false)
         }
         _biometricEnabled.value = repository.isBiometricEnabled()
+        _biometricBackupCount.value = BiometricBackupKeyManager.entryCount(getApplication())
         _autoLockSeconds.value = repository.autoLockSeconds
         _clipboardTimeoutSeconds.value = repository.clipboardTimeoutSeconds
         _sortOption.value = VaultSortOption.entries
@@ -419,7 +444,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _authError.value = null
-        _biometricPromptEvent.tryEmit(BiometricPurpose.UNLOCK)
+        _biometricPromptEvent.tryEmit(BiometricPromptRequest(BiometricPurpose.UNLOCK))
     }
 
     fun onBiometricVerified(authenticatedCipher: javax.crypto.Cipher? = null) {
@@ -514,6 +539,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         // timeout job, Off mode relies on this ownership-checked wipe.
         clipboardJob?.cancel()
         clearSensitiveClipboardIfOwned()
+        pendingBackupVmkHex = null
+        pendingBiometricRestoreJson = null
+        pendingBackupFingerprintForEnroll = null
+        pendingEnrollJson = null
+        pendingEnrollSecret = null
+        _backupEnrollOffer.value = null
         if (autoLocked) {
             postStatusMessage("Vault auto-locked due to inactivity")
         } else {
@@ -741,6 +772,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         json: String,
         backupPassword: String? = null,
         allowPartial: Boolean = false,
+        foreignVmkHex: String? = null,
     ) {
         viewModelScope.launch {
             try {
@@ -748,6 +780,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     jsonString = json,
                     backupPassword = backupPassword,
                     skipInvalidRecords = allowPartial,
+                    foreignVmkHex = foreignVmkHex,
                 )
                 val parts = mutableListOf<String>()
                 if (report.imported > 0) {
@@ -779,7 +812,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 pendingPartialImportJson = null
                 pendingPartialImportPassword = null
+                pendingBiometricRestoreJson = null
                 _importVerificationPrompt.value = null
+                if (!allowPartial && foreignVmkHex == null && !backupPassword.isNullOrBlank()) {
+                    offerBiometricEnrollmentForBackup(json, backupPassword)
+                }
                 postStatusMessage(msg)
                 onUserInteraction()
             } catch (prompt: BackupVerificationException) {
@@ -815,6 +852,119 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         pendingPartialImportJson = null
         pendingPartialImportPassword = null
         _importVerificationPrompt.value = null
+    }
+
+    // -------------------------------------------------------------------------
+    // Biometric backup restore ("fingerprint decryption")
+    // -------------------------------------------------------------------------
+
+    /** True when this file's source vault was saved for fingerprint restore. */
+    fun canRestoreBackupWithFingerprint(json: String): Boolean {
+        val fingerprint = repository.backupFingerprint(json) ?: return false
+        return BiometricBackupKeyManager.hasEntry(getApplication(), fingerprint)
+    }
+
+    /**
+     * Start a fingerprint-gated import of a saved backup: the stored backup key is
+     * unwrapped by a per-use biometric Keystore key, so no phrase is typed.
+     */
+    fun importBackupWithFingerprint(json: String) {
+        val fingerprint = repository.backupFingerprint(json)
+        if (fingerprint == null || !BiometricBackupKeyManager.hasEntry(getApplication(), fingerprint)) {
+            postStatusMessage("This backup is not saved for fingerprint restore yet")
+            return
+        }
+        pendingBiometricRestoreJson = json
+        _biometricPromptEvent.tryEmit(
+            BiometricPromptRequest(BiometricPurpose.RESTORE_BACKUP, backupFingerprint = fingerprint)
+        )
+    }
+
+    /** Prompt callback: authenticated DECRYPT cipher for one saved backup entry. */
+    fun onBackupRestoreVerified(
+        authenticatedCipher: javax.crypto.Cipher?,
+        fingerprint: String,
+    ) {
+        val json = pendingBiometricRestoreJson
+        if (json == null) return
+        viewModelScope.launch {
+            val vmkHex = BiometricBackupKeyManager.decryptEntry(
+                getApplication(), fingerprint, authenticatedCipher,
+            )
+            if (vmkHex == null) {
+                pendingBiometricRestoreJson = null
+                postStatusMessage("Fingerprint restore failed — the saved backup key is unavailable")
+                return@launch
+            }
+            importBackupJson(json, foreignVmkHex = vmkHex)
+        }
+    }
+
+    /** Prompt callback: authenticated ENCRYPT cipher for a new backup entry. */
+    fun onBackupEnrollVerified(authenticatedCipher: javax.crypto.Cipher?) {
+        val fingerprint = pendingBackupFingerprintForEnroll
+        val vmkHex = pendingBackupVmkHex
+        if (fingerprint == null || vmkHex == null) return
+        val stored = BiometricBackupKeyManager.storeEntry(
+            getApplication(), fingerprint, vmkHex, authenticatedCipher,
+        )
+        _biometricBackupCount.value = BiometricBackupKeyManager.entryCount(getApplication())
+        pendingBackupVmkHex = null
+        pendingBackupFingerprintForEnroll = null
+        pendingEnrollJson = null
+        pendingEnrollSecret = null
+        _backupEnrollOffer.value = null
+        postStatusMessage(
+            if (stored) "Backup saved for fingerprint restore"
+            else "Could not save the backup for fingerprint restore"
+        )
+    }
+
+    fun confirmBackupEnroll() {
+        val offer = _backupEnrollOffer.value ?: return
+        val json = pendingEnrollJson
+        val secret = pendingEnrollSecret
+        if (json == null || secret.isNullOrBlank()) {
+            dismissBackupEnrollOffer()
+            return
+        }
+        viewModelScope.launch {
+            val vmkHex = repository.unwrapBackupVmk(json, secret)
+            if (vmkHex == null) {
+                postStatusMessage("Could not unlock this backup for fingerprint restore")
+                return@launch
+            }
+            pendingBackupVmkHex = vmkHex
+            pendingBackupFingerprintForEnroll = offer.fingerprint
+            _biometricPromptEvent.tryEmit(
+                BiometricPromptRequest(
+                    BiometricPurpose.ENROLL_BACKUP,
+                    backupFingerprint = offer.fingerprint,
+                )
+            )
+        }
+    }
+
+    fun dismissBackupEnrollOffer() {
+        _backupEnrollOffer.value = null
+        pendingEnrollJson = null
+        pendingEnrollSecret = null
+        pendingBackupVmkHex = null
+        pendingBackupFingerprintForEnroll = null
+    }
+
+    fun clearBiometricBackupEntries() {
+        BiometricBackupKeyManager.clearAll(getApplication())
+        _biometricBackupCount.value = 0
+        postStatusMessage("Saved fingerprint backups removed")
+    }
+
+    private fun offerBiometricEnrollmentForBackup(json: String, secret: String) {
+        val fingerprint = repository.backupFingerprint(json) ?: return
+        if (BiometricBackupKeyManager.hasEntry(getApplication(), fingerprint)) return
+        pendingEnrollJson = json
+        pendingEnrollSecret = secret
+        _backupEnrollOffer.value = BackupEnrollOffer(fingerprint)
     }
 
     /**
@@ -1031,7 +1181,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             // Fresh enrolment: make sure no stale key material survives.
             BiometricKeyManager.clearBiometricKey(getApplication())
         }
-        _biometricPromptEvent.tryEmit(BiometricPurpose.ENROLL)
+        _biometricPromptEvent.tryEmit(BiometricPromptRequest(BiometricPurpose.ENROLL))
     }
 
     /** Called with the authenticated ENCRYPT_MODE cipher after a successful prompt. */
