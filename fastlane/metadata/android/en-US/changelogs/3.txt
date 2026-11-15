@@ -1,5 +1,0 @@
-VaultZero v1.2.0:
-• New phone? Restore a full encrypted backup during first-run setup using your existing 12-word recovery kit. No new seed phrase is generated.
-• Standard backups keep the original master password (or set a new one during restore); phrase-only backups ask for a new local password.
-• Restore is verified record-by-record before anything is written, preserves favourites/timestamps, and never overwrites an existing vault.
-• Fixed the Settings footer to show the real app version/build.

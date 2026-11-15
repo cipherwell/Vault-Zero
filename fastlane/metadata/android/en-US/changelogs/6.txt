@@ -1,0 +1,6 @@
+VaultZero v1.4.0:
+• New Cipherwell project identity and production signing key
+• BIP-39 128-bit recovery kits with unique words; legacy kits can be rotated
+• First-run restore from an encrypted backup with your existing recovery phrase
+• AES-256-GCM records, hardware biometrics, verified backups, fully offline
+• Existing installs must be uninstalled/reinstalled because the signing key changed

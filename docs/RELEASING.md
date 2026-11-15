@@ -7,14 +7,15 @@ outside the repository.
 
 | Item | Value |
 | --- | --- |
-| Keystore | `~/.vaultzero-release/vaultzero-upload.jks` (alias `upload`, PKCS12, RSA-4096) |
-| Credentials | `~/.vaultzero-release/keystore.env` (`chmod 600`) |
+| Keystore | `~/.cipherwell-release/cipherwell-upload.jks` (alias `upload`, PKCS12, RSA-4096) |
+| Credentials | `~/.cipherwell-release/keystore.env` (`chmod 600`) |
 | Certificate SHA-256 | `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7` |
 | Signature scheme | APK Signature Scheme v2 (minSdk 24) |
 
 **Back the keystore and password up offline (two copies) before the first store upload.** Never
 commit them. Losing the key blocks updating an installed app; leaking it allows malicious updates.
-The old `v1.0.0` preview was debug-signed and must never be used as a release identity.
+v1.4.0 introduced the Cipherwell signing identity. Earlier releases were removed; installed builds
+from the previous key cannot update in place. Never use `debug.keystore` as a release identity.
 
 ## 1. Prepare the version
 
@@ -29,7 +30,7 @@ The old `v1.0.0` preview was debug-signed and must never be used as a release id
 
 ```bash
 cd vault-zero-app
-source ~/.vaultzero-release/keystore.env
+source ~/.cipherwell-release/keystore.env
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 export ANDROID_HOME=$HOME/Android/Sdk
 ./gradlew --console=plain :app:testDebugUnitTest :app:lintDebug

@@ -1,11 +1,9 @@
 # Submitting VaultZero to F-Droid
 
-**Status:** upstream and build metadata are ready for submission. F-Droid builds and signs its own
-APK from source; the app is **not yet in the F-Droid repository** until a `fdroiddata` merge request
-is opened and reviewed.
+**Status:** F-Droid submission is **deferred** until the public repo passes F-Droid’s 3-month maintenance rule (Quality point 6). The earlier New App MR was closed for that policy and for not using the template. Resubmit after ~21 January 2027 with the filled template, full commit hash, AuthorEmail and `New App` label. Builds and the recipe below are otherwise ready.
 
 - **Package ID:** `com.aistudio.vaultzero.secvlt`
-- **Version to submit:** `1.3.1` (`versionCode` 5), tag **`v1.3.1`**
+- **Version to submit:** `1.4.0` (`versionCode` 6), tag **`v1.4.0`** (new Cipherwell signing identity)
 - **License:** MIT (recognized FOSS)
 - **Source/issue tracker:** https://github.com/cipherwell/Vault-Zero
 - **Website:** https://cipherwell.github.io/Vault-Zero/
@@ -50,13 +48,13 @@ cp /path/to/vault-zero-app/fdroid/com.aistudio.vaultzero.secvlt.yml \
 ```
 
 The recipe must be copied unchanged unless you deliberately bump the version (keep
-`commit: v1.3.1` and `CurrentVersion: 1.3.1` aligned).
+`commit: v1.4.0` and `CurrentVersion: 1.4.0` aligned).
 
 ## 2. Validate the metadata (recommended)
 
 > Local validation performed for this recipe: `fdroid readmeta`, `fdroid rewritemeta` and
 > `fdroid lint` pass, and `fdroid build --test --no-refresh --no-tarball
-> com.aistudio.vaultzero.secvlt:5` successfully built the unsigned APK from tag `v1.3.1` with
+> com.aistudio.vaultzero.secvlt:6` successfully built the unsigned APK from tag v1.4.0 with
 > fdroidserver 2.4.2 (Gradle 9.3.1, JDK 17, Android SDK 36).
 
 F-Droid's CI will build it, but local linting saves a review round-trip. The documented server-tools
@@ -140,7 +138,7 @@ The recipe uses tags + versionName/versionCode in `app/build.gradle.kts`:
 - F-Droid metadata filename = package ID.
 - Category `Security`/`System`; licence MIT; no anti-features.
 - The built APK has no network permission; no anti-feature declarations are needed.
-- Changelog is currently linked to `releases/v1.3.1.md`; future version bumps should update it.
+- Changelog is currently linked to `releases/v1.4.0.md`; future version bumps should update it.
 - F-Droid builds cannot be compared bit-for-bit with the GitHub APK because the signing keys and
   build environment differ; reproducible builds are not required for inclusion.
 

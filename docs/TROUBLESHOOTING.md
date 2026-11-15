@@ -3,9 +3,9 @@
 ## Installation
 
 **`INSTALL_FAILED_UPDATE_INCOMPATIBLE` / "App not installed" after downloading a new build**
-The APK is signed with a different key than the installed app. The `v1.0.0` preview was
-debug-signed; uninstall it first (export a backup if needed), then install the current release. Never install
-an APK re-signed by a third party.
+The APK is signed with a different key than the installed app. v1.4.0 uses a new Cipherwell
+signing key, so v1.3.1 and earlier installs cannot update in place. Export a backup + recovery
+phrase, uninstall, install v1.4.0, then restore. Never install an APK re-signed by a third party.
 
 **`INSTALL_FAILED_VERSION_DOWNGRADE`**
 The installed build has a higher versionCode. Uninstall or install the same/newer version.

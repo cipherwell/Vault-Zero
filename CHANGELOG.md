@@ -1,144 +1,24 @@
 # Changelog
 
-All notable changes to VaultZero are documented here. Format based on
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[Semantic Versioning](https://semver.org/).
+VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
+intentionally removed during the identity migration.
 
-## [1.3.1] — 2026-11-15 — F-Droid-compatible release build
-
-### Changed
-- Release builds are now **unsigned when no production signing environment is supplied** (e.g.
-  F-Droid's build server), so distributors can sign with their own key. Local/CI builds with
-  `KEYSTORE_PATH`/`STORE_PASSWORD`/`KEY_PASSWORD` remain production-signed; release never falls
-  back to the debug keystore.
-- `compileSdk` simplified from 36.1 to plain **36** for broader distro toolchain compatibility
-  (target SDK remains 36).
-
-### Fixed
-- AndroidX/F-Droid fastlane short description no longer has a trailing period (F-Droid metadata
-  requirement).
-- F-Droid recipe updated: current build tag `v1.3.1` / versionCode 5, no unnecessary `subdir` or
-  debug-keystore scan entry.
-
-### Upgrade notes
-- In-place from 1.3.0 (same signing key, versionCode 5). No app behavior change; this release
-  exists so F-Droid can reproduce the build without the private upload key.
-
-## [1.3.0] — 2026-11-15 — hardened recovery phrases
-
-### Security
-- Replaced the legacy 136-word recovery scheme with **BIP-39 English (2048 words, 128-bit
-  entropy)**. Generated kits now have 12 unique words; repeated words are rejected/regenerated.
-  The old scheme drew 11 words **with replacement** from 136 words, giving only ≈78 bits of entropy
-  and a 34% chance of a repeat (observed as "eclipse" three times).
-- Recovery derivation remains PBKDF2-HMAC-SHA256(phrase, salt, 600,000), so existing vaults and
-  backups remain compatible. Legacy 136-word phrases are still validated with their original
-  checksum.
-- Added **Settings → Generate New Recovery Kit** to rotate an existing kit: fresh BIP-39 phrase and
-  salt, same VMK/records/fingerprint/master password; the old phrase stops opening this vault while
-  old backups remain restorable with the phrase they were exported under.
-- Audited AES-256-GCM record encryption, AAD binding, VMK wrapping, KDF, recovery-at-rest wrapping,
-  backup envelope and biometric keystore usage; no new critical defect found. Full report:
-  `docs/AUDIT-2026-11-15-recovery-and-encryption.md`.
-
-### Testing
-- 105 JVM tests, 0 failures. New coverage: 24 official BIP-39 vectors cross-checked against the
-  maintained Zcash `kotlin-bip39` library (test-only), 100 random entropy cross-checks, unique-word
-  generation, legacy-phrase compatibility, tampered checksum rejection, recovery-kit rotation,
-  old/new backup restore with old/new phrases.
+## [1.4.0] — 2026-11-15
 
 ### Changed
-- Settings displays the real `BuildConfig` version and a new recovery-kit rotation row.
-- Documentation, store description and F-Droid recipe updated for 1.3.0.
-
-### Upgrade notes
-- In-place from 1.2.x (versionCode 4, same signing key). New vaults automatically get the stronger
-  BIP-39 kit. Existing vaults keep their legacy phrase until the user rotates it in Settings.
-
-## [1.2.0] — 2026-11-15 — first-run migration restore
-
-### Added
-- **Restore from Backup on first run**: a fresh install can now choose an encrypted backup and
-  enter the existing 12-word recovery phrase instead of creating a new vault/seed phrase.
-  - The source recovery phrase and key fingerprint are preserved; no new kit is generated.
-  - Standard backups keep their original master password by default, or the user can set a new
-    one during restore. Phrase-only backups require a new local master password.
-  - Every record is authenticated and decrypted before anything is written; records keep their
-    original ciphertext, favourites, timestamps and last-used values.
-  - The restore refuses to overwrite an initialized vault; existing-vault merging remains in
-    Settings → Restore / Import Encrypted Backup.
-- Six new JVM/Robolectric tests cover standard restore, password rotation, phrase-only backups,
-  wrong phrases, tampered records and the no-overwrite rule (suite now 96 tests).
-- Settings footer now reports the real `BuildConfig.VERSION_NAME`/`VERSION_CODE` instead of a
-  hardcoded preview version.
+- New **Cipherwell** project identity and a new production signing key (`CN=Cipherwell`).
+  Existing installs must be uninstalled/reinstalled; export a backup first.
+- Repository, documentation, F-Droid metadata and release assets rebuilt under the new identity.
 
 ### Security
-- Bootstrap restore validates the envelope format, KDF iteration bounds (10k–600k), salt/key
-  envelope sizes and every record's AES-GCM authentication before the atomic DB/credential write.
-- The untrusted backup fingerprint is bounded; malformed values are replaced with a locally
-  derived fingerprint.
+- BIP-39 128-bit recovery kits with unique words; legacy 136-word kits still accepted and rotatable
+  in Settings.
+- AES-256-GCM records with AAD binding, PBKDF2-HMAC-SHA256 (600,000), hardware per-use biometrics.
+- First-run restore from encrypted backup with the existing recovery phrase.
+- Verified, duplicate-safe backup import; SAF-only backups; no network permission or telemetry.
+- 105 JVM tests / 0 failures; lint clean.
 
 ### Upgrade notes
-- Upgrading in place from 1.1.0 preserves vault data and signing identity (`versionCode` 3).
-- Migrating to a new phone: install 1.2.0, choose **Restore from Backup**, pick the `.json` backup
-  and enter the old phone's 12-word recovery kit.
-
-## [1.1.0] — 2026-11-15 — first production-signed release
-
-### Added
-- Six vault record types (logins, cards, API secrets, crypto wallets/seed phrases, secure notes, identities).
-- Hardware per-use biometric unlock with `BiometricPrompt.CryptoObject`; automatic prompt on app
-  open when enabled; per-use Keystore key invalidated by biometric re-enrolment.
-- Verified, duplicate-safe backup import: updates same-id changed records, skips repeats,
-  atomic write, explicit salvage mode for partially unreadable files, hostile-input bounds.
-- Backups can be restored with the master password **or** the 12-word recovery phrase;
-  optional phrase-only export (password envelope stripped).
-- Change Master Password without re-encrypting records; recovery kit remains valid.
-- Live 2FA dashboard and inline copy-TOTP from the vault list.
-- Audit-backed search filters (`is:weak`, `is:reused`, `is:stale`, `is:no2fa`, `is:clean`).
-- Undo delete, recently-used sort, bulk favourite, launcher shortcuts.
-- Background locking (15/30/60 s or Off), screen-off immediate lock, SAF-picker exemption.
-- One UI-inspired redesign with light/dark/system appearance, collapsing title, floating pill nav.
-- Passphrase separator/capitalisation options, export previews, import result summary,
-  unsaved-editor guard, auto-masking revealed secrets, timestamped backup names.
-
-### Changed
-- Password KDF increased to **600,000** PBKDF2-HMAC-SHA256 iterations; legacy vaults upgrade
-  transparently on unlock.
-- Auto-lock/clipboard options now include Off (clipboard Off still wipes on vault lock).
-- Version `1.1.0`, `versionCode 2`, target/compile SDK 36, min SDK 24.
-- Production release signing established; repository/CI no longer use a debug key for releases.
-
-### Security
-- Per-record AES-256-GCM now always bound with v2 AAD (`VaultZero_Record_v2:<id>:<type>`);
-  tampered row swaps fail closed and are hidden (pentest F-03).
-- Backup import hardened against hostile KDF iteration counts, oversized salts and key envelopes
-  (pentest F-01, fixed).
-- Release build verified: non-debuggable, `run-as` blocked, screenshots blocked, `adb backup`
-  contains no app data.
-- Pentest report: `docs/PENTEST-2026-11-15.md`.
-
-### Fixed
-- Category/selection filters could show stale results or reset scroll position incorrectly.
-- Settings timeout/auto-lock/clipboard changes were laggy due to synchronous preference writes
-  and non-observable state.
-- Biometric behaviour was previously cosmetic (no auth-required key, no CryptoObject); replaced.
-- Duplicate imports and partial imports; backup verification is now completed before writing.
-
-### Upgrade notes
-- `v1.0.0` was a debug-signed public preview. Uninstall it before installing `v1.1.0`; backups
-  remain importable.
-- Existing v1.0.x vaults upgrade automatically on first unlock (KDF migration); Room DB migrates
-  v1→v2 non-destructively (adds last-used timestamp).
-
-## [1.0.0] — 2026-10-20 — public preview (debug-signed, superseded)
-
-Initial preview: encrypted vault, AES-256-GCM records, PBKDF2 100k, 12-word recovery phrase,
-TOTP, audit, generator, encrypted backups. Superseded by 1.1.0; do not use for updates.
-
-[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.3.1...HEAD
-[1.3.1]: https://github.com/cipherwell/Vault-Zero/compare/v1.3.0...v1.3.1
-[1.3.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/cipherwell/Vault-Zero/releases/tag/v1.0.0
+- v1.4.0 is signed with a new key; it cannot update v1.3.1 or older builds in place.
+- Export an encrypted backup + recovery phrase, uninstall the old app, install v1.4.0, restore.
+- Future releases continue under the Cipherwell signing identity.

@@ -31,7 +31,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.3.1** (`versionCode 5`). Self-tested and pentested; an
+> **Status:** production release **v1.4.0** (`versionCode 6`), maintained under the **Cipherwell** identity.. Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -109,26 +109,26 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.3.1](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.4.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.3.1.apk` (sideload) | 1,861,355 B | `107fea47f006210b88f38b6a6813d4ed18af58cd08f488d5e9da14a817556a1c` |
-| `VaultZero-v1.3.1.aab` (store upload) | 4,049,490 B | `3039ee37d62ce144330c094925f1d104d22b2d6043a27822770dab15acd98bf7` |
+| `VaultZero-v1.4.0.apk` (sideload) | 1,861,359 B | `d29347dbf90dc771b5451d27f135f75b887d38152b6f953709536b50ee2323ef` |
+| `VaultZero-v1.4.0.aab` (store upload) | 4,049,393 B | `7ba6f53f0200fd1d78dd56c31546f7752e2d16b6fa32d74c5ebc7ba37cd5c0f7` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ```bash
-sha256sum -c VaultZero-v1.3.1.apk.sha256
-apksigner verify --print-certs VaultZero-v1.3.1.apk
+sha256sum -c VaultZero-v1.4.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.4.0.apk
 ```
 
 See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for installation and first-run steps.
 
-> **Upgrading from v1.0.0 preview:** that build was debug-signed with a public key.
-> Uninstall it (export a backup first) before installing v1.3.1; Android will reject an
-> in-place update. Old backup files remain importable with their master password or recovery phrase.
+> **Upgrading from any earlier release:** v1.4.0 uses a new production signing key. Android cannot
+> update an older install in place. Export an encrypted backup + recovery phrase, uninstall, install
+> v1.4.0, then restore. Earlier GitHub releases/assets were removed during the identity migration.
 
 ### Requirements
 Android 7.0 (API 24) or newer. No Google Play Services, no network, no account.

@@ -1,5 +1,0 @@
-VaultZero v1.3.1:
-• BIP-39 128-bit recovery kits with 12 unique words; legacy kits still work and can be rotated
-• First-run restore from an encrypted backup with the existing recovery phrase
-• F-Droid/reproducible build compatibility: unsigned release builds when no upload key is supplied
-• 105 JVM tests / 0 failures; version footer and security docs refreshed

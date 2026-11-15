@@ -1,15 +1,13 @@
 # VaultZero security policy
 
-**Version:** 1.3.0 (`versionCode 4`) · **Last updated:** 15 November 2026
+**Version:** 1.4.0 (`versionCode 6`) · **Last updated:** 15 November 2026
 
 ## Supported versions
 
 | Version | Supported |
 | --- | --- |
-| `1.3.x` (production, release-signed) | ✅ security fixes |
-| `1.2.x` (production, release-signed) | ⚠️ upgrade to 1.3.x (weak legacy recovery kits) |
-| `1.1.x` (production, release-signed) | ❌ upgrade |
-| `1.0.0` (public preview, debug-signed) | ❌ upgrade to 1.1.0 (uninstall required) |
+| `1.4.x` (Cipherwell production, release-signed) | ✅ security fixes |
+| `1.3.x` and earlier | ❌ upgrade to 1.4.0 (new signing key; uninstall required) |
 
 ## Reporting a vulnerability
 
@@ -98,8 +96,8 @@ intents and log leakage all held.
 ## Release verification
 
 ```bash
-sha256sum -c VaultZero-v1.3.1.apk.sha256
-apksigner verify --print-certs VaultZero-v1.3.1.apk
+sha256sum -c VaultZero-v1.4.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.4.0.apk
 # expected certificate SHA-256:
 # 6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7
 ```
