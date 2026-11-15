@@ -8,6 +8,8 @@
 
 AES-256-GCM · PBKDF2-HMAC-SHA256 (600,000) · hardware biometrics · no network permission · no accounts · no telemetry
 
+🌐 [cipherwell.github.io/Vault-Zero](https://cipherwell.github.io/Vault-Zero/) · 📦 [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases) · 📚 [Documentation](docs/README.md)
+
 [![Release](https://img.shields.io/github/v/release/Cipherwell/Vault-Zero?label=release&style=flat-square)](https://github.com/cipherwell/Vault-Zero/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Android-7.0%2B%20(API%2024)-3DDC84?style=flat-square&logo=android&logoColor=white)](#requirements)
