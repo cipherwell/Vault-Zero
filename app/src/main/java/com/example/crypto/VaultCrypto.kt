@@ -37,6 +37,9 @@ object VaultCrypto {
 
     /** Oldest work factor still accepted when opening an existing vault. */
     const val MIN_ACCEPTED_ITERATIONS = 10_000
+
+    /** Smallest TOTP secret accepted for display/audit (80 bits, RFC 4226 floor). */
+    const val MIN_TOTP_SECRET_BYTES = 10
     const val KEY_LENGTH_BITS = 256
     const val KEY_LENGTH_BYTES = 32
     const val SALT_LENGTH_BYTES = 16
@@ -344,7 +347,10 @@ object VaultCrypto {
 
         return try {
             val decodedKey = base32Decode(cleanSecret)
-            if (decodedKey.isEmpty()) return null
+            // RFC 4226 recommends >= 128-bit keys; 10 bytes is the practical
+            // floor (80 bits). Anything shorter is a malformed/truncated secret
+            // and must not render a misleading "2FA code".
+            if (decodedKey.size < MIN_TOTP_SECRET_BYTES) return null
 
             val currentSecond = timeMillis / 1000L
             val timeWindow = currentSecond / timeStepSeconds
@@ -414,7 +420,7 @@ object VaultCrypto {
         WEAK("Weak", 0.4f),
         FAIR("Fair", 0.6f),
         STRONG("Strong", 0.85f),
-        FORTIFIED("Fortified (Quantum-Resistant)", 1.0f)
+        FORTIFIED("Excellent", 1.0f)
     }
 
     data class PasswordStrength(

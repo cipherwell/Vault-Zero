@@ -2,6 +2,8 @@ package com.example.crypto
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -135,6 +137,27 @@ class VaultCryptoTest {
             threw = true
         }
         assertTrue(threw)
+    }
+
+    // ---- TOTP secret validation ----
+
+    @Test
+    fun `totp rejects truncated or malformed secrets instead of rendering a code`() {
+        assertNull("empty secret", VaultCrypto.generateTotp(""))
+        assertNull("non-base32 characters", VaultCrypto.generateTotp("NOT-A-VALID-1SECRET"))
+        assertNull("5-byte key is below the RFC 4226 floor", VaultCrypto.generateTotp("GEZDGNBV"))
+        assertNull(
+            "9-byte key must not render a misleading code",
+            VaultCrypto.generateTotp("NOTAVALIDSECRET"),
+        )
+    }
+
+    @Test
+    fun `totp still renders for a real 20-byte secret`() {
+        val result = VaultCrypto.generateTotp("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ")
+        assertNotNull("valid RFC 6238 seed must produce a code", result)
+        assertEquals(6, result!!.code.length)
+        assertTrue(result.code.all { it.isDigit() })
     }
 
     // ---- key verifier / fingerprints ----

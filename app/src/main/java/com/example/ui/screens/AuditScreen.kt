@@ -86,7 +86,7 @@ fun AuditScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Autonomous zero-knowledge threat and hygiene assessment",
+                text = "Local review of password strength, reuse, age and 2FA setup",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -125,7 +125,7 @@ fun AuditScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (report.vulnerabilities.isEmpty()) {
-                                "Vault Fortified: All credentials meet military-grade standards."
+                                "No issues found in the logins you have saved."
                             } else {
                                 "${report.vulnerabilities.size} security issues found in your credentials."
                             },
@@ -277,9 +277,12 @@ private fun MetricPill(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
+        ),
         modifier = modifier
     ) {
         Column(

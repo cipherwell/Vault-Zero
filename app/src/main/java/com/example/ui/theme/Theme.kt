@@ -10,11 +10,11 @@ import androidx.compose.ui.graphics.Color
 private val DarkColorScheme = darkColorScheme(
     primary = CyberEmerald,
     onPrimary = ObsidianBg,
-    primaryContainer = Color(0xFF003820),
-    onPrimaryContainer = CyberEmerald,
+    primaryContainer = Color(0xFF0C2A22),
+    onPrimaryContainer = CyberEmeraldMuted,
     secondary = CyberCyan,
     onSecondary = ObsidianBg,
-    secondaryContainer = Color(0xFF003344),
+    secondaryContainer = Color(0xFF14232C),
     onSecondaryContainer = CyberCyan,
     tertiary = RoyalPurple,
     onTertiary = Color.White,
@@ -24,10 +24,15 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = TextPrimaryDark,
     surfaceVariant = ObsidianSurfaceVariant,
     onSurfaceVariant = TextSecondaryDark,
+    surfaceContainerLowest = ObsidianBg,
+    surfaceContainerLow = Color(0xFF0D1016),
+    surfaceContainer = Color(0xFF10141A),
+    surfaceContainerHigh = Color(0xFF141922),
+    surfaceContainerHighest = ObsidianSurfaceVariant,
     error = DangerRed,
     onError = Color.White,
     outline = ObsidianCardBorder,
-    outlineVariant = Color(0xFF1F293D)
+    outlineVariant = Color(0xFF1E2530)
 )
 
 private val LightColorScheme = lightColorScheme(

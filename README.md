@@ -10,6 +10,11 @@
 
 ---
 
+> **Interface verification:** every screen and interactive flow was driven on the
+> live emulator (unlock, search, filters, favorites, item detail/edit/create/delete,
+> generator + save-to-vault, audit, recovery kit, settings, lock). Logic that can be
+> asserted without pixels is covered by the 47 JVM tests.
+
 > **Security posture:** see [`SECURITY.md`](SECURITY.md) for the enforced controls,
 > how each is verified, and the known gaps. Short version: no network permission of
 > any kind, encrypted backups leave the app only through a Storage Access Framework

@@ -25,40 +25,40 @@ val VaultTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = SpaceGroteskFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = (-0.5).sp
+        fontSize = 30.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.4).sp
     ),
     displayMedium = TextStyle(
         fontFamily = SpaceGroteskFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
-        letterSpacing = (-0.25).sp
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
+        letterSpacing = (-0.2).sp
     ),
     headlineLarge = TextStyle(
         fontFamily = SpaceGroteskFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp
+        fontSize = 22.sp,
+        lineHeight = 28.sp
     ),
     headlineMedium = TextStyle(
         fontFamily = SpaceGroteskFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 28.sp
+        fontSize = 19.sp,
+        lineHeight = 24.sp
     ),
     titleLarge = TextStyle(
         fontFamily = SpaceGroteskFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp
+        fontSize = 17.sp,
+        lineHeight = 22.sp
     ),
     titleMedium = TextStyle(
         fontFamily = SpaceGroteskFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
+        fontSize = 15.sp,
+        lineHeight = 20.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -97,6 +97,6 @@ val VaultTypography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 10.sp,
         lineHeight = 14.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 1.2.sp
     )
 )

@@ -38,7 +38,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -102,59 +102,49 @@ fun VaultListScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header Bar
+            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
+                    Text(
+                        text = "Vault",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "VaultZero",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(CyberEmerald.copy(alpha = 0.15f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "UNLOCKED • AES-256",
-                                fontFamily = JetBrainsMonoFamily,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = CyberEmerald
-                            )
-                        }
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(CyberEmerald)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${items.size} ${if (items.size == 1) "item" else "items"} · AES-256 · unlocked",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Text(
-                        text = "${items.size} encrypted ${if (items.size == 1) "entry" else "entries"}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
-                // Quick Lock Button
                 IconButton(
                     onClick = { viewModel.lockVault() },
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
                         .testTag("quick_lock_button")
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Lock Vault",
-                        tint = CyberCyan,
-                        modifier = Modifier.size(18.dp)
+                        contentDescription = "Lock vault",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -188,12 +178,12 @@ fun VaultListScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .testTag("vault_search_input"),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                    focusedBorderColor = CyberEmerald
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                    focusedBorderColor = CyberEmerald.copy(alpha = 0.8f)
                 )
             )
 
@@ -215,9 +205,9 @@ fun VaultListScreen(
                         viewModel.setTypeFilter(null)
                         if (favoritesOnly) viewModel.toggleFavoritesFilter()
                     },
-                    label = { Text("All", fontSize = 13.sp) },
+                    label = { Text("All", fontSize = 12.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = CyberEmerald.copy(alpha = 0.2f),
+                        selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         selectedLabelColor = CyberEmerald
                     )
                 )
@@ -233,10 +223,10 @@ fun VaultListScreen(
                             modifier = Modifier.size(14.dp)
                         )
                     },
-                    label = { Text("Favorites", fontSize = 13.sp) },
+                    label = { Text("Favorites", fontSize = 12.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = DangerRed.copy(alpha = 0.2f),
-                        selectedLabelColor = DangerRed
+                        selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        selectedLabelColor = CyberEmerald
                     )
                 )
 
@@ -245,10 +235,12 @@ fun VaultListScreen(
                     FilterChip(
                         selected = selectedType == type,
                         onClick = { viewModel.setTypeFilter(if (selectedType == type) null else type) },
-                        label = { Text(type.displayName, fontSize = 13.sp) },
+                        label = { Text(type.displayName, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = CyberCyan.copy(alpha = 0.2f),
-                            selectedLabelColor = CyberCyan
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            selectedLabelColor = CyberEmerald
                         )
                     )
                 }
@@ -297,8 +289,8 @@ fun VaultListScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(items, key = { it.id }) { item ->
                         VaultItemCard(
@@ -315,18 +307,19 @@ fun VaultListScreen(
             }
         }
 
-        // FAB for Adding New Entry
-        ExtendedFloatingActionButton(
+        // Compact primary action
+        FloatingActionButton(
             onClick = { showCreateMenu = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = fabBottomPadding)
+                .padding(end = 20.dp, bottom = fabBottomPadding)
                 .testTag("add_item_fab"),
             containerColor = CyberEmerald,
             contentColor = Color.Black,
-            icon = { Icon(Icons.Default.Add, contentDescription = "Add Item") },
-            text = { Text("Add Entry", fontWeight = FontWeight.Bold) }
-        )
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add item")
+        }
 
         // Type Selection Modal Bottom Sheet / Dialog
         if (showCreateMenu) {
@@ -350,49 +343,45 @@ private fun VaultItemCard(
     onCopyPrimary: (String, String) -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-        ),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable { onTap() }
             .testTag("vault_item_${item.id}")
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 VaultTypeIcon(type = item.type)
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(14.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = item.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(1.dp))
 
                     val subtitle = when (val p = item.payload) {
                         is LoginPayload -> p.username.ifEmpty { p.url }
                         is CardPayload -> if (p.cardNumber.length >= 4) "•••• ${p.cardNumber.takeLast(4)}" else p.brand
-                        is ApiSecretPayload -> "${p.environment} • ${p.serviceName}"
-                        is CryptoPayload -> "${p.network} • ${if (p.publicAddress.length > 10) p.publicAddress.take(6) + "..." + p.publicAddress.takeLast(4) else p.walletName}"
-                        is NotePayload -> p.content.lines().firstOrNull() ?: "Encrypted Note"
-                        is IdentityPayload -> "${p.idType} • ${p.fullName}"
+                        is ApiSecretPayload -> "${p.environment} · ${p.serviceName}"
+                        is CryptoPayload -> "${p.network} · ${if (p.publicAddress.length > 10) p.publicAddress.take(6) + "…" + p.publicAddress.takeLast(4) else p.walletName}"
+                        is NotePayload -> p.content.lines().firstOrNull() ?: "Encrypted note"
+                        is IdentityPayload -> "${p.idType} · ${p.fullName}"
                     }
 
                     Text(
@@ -404,27 +393,25 @@ private fun VaultItemCard(
                     )
                 }
 
-                // Favorite Toggle
                 IconButton(
                     onClick = onToggleFavorite,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
                         imageVector = if (item.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = if (item.isFavorite) DangerRed else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.size(20.dp)
+                        contentDescription = if (item.isFavorite) "Remove from favorites" else "Add to favorites",
+                        tint = if (item.isFavorite) CyberEmerald else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
-                // Quick Copy Button for Login/Card/Secret
                 val (copyLabel, copyValue) = when (val p = item.payload) {
                     is LoginPayload -> Pair("Password", p.password)
-                    is CardPayload -> Pair("Card Number", p.cardNumber)
-                    is ApiSecretPayload -> Pair("API Key", p.apiKey.ifEmpty { p.secretToken })
-                    is CryptoPayload -> Pair("Public Address", p.publicAddress)
+                    is CardPayload -> Pair("Card number", p.cardNumber)
+                    is ApiSecretPayload -> Pair("API key", p.apiKey.ifEmpty { p.secretToken })
+                    is CryptoPayload -> Pair("Public address", p.publicAddress)
                     is NotePayload -> Pair("Note", p.content)
-                    is IdentityPayload -> Pair("ID Number", p.idNumber)
+                    is IdentityPayload -> Pair("ID number", p.idNumber)
                 }
 
                 if (copyValue.isNotEmpty()) {
@@ -440,28 +427,27 @@ private fun VaultItemCard(
                             justCopied = true
                             onCopyPrimary(copyLabel, copyValue)
                         },
-                        modifier = Modifier.size(36.dp).testTag("quick_copy_${item.id}")
+                        modifier = Modifier.size(32.dp).testTag("quick_copy_${item.id}")
                     ) {
                         Icon(
                             imageVector = if (justCopied) Icons.Default.Check else Icons.Default.ContentCopy,
-                            contentDescription = "Quick Copy $copyLabel",
-                            tint = CyberEmerald,
-                            modifier = Modifier.size(18.dp)
+                            contentDescription = "Copy $copyLabel",
+                            tint = if (justCopied) CyberEmerald else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.size(17.dp)
                         )
                     }
                 }
             }
 
-            // Live TOTP snippet if Login item has 2FA configured
             if (item.type == VaultType.LOGIN) {
                 val login = item.payload as LoginPayload
                 if (login.totpSecret.isNotEmpty()) {
                     val totp = VaultCrypto.generateTotp(login.totpSecret, clockTicker)
                     if (totp != null) {
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         TotpLiveBadge(
                             totpResult = totp,
-                            onCopy = { onCopyPrimary("2FA Code", totp.code) },
+                            onCopy = { onCopyPrimary("2FA code", totp.code) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -478,7 +464,7 @@ private fun CreateTypeSelectorDialog(
 ) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
@@ -488,13 +474,13 @@ private fun CreateTypeSelectorDialog(
         ) {
             Column(modifier = Modifier.padding(22.dp)) {
                 Text(
-                    text = "New Vault Entry",
+                    text = "New item",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Select credential type to encrypt with AES-256-GCM:",
+                    text = "Choose the type of record to encrypt.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -505,7 +491,7 @@ private fun CreateTypeSelectorDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .clickable { onSelect(type) }
                             .padding(vertical = 10.dp, horizontal = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
