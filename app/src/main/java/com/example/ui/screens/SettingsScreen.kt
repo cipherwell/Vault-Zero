@@ -45,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -89,6 +90,9 @@ fun SettingsScreen(
     var pendingImportName by remember { mutableStateOf<String?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var exportPhraseOnly by remember { mutableStateOf(false) }
+    var pendingExportPhraseOnly by remember { mutableStateOf(false) }
     val importPrompt by viewModel.importVerificationPrompt.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
     val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
@@ -104,11 +108,21 @@ fun SettingsScreen(
         BackupPickerChannel.results.collect { result ->
             when (result.kind) {
                 BackupPickerChannel.Kind.EXPORT -> result.uri?.let { uri ->
-                    viewModel.exportBackupJson { json ->
+                    val protection = if (pendingExportPhraseOnly) {
+                        com.example.data.BackupProtection.RECOVERY_PHRASE_ONLY
+                    } else {
+                        com.example.data.BackupProtection.STANDARD
+                    }
+                    viewModel.exportBackupJson(protection) { json ->
                         scope.launch {
                             val ok = BackupFileIo.writeText(context, uri, json)
                             backupStatus = if (ok) {
-                                "Encrypted backup saved to ${BackupFileIo.displayName(context, uri)}. The file contains no plaintext secrets."
+                                "Encrypted backup saved to ${BackupFileIo.displayName(context, uri)}. " +
+                                    if (pendingExportPhraseOnly) {
+                                        "It can only be opened with this backup's 12-word recovery phrase."
+                                    } else {
+                                        "It can be opened with this vault's master password or its 12-word recovery phrase. No plaintext secrets inside."
+                                    }
                             } else {
                                 "Could not write the backup to that location."
                             }
@@ -437,13 +451,7 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            val stamp = java.text.SimpleDateFormat(
-                                "yyyyMMdd-HHmm",
-                                java.util.Locale.US,
-                            ).format(java.util.Date())
-                            BackupPickerChannel.requestExport("vaultzero-backup-$stamp.json")
-                        }
+                        .clickable { showExportDialog = true }
                         .padding(vertical = 10.dp)
                         .testTag("export_backup_row"),
                     verticalAlignment = Alignment.CenterVertically
@@ -632,7 +640,7 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "${pendingImportName ?: "Backup file"} is ready to import. If it was created by a different vault key, enter that vault's Master Password; otherwise leave it blank.",
+                        text = "${pendingImportName ?: "Backup file"} is ready to import. Enter the source vault's Master Password or its 12-word Recovery Phrase when the file was created by a different vault; leave it blank for a backup of this vault (unlock with biometrics first to avoid typing). Phrase-only backups always require their recovery phrase.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -640,7 +648,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = backupPassword,
                         onValueChange = { backupPassword = it },
-                        label = { Text("Backup Master Password (if from another vault)") },
+                        label = { Text("Master Password or 12-Word Recovery Phrase") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -665,6 +673,87 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showImportDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text("Export Encrypted Backup") },
+            text = {
+                Column {
+                    Text(
+                        text = "How should this backup be unlockable?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { exportPhraseOnly = false }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = !exportPhraseOnly, onClick = { exportPhraseOnly = false })
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Master password or recovery phrase", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "Restore with either credential · cross-device friendly",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { exportPhraseOnly = true }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = exportPhraseOnly, onClick = { exportPhraseOnly = true })
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("12-word recovery phrase only", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "Password envelope is stripped; only that phrase opens it",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Biometrics unlock this vault locally; they cannot decrypt a foreign backup. The recovery phrase is the portable credential.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val stamp = java.text.SimpleDateFormat(
+                            "yyyyMMdd-HHmm",
+                            java.util.Locale.US,
+                        ).format(java.util.Date())
+                        pendingExportPhraseOnly = exportPhraseOnly
+                        showExportDialog = false
+                        val suffix = if (exportPhraseOnly) "-phrase" else ""
+                        BackupPickerChannel.requestExport("vaultzero-backup-$stamp$suffix.json")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                ) {
+                    Text("Choose file")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExportDialog = false }) { Text("Cancel") }
             }
         )
     }

@@ -351,6 +351,82 @@ class VaultRepositorySecurityTest {
         assertEquals(0, db.vaultDao().getAllList().size)
     }
 
+    // ---- recovery-phrase backups ----
+
+    @Test
+    fun `standard backup imports into another vault with the source recovery phrase`() = runTest {
+        repository.saveItem(login("row-v", "Phi", "secret-phi"))
+        repository.saveItem(login("row-w", "Chi", "secret-chi"))
+        val backup = repository.exportEncryptedBackup()
+        val phrase = recoveryPhrase
+
+        repository.clearVault()
+        repository.setupMasterPassword("DifferentVaultPass#1")
+        val report = repository.importEncryptedBackup(backup, backupPassword = phrase)
+        assertEquals("both records restored via phrase only", 2, report.imported)
+        assertEquals(
+            setOf("Phi", "Chi"),
+            repository.getVaultItemsFlow().first().map { it.title }.toSet(),
+        )
+    }
+
+    @Test
+    fun `phrase-only backup strips the password envelope and opens only with the phrase`() = runTest {
+        repository.saveItem(login("row-x", "Psi", "secret-psi"))
+        val backup = repository.exportEncryptedBackup(BackupProtection.RECOVERY_PHRASE_ONLY)
+        assertFalse("password-wrapped VMK must be absent", backup.contains("encryptedVmkByPassword"))
+        assertFalse("password salt must be absent", backup.contains("\"salt\":"))
+        assertTrue("protection marker", backup.contains("recovery_phrase_only"))
+
+        // Fresh vault B: the old password must not work, the phrase must.
+        repository.clearVault()
+        repository.setupMasterPassword("VaultBPassword#1")
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup, backupPassword = password)
+            }
+        }
+        assertEquals(0, db.vaultDao().getAllList().size)
+
+        val report = repository.importEncryptedBackup(backup, backupPassword = recoveryPhrase)
+        assertEquals(1, report.imported)
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `phrase-only backup demands its phrase even inside the vault it came from`() = runTest {
+        repository.saveItem(login("row-y", "Omega", "secret-omega"))
+        val backup = repository.exportEncryptedBackup(BackupProtection.RECOVERY_PHRASE_ONLY)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup) // no secret, same vault
+            }
+        }
+        val withPhrase = repository.importEncryptedBackup(backup, backupPassword = recoveryPhrase)
+        assertEquals("same-vault import is a duplicate, not an error", 1, withPhrase.duplicatesSkipped)
+        assertEquals(0, withPhrase.imported)
+    }
+
+    @Test
+    fun `wrong recovery phrase is rejected before anything is written`() = runTest {
+        repository.saveItem(login("row-z", "Aleph", "secret-aleph"))
+        val backup = repository.exportEncryptedBackup()
+        val words = recoveryPhrase.split(" ").toMutableList()
+        val first = words[0]
+        words[0] = words[1]
+        words[1] = first // valid words, wrong order -> checksum must reject
+
+        repository.clearVault()
+        repository.setupMasterPassword("VaultC_Password#1")
+        assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup, backupPassword = words.joinToString(" "))
+            }
+        }
+        assertEquals("rejected phrase must not write", 0, db.vaultDao().getAllList().size)
+    }
+
     // ---- master password rotation ----
 
     @Test
