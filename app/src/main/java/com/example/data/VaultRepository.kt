@@ -105,6 +105,20 @@ class VaultRepository(
         prefs.clipboardTimeoutSeconds = seconds
     }
 
+    val sortOption: String
+        get() = prefs.sortOption
+
+    fun setSortOption(option: String) {
+        prefs.sortOption = option
+    }
+
+    val groupByType: Boolean
+        get() = prefs.groupByType
+
+    fun setGroupByType(enabled: Boolean) {
+        prefs.groupByType = enabled
+    }
+
     fun themeMode(): String = prefs.themeMode
 
     fun setThemeMode(value: String) {
@@ -574,7 +588,8 @@ class VaultRepository(
      */
     suspend fun importEncryptedBackup(
         jsonString: String,
-        backupPassword: String? = null
+        backupPassword: String? = null,
+        skipInvalidRecords: Boolean = false,
     ): BackupImportReport = withContext(Dispatchers.Default) {
         val activeKey = activeSecretKey ?: throw IllegalStateException("Vault is locked")
         val backupJson = try {
@@ -613,48 +628,64 @@ class VaultRepository(
 
         // ---- phase 1: parse + decrypt + validate every record (no writes) ----
         val candidates = ArrayList<VaultItem>(itemsArray.length())
+        var unreadable = 0
+        var firstUnreadableReason: String? = null
         for (i in 0 until itemsArray.length()) {
-            val itemObj = itemsArray.optJSONObject(i)
-                ?: throw IllegalArgumentException("entry ${i + 1} is not an object")
-            val id = itemObj.optString("id", "")
-            if (id.isBlank()) throw IllegalArgumentException("entry ${i + 1} has no record id")
-            val typeStr = itemObj.optString("type", "")
-            val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull()
-                ?: throw IllegalArgumentException("entry ${i + 1} has an unknown item type")
-            val encPayload = itemObj.optString("encryptedPayload", "")
-            if (encPayload.isEmpty()) {
-                throw IllegalArgumentException("entry ${i + 1} has no encrypted payload")
-            }
-
-            val tempEntity = VaultItemEntity(
-                id = id,
-                title = itemObj.optString("title", REDACTED_TITLE),
-                type = validType.name,
-                category = itemObj.optString("category", REDACTED_CATEGORY),
-                encryptedPayload = encPayload,
-                isFavorite = itemObj.optBoolean("isFavorite", false),
-                createdAt = itemObj.optLong("createdAt", System.currentTimeMillis()),
-                updatedAt = itemObj.optLong("updatedAt", System.currentTimeMillis()),
-                tagsJson = itemObj.optString("tagsJson", REDACTED_TAGS_JSON)
-            )
-
-            val decrypted = try {
-                decryptRecordEntity(tempEntity, activeKey)
-            } catch (activeFailure: Exception) {
-                val altKey = foreignBackupKey
-                    ?: throw IllegalArgumentException(
-                        "entry ${i + 1} failed authentication with this vault's key " +
-                            "(is this a backup of a different vault? provide its password)"
-                    )
-                try {
-                    decryptRecordEntity(tempEntity, altKey)
-                } catch (foreignFailure: Exception) {
-                    throw IllegalArgumentException(
-                        "entry ${i + 1} failed authentication (wrong backup password or corrupted file)"
-                    )
+            try {
+                val itemObj = itemsArray.optJSONObject(i)
+                    ?: throw IllegalArgumentException("entry ${i + 1} is not an object")
+                val id = itemObj.optString("id", "")
+                if (id.isBlank()) throw IllegalArgumentException("entry ${i + 1} has no record id")
+                val typeStr = itemObj.optString("type", "")
+                val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull()
+                    ?: throw IllegalArgumentException("entry ${i + 1} has an unknown item type")
+                val encPayload = itemObj.optString("encryptedPayload", "")
+                if (encPayload.isEmpty()) {
+                    throw IllegalArgumentException("entry ${i + 1} has no encrypted payload")
                 }
+
+                val tempEntity = VaultItemEntity(
+                    id = id,
+                    title = itemObj.optString("title", REDACTED_TITLE),
+                    type = validType.name,
+                    category = itemObj.optString("category", REDACTED_CATEGORY),
+                    encryptedPayload = encPayload,
+                    isFavorite = itemObj.optBoolean("isFavorite", false),
+                    createdAt = itemObj.optLong("createdAt", System.currentTimeMillis()),
+                    updatedAt = itemObj.optLong("updatedAt", System.currentTimeMillis()),
+                    tagsJson = itemObj.optString("tagsJson", REDACTED_TAGS_JSON)
+                )
+
+                val decrypted = try {
+                    decryptRecordEntity(tempEntity, activeKey)
+                } catch (activeFailure: Exception) {
+                    val altKey = foreignBackupKey
+                        ?: throw IllegalArgumentException(
+                            "entry ${i + 1} failed authentication with this vault's key " +
+                                "(is this a backup of a different vault? provide its password)"
+                        )
+                    try {
+                        decryptRecordEntity(tempEntity, altKey)
+                    } catch (foreignFailure: Exception) {
+                        throw IllegalArgumentException(
+                            "entry ${i + 1} failed authentication (wrong backup password or corrupted file)"
+                        )
+                    }
+                }
+                candidates.add(decrypted)
+            } catch (e: IllegalArgumentException) {
+                unreadable++
+                if (firstUnreadableReason == null) firstUnreadableReason = e.message
             }
-            candidates.add(decrypted)
+        }
+        if (unreadable > 0 && !skipInvalidRecords) {
+            throw BackupVerificationException(
+                unreadableRecords = unreadable,
+                message = "Backup failed verification: $unreadable " +
+                    (if (unreadable == 1) "record is" else "records are") +
+                    " unreadable (${firstUnreadableReason ?: "authentication failed"}). " +
+                    "Nothing has been written.",
+            )
         }
 
         // ---- phase 2: per-record classification (still no writes) ----
@@ -722,6 +753,7 @@ class VaultRepository(
             imported = imported,
             updated = updated,
             duplicatesSkipped = duplicates,
+            skippedInvalid = unreadable,
         )
     }
 
@@ -748,6 +780,45 @@ class VaultRepository(
         )
     }
 
+
+    /**
+     * Rotate the master password without changing the VMK: verify the current
+     * password against the stored password envelope, derive a new KEK with a fresh
+     * salt at the current PBKDF2 strength, and atomically replace only the
+     * password-derived envelope. Records are untouched (they are wrapped by the
+     * VMK), and the recovery kit keeps working because its envelope is derived
+     * from the VMK too.
+     */
+    suspend fun changeMasterPassword(
+        currentPassword: String,
+        newPassword: String,
+    ) = withContext(Dispatchers.Default) {
+        val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val cleanCurrent = currentPassword.trim()
+        val cleanNew = newPassword.trim()
+        require(cleanNew.length >= 8) { "New password must be at least 8 characters" }
+        require(cleanNew != cleanCurrent) { "New password must differ from the current one" }
+
+        val salt = Base64.decode(prefs.saltBase64, Base64.NO_WRAP)
+        val currentKey = VaultCrypto.deriveKey(cleanCurrent, salt, prefs.kdfIterations)
+        val currentVerifier = VaultCrypto.createKeyVerifier(currentKey, "PASSWORD")
+        if (currentVerifier != prefs.masterPasswordHash) {
+            throw IllegalArgumentException("Current master password is incorrect")
+        }
+
+        val vmkHex = VaultCrypto.bytesToHex(key.encoded)
+        val newSalt = VaultCrypto.generateSalt()
+        val newKey = VaultCrypto.deriveKey(cleanNew, newSalt, VaultCrypto.DEFAULT_ITERATIONS)
+        val newEncVmk = VaultCrypto.encrypt(vmkHex, newKey)
+        val newVerifier = VaultCrypto.createKeyVerifier(newKey, "PASSWORD")
+
+        prefs.rotatePasswordEnvelope(
+            passwordVerifier = newVerifier,
+            saltBase64 = Base64.encodeToString(newSalt, Base64.NO_WRAP),
+            encryptedVmkByPassword = newEncVmk,
+            kdfIterations = VaultCrypto.DEFAULT_ITERATIONS,
+        )
+    }
 
     /**
      * Re-wrap both key envelopes with the current [VaultCrypto.DEFAULT_ITERATIONS]

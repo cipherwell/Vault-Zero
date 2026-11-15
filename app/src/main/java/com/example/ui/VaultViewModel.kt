@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import com.example.crypto.SecurityAuditEngine
 import com.example.crypto.VaultCrypto
+import com.example.data.BackupVerificationException
 import com.example.data.VaultDatabase
 import com.example.data.VaultPreferences
 import com.example.data.VaultRepository
@@ -58,6 +59,12 @@ enum class BiometricPurpose { UNLOCK, ENROLL }
 
 /** Which editor field an external action (e.g. the audit "Fix" button) should focus. */
 enum class EditFocus { PASSWORD, TOTP, CARD_NUMBER, NOTE_CONTENT, SEED_PHRASE, API_KEY, ID_NUMBER }
+
+/** Shown when a backup has unreadable records and the user may import the rest. */
+data class ImportVerificationPrompt(
+    val unreadableRecords: Int,
+    val message: String,
+)
 
 enum class VaultSortOption(val label: String) {
     FAVORITES_FIRST("Favorites first"),
@@ -112,6 +119,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _editFocus = MutableStateFlow<EditFocus?>(null)
     val editFocus: StateFlow<EditFocus?> = _editFocus.asStateFlow()
+
+    private val _importVerificationPrompt = MutableStateFlow<ImportVerificationPrompt?>(null)
+    val importVerificationPrompt: StateFlow<ImportVerificationPrompt?> =
+        _importVerificationPrompt.asStateFlow()
+    private var pendingPartialImportJson: String? = null
+    private var pendingPartialImportPassword: String? = null
 
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
@@ -209,6 +222,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _biometricEnabled.value = repository.isBiometricEnabled()
         _autoLockSeconds.value = repository.autoLockSeconds
         _clipboardTimeoutSeconds.value = repository.clipboardTimeoutSeconds
+        _sortOption.value = VaultSortOption.entries
+            .firstOrNull { it.name == repository.sortOption } ?: VaultSortOption.FAVORITES_FIRST
+        _groupByType.value = repository.groupByType
         regeneratePassword()
         startClockTicker()
     }
@@ -541,12 +557,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSortOption(option: VaultSortOption) {
+        if (_sortOption.value == option) return
         _sortOption.value = option
+        repository.setSortOption(option.name)
         onUserInteraction()
     }
 
     fun setGroupByType(enabled: Boolean) {
+        if (_groupByType.value == enabled) return
         _groupByType.value = enabled
+        repository.setGroupByType(enabled)
         onUserInteraction()
     }
 
@@ -713,10 +733,18 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun importBackupJson(json: String, backupPassword: String? = null) {
+    fun importBackupJson(
+        json: String,
+        backupPassword: String? = null,
+        allowPartial: Boolean = false,
+    ) {
         viewModelScope.launch {
             try {
-                val report = repository.importEncryptedBackup(json, backupPassword)
+                val report = repository.importEncryptedBackup(
+                    jsonString = json,
+                    backupPassword = backupPassword,
+                    skipInvalidRecords = allowPartial,
+                )
                 val parts = mutableListOf<String>()
                 if (report.imported > 0) {
                     parts.add(
@@ -734,17 +762,86 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                             "${if (report.duplicatesSkipped == 1) "" else "s"} skipped"
                     )
                 }
+                if (report.skippedInvalid > 0) {
+                    parts.add(
+                        "${report.skippedInvalid} unreadable " +
+                            (if (report.skippedInvalid == 1) "record skipped" else "records skipped")
+                    )
+                }
                 val msg = when {
                     parts.isEmpty() -> "Backup verified · nothing new to import"
-                    report.totalNew == 0 -> "Backup verified · " + parts.joinToString(" · ") + ", nothing new"
+                    report.totalNew == 0 -> "Backup verified · " + parts.joinToString(" · ")
                     else -> parts.joinToString(" · ")
                 }
+                pendingPartialImportJson = null
+                pendingPartialImportPassword = null
+                _importVerificationPrompt.value = null
                 postStatusMessage(msg)
                 onUserInteraction()
+            } catch (prompt: BackupVerificationException) {
+                if (allowPartial) {
+                    // Should not happen (partial mode no longer throws), but never
+                    // leave the UI without feedback.
+                    postStatusMessage("Import failed — nothing was written: ${prompt.message}")
+                } else {
+                    pendingPartialImportJson = json
+                    pendingPartialImportPassword = backupPassword
+                    _importVerificationPrompt.value = ImportVerificationPrompt(
+                        unreadableRecords = prompt.unreadableRecords,
+                        message = prompt.message ?: "Some records could not be verified.",
+                    )
+                }
             } catch (e: IllegalArgumentException) {
                 postStatusMessage("Import rejected — nothing was written: ${e.message}")
             } catch (e: Exception) {
                 postStatusMessage("Import failed — nothing was written: ${e.message ?: "invalid backup"}")
+            }
+        }
+    }
+
+    /** User accepted importing only the readable records of a partially bad backup. */
+    fun confirmPartialImport() {
+        val json = pendingPartialImportJson ?: return
+        val password = pendingPartialImportPassword
+        _importVerificationPrompt.value = null
+        importBackupJson(json, password, allowPartial = true)
+    }
+
+    fun cancelPartialImport() {
+        pendingPartialImportJson = null
+        pendingPartialImportPassword = null
+        _importVerificationPrompt.value = null
+    }
+
+    /**
+     * Rotate the master password: verifies the current one, re-wraps the VMK with
+     * a fresh salt/KEK at 600k iterations, and leaves records and the recovery kit
+     * untouched.
+     */
+    fun changeMasterPassword(
+        currentPassword: String,
+        newPassword: String,
+        confirmPassword: String,
+        onResult: (Boolean) -> Unit,
+    ) {
+        if (newPassword.length < 8) {
+            postStatusMessage("New password must be at least 8 characters")
+            onResult(false)
+            return
+        }
+        if (newPassword != confirmPassword) {
+            postStatusMessage("New passwords do not match")
+            onResult(false)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                repository.changeMasterPassword(currentPassword, newPassword)
+                postStatusMessage("Master password changed")
+                onResult(true)
+            } catch (e: Exception) {
+                postStatusMessage("Could not change password: ${e.message}")
+                onResult(false)
             }
         }
     }
