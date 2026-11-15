@@ -1,6 +1,5 @@
 package com.example.data
 
-import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.crypto.VaultCrypto
@@ -32,16 +31,16 @@ class VaultSetupDeviceTest {
     private lateinit var db: VaultDatabase
 
     @After
-    fun closeDb() {
-        if (::db.isInitialized) db.close()
+    fun tearDown() {
+        // Do not close the Room singleton: it outlives this test by design.
     }
 
     @Test
     fun setupProducesAnUnlockableVaultAtTheCurrentWorkFactor() = runBlocking {
         prefs.resetAll()
-        db = Room.inMemoryDatabaseBuilder(context, VaultDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        // Persistent DB on purpose: this test seeds the device for UI/backup
+        // verification, so the demo entry must survive the test process.
+        db = VaultDatabase.getInstance(context)
         val repository = VaultRepository(db.vaultDao(), prefs)
 
         val (recoveryPhrase, vmkHex) = repository.setupMasterPassword("test1234")
@@ -56,5 +55,19 @@ class VaultSetupDeviceTest {
         assertFalse("wrong password must be rejected", repository.unlock("wrongpass1"))
         assertTrue("the setup password must unlock the vault", repository.unlock("test1234"))
         assertEquals("unlock must recover the same VMK", vmkHex, repository.getActiveVmkHex())
+
+        // One known entry so backup export/import can be exercised from the UI.
+        repository.saveItem(
+            com.example.model.VaultItem(
+                id = "demo-entry-1",
+                title = "Demo Login",
+                type = com.example.model.VaultType.LOGIN,
+                payload = com.example.model.LoginPayload(
+                    username = "demo@example.com",
+                    password = "super-secret-value-42",
+                ),
+            )
+        )
+        assertEquals(1, db.vaultDao().getAllList().size)
     }
 }

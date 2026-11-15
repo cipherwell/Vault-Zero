@@ -101,3 +101,36 @@ user settings:
 That sets `BuildConfig.DEV_DISABLE_AUTO_LOCK`, which makes the ViewModel treat
 the timeout as `0` ("never lock") and replaces the Settings timeout chips with a
 dev-build notice. Release builds never receive the flag.
+
+## Verifying a hardened release build
+
+Release builds are R8-shrunk and obfuscated (`app/proguard-rules.pro`). The release
+signing config reads `KEYSTORE_PATH` / `STORE_PASSWORD` / `KEY_PASSWORD`; for a
+local smoke test use a throwaway upload key (never commit it):
+
+```bash
+keytool -genkeypair -v -keystore /tmp/vz-release-test.jks \
+  -storepass android -keypass android -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -dname "CN=Vault Zero Release Test,O=VaultZero,C=US"
+
+KEYSTORE_PATH=/tmp/vz-release-test.jks STORE_PASSWORD=android KEY_PASSWORD=android \
+  ./gradlew :app:assembleRelease
+```
+
+What to check afterwards:
+
+- `unzip -p app/build/outputs/apk/release/app-release.apk classes.dex | strings \
+  | grep -c 'com/example/ui/screens/SettingsScreenKt'` → `0` (UI obfuscated)
+- same command for `com/example/crypto/VaultCrypto` → non-zero (pinned for
+  crash forensics)
+- install and launch: the lock screen renders and logcat has no `FATAL EXCEPTION`
+
+The release APK has a different signing identity from the debug APK, so installing
+it requires uninstalling the debug app first — which deletes the on-device vault.
+Re-seed afterwards with `VaultSetupDeviceTest` (see above).
+
+## Security posture
+
+See `SECURITY.md` for the enforced controls, the verification for each one, and the
+known gaps (per-use biometric key binding, JVM string lifetime, Argon2id option).

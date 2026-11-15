@@ -10,6 +10,12 @@
 
 ---
 
+> **Security posture:** see [`SECURITY.md`](SECURITY.md) for the enforced controls,
+> how each is verified, and the known gaps. Short version: no network permission of
+> any kind, encrypted backups leave the app only through a Storage Access Framework
+> document you pick yourself, and nothing but the launcher is exported.
+
+
 ## 📲 Download & Easy APK Installation
 
 Get **VaultZero** running on your Android device in under a minute. Pre-built, R8-optimized signed APK binaries (`2.04 MB`) are published on [**GitHub Releases**](https://github.com/cipherwell/Vault-Zero/releases) (automatically built and attached via [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml), keeping the Git source tree 100% free of binary blobs for **F-Droid** compliance).
