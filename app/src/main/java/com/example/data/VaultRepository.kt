@@ -446,6 +446,13 @@ class VaultRepository(
                         null
                     }
                 }
+                    // Titles are stored redacted, so ordering has to happen after
+                    // decryption: favorites first, then alphabetical (stable and
+                    // predictable, independent of insertion order).
+                    .sortedWith(
+                        compareByDescending<VaultItem> { it.isFavorite }
+                            .thenBy { it.title.lowercase() }
+                    )
             }
         }.flowOn(Dispatchers.Default)
     }
@@ -464,7 +471,7 @@ class VaultRepository(
             encryptedPayload = encryptedEnvelope,
             isFavorite = item.isFavorite,
             createdAt = if (item.createdAt == 0L) now else item.createdAt,
-            updatedAt = if (item.updatedAt > 0L && item.id.isEmpty()) item.updatedAt else now,
+            updatedAt = if (item.updatedAt > 0L) item.updatedAt else now,
             tagsJson = REDACTED_TAGS_JSON
         )
         dao.insertOrUpdate(entity)

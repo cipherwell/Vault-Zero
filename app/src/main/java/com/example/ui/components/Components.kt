@@ -64,6 +64,8 @@ import com.example.crypto.VaultCrypto
 import com.example.model.VaultType
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
+import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.CyberEmeraldMuted
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.RoyalPurple
@@ -71,28 +73,31 @@ import com.example.ui.theme.WarningAmber
 
 @Composable
 fun VaultTypeIcon(type: VaultType, modifier: Modifier = Modifier) {
-    val (icon, tint, bg) = when (type) {
-        VaultType.LOGIN -> Triple(Icons.Default.VpnKey, CyberEmerald, CyberEmerald.copy(alpha = 0.15f))
-        VaultType.CARD -> Triple(Icons.Default.CreditCard, CyberCyan, CyberCyan.copy(alpha = 0.15f))
-        VaultType.API_SECRET -> Triple(Icons.Default.Code, RoyalPurple, RoyalPurple.copy(alpha = 0.15f))
-        VaultType.CRYPTO_WALLET -> Triple(Icons.Default.CurrencyBitcoin, WarningAmber, WarningAmber.copy(alpha = 0.15f))
-        VaultType.NOTE -> Triple(Icons.Default.Description, Color(0xFF60A5FA), Color(0xFF60A5FA).copy(alpha = 0.15f))
-        VaultType.IDENTITY -> Triple(Icons.Default.Badge, Color(0xFFF472B6), Color(0xFFF472B6).copy(alpha = 0.15f))
+    // One neutral tile for every type: the glyph carries the meaning, not a
+    // rainbow of accent colors. Tints stay muted so the single emerald accent
+    // still belongs to primary actions.
+    val (icon, tint) = when (type) {
+        VaultType.LOGIN -> Icons.Default.VpnKey to CyberEmeraldMuted
+        VaultType.CARD -> Icons.Default.CreditCard to CyberCyan
+        VaultType.API_SECRET -> Icons.Default.Code to RoyalPurple
+        VaultType.CRYPTO_WALLET -> Icons.Default.CurrencyBitcoin to WarningAmber
+        VaultType.NOTE -> Icons.Default.Description to ElectricBlue
+        VaultType.IDENTITY -> Icons.Default.Badge to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Box(
         modifier = modifier
-            .size(42.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(bg)
-            .border(1.dp, tint.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = type.displayName,
             tint = tint,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(20.dp)
         )
     }
 }
@@ -182,12 +187,12 @@ fun TotpLiveBadge(
 ) {
     val progress = totpResult.progress
     val warning = totpResult.remainingSeconds <= 5
-    val ringColor = if (warning) DangerRed else CyberCyan
+    val ringColor = if (warning) WarningAmber else CyberEmeraldMuted
 
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, ringColor.copy(alpha = 0.3f)),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable { onCopy() }
@@ -218,7 +223,7 @@ fun TotpLiveBadge(
 
             Column {
                 Text(
-                    text = "2FA AUTH CODE",
+                    text = "2FA CODE",
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -230,9 +235,9 @@ fun TotpLiveBadge(
                     text = formatted,
                     fontFamily = JetBrainsMonoFamily,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    letterSpacing = 1.sp,
-                    color = CyberEmerald
+                    fontSize = 15.sp,
+                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -389,26 +394,25 @@ fun VaultStatusPill(
 fun ZeroKnowledgeSecurityBadge(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(CyberEmerald.copy(alpha = 0.12f))
-            .border(1.dp, CyberEmerald.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Shield,
             contentDescription = null,
-            tint = CyberEmerald,
-            modifier = Modifier.size(14.dp)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(12.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = "ZERO-KNOWLEDGE • AES-256-GCM",
-            fontSize = 10.sp,
+            text = "AES-256-GCM · ZERO-KNOWLEDGE",
+            fontSize = 9.sp,
             fontFamily = JetBrainsMonoFamily,
-            fontWeight = FontWeight.Bold,
-            color = CyberEmerald,
-            letterSpacing = 0.5.sp
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 0.6.sp
         )
     }
 }

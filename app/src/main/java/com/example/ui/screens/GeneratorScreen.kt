@@ -81,7 +81,7 @@ fun GeneratorScreen(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Generate high-entropy, mathematically uncrackable credentials",
+            text = "Strong, unique credentials generated locally with a CSPRNG",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -189,22 +189,26 @@ fun GeneratorScreen(
             FilterChip(
                 selected = !config.isPassphraseMode,
                 onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = false)) },
-                label = { Text("Random String") },
+                label = { Text("Password", fontSize = 13.sp) },
                 modifier = Modifier.weight(1f),
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = CyberCyan.copy(alpha = 0.2f),
-                    selectedLabelColor = CyberCyan
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    selectedLabelColor = CyberEmerald
                 )
             )
 
             FilterChip(
                 selected = config.isPassphraseMode,
                 onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = true)) },
-                label = { Text("Memorable Passphrase") },
+                label = { Text("Passphrase", fontSize = 13.sp) },
                 modifier = Modifier.weight(1f),
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = CyberCyan.copy(alpha = 0.2f),
-                    selectedLabelColor = CyberCyan
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    selectedLabelColor = CyberEmerald
                 )
             )
         }
@@ -320,7 +324,7 @@ fun GeneratorScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Passphrases use easy-to-remember words while delivering exceptional cryptographic entropy against dictionary and brute-force attacks.",
+                        text = "Passphrases trade symbols for word entropy. Use a unique passphrase per account and store it here.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

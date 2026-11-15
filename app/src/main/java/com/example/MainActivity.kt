@@ -343,8 +343,8 @@ fun VaultBottomNavigationBar(
 ) {
     NavigationBar(
         modifier = Modifier.testTag("vault_bottom_navigation"),
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 0.dp,
         windowInsets = WindowInsets.navigationBars
     ) {
         NavigationBarItem(
@@ -357,11 +357,11 @@ fun VaultBottomNavigationBar(
                     modifier = Modifier.size(22.dp)
                 )
             },
-            label = { Text("Vault", fontSize = 12.sp) },
+            label = { Text("Vault", fontSize = 11.sp) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.Black,
+                selectedIconColor = CyberEmerald,
                 selectedTextColor = CyberEmerald,
-                indicatorColor = CyberEmerald,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -378,11 +378,11 @@ fun VaultBottomNavigationBar(
                     modifier = Modifier.size(22.dp)
                 )
             },
-            label = { Text("Generator", fontSize = 12.sp) },
+            label = { Text("Generator", fontSize = 11.sp) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.Black,
+                selectedIconColor = CyberEmerald,
                 selectedTextColor = CyberEmerald,
-                indicatorColor = CyberEmerald,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -399,11 +399,11 @@ fun VaultBottomNavigationBar(
                     modifier = Modifier.size(22.dp)
                 )
             },
-            label = { Text("Audit", fontSize = 12.sp) },
+            label = { Text("Audit", fontSize = 11.sp) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.Black,
+                selectedIconColor = CyberEmerald,
                 selectedTextColor = CyberEmerald,
-                indicatorColor = CyberEmerald,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -420,11 +420,11 @@ fun VaultBottomNavigationBar(
                     modifier = Modifier.size(22.dp)
                 )
             },
-            label = { Text("Settings", fontSize = 12.sp) },
+            label = { Text("Settings", fontSize = 11.sp) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.Black,
+                selectedIconColor = CyberEmerald,
                 selectedTextColor = CyberEmerald,
-                indicatorColor = CyberEmerald,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),

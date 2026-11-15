@@ -81,6 +81,18 @@ class VaultRepositorySecurityTest {
         )
     }
 
+    @Test
+    fun `saveItem preserves caller-provided timestamps (restore and audit paths)`() = runTest {
+        val old = System.currentTimeMillis() - 200L * 24 * 60 * 60 * 1000
+        repository.saveItem(
+            login("row-old", "Old Record", "Strong-unique-Passw0rd!")
+                .copy(createdAt = old, updatedAt = old),
+        )
+        val entity = db.vaultDao().getAllList().single { it.id == "row-old" }
+        assertEquals("createdAt must be preserved", old, entity.createdAt)
+        assertEquals("updatedAt drives the stale audit and must be preserved", old, entity.updatedAt)
+    }
+
     // ---- AAD row binding ----
 
     @Test
