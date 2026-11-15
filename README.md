@@ -12,6 +12,8 @@ AES-256-GCM · PBKDF2-HMAC-SHA256 (600,000) · BIP-39 128-bit recovery kits · h
 
 [![Release](https://img.shields.io/github/v/release/cipherwell/Vault-Zero?label=release&style=flat-square)](https://github.com/cipherwell/Vault-Zero/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Tests & Lint](https://github.com/cipherwell/Vault-Zero/actions/workflows/test.yml/badge.svg)](https://github.com/cipherwell/Vault-Zero/actions/workflows/test.yml)
+[![Reproducibility](https://github.com/cipherwell/Vault-Zero/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/cipherwell/Vault-Zero/actions/workflows/reproducibility.yml)
 [![Platform](https://img.shields.io/badge/Android-7.0%2B%20(API%2024)-3DDC84?style=flat-square&logo=android&logoColor=white)](#requirements)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](#tech-stack)
 [![Offline](https://img.shields.io/badge/network%20access-none-black?style=flat-square)](#security-at-a-glance)
