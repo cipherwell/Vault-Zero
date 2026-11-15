@@ -18,7 +18,7 @@ Binaries: https://github.com/cipherwell/Vault-Zero/releases/download/v1.5.0/Vaul
 Builds:
   - versionName: 1.5.0
     versionCode: 7
-    commit: v1.5.0
+    commit: 173781d2b491e3bb79b3ecf81400f96f7241258e
     subdir: app
     gradle:
       - yes
