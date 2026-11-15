@@ -82,6 +82,12 @@ calls `VaultDao.replaceAllForRestore` (one Room transaction). Credentials are co
 records through the atomic `saveEnvelopeCredentials` write; the active VMK is installed only after
 both complete, so a failure leaves the app uninitialized and retryable.
 
+### Recovery-kit rotation
+`VaultViewModel.regenerateRecoveryKit()` calls `VaultRepository.regenerateRecoveryKit()`, which
+generates a fresh BIP-39 phrase/salt, derives a new recovery KEK, re-wraps the same VMK, and
+atomically replaces only the recovery fields via `VaultPreferences.rotateRecoveryEnvelope()`.
+Records, password envelope, VMK and fingerprint are untouched.
+
 ## Database schema (Room v2)
 
 `vault_items` — one row per record; all sensitive metadata is inside `encryptedPayload`.

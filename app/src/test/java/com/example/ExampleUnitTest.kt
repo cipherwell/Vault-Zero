@@ -101,7 +101,7 @@ class ExampleUnitTest {
         assertTrue(VaultCrypto.verifyRecoveryPhraseChecksum(recovery))
 
         // Corrupting the 12th checksum word to a different valid word must fail checksum verification
-        val differentChecksumWord = VaultCrypto.RECOVERY_WORDLIST.first { it != words[11] }
+        val differentChecksumWord = com.example.crypto.Bip39Recovery.WORDLIST.first { it != words[11] }
         val corruptedPhrase = (words.subList(0, 11) + differentChecksumWord).joinToString(" ")
         assertTrue(VaultCrypto.validateRecoveryPhrase(corruptedPhrase, enforceChecksum = false))
         assertFalse(VaultCrypto.verifyRecoveryPhraseChecksum(corruptedPhrase))

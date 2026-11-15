@@ -12,8 +12,8 @@ android {
     applicationId = "com.aistudio.vaultzero.secvlt"
     minSdk = 24
     targetSdk = 36
-    versionCode = 3
-    versionName = "1.2.0"
+    versionCode = 4
+    versionName = "1.3.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -107,6 +107,7 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
+  testImplementation(libs.bip39.test)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)

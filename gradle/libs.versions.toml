@@ -23,6 +23,7 @@ kotlinxCoroutinesCore = "1.10.2"
 datastorePreferences = "1.1.7"
 robolectric = "4.16.1"
 biometric = "1.2.0-alpha05"
+bip39Test = "1.0.9"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,6 +55,7 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
+bip39-test = { group = "cash.z.ecc.android", name = "kotlin-bip39-jvm", version.ref = "bip39Test" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

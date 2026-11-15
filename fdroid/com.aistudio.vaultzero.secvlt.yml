@@ -5,7 +5,7 @@ License: MIT
 AuthorName: Cipherwell
 SourceCode: https://github.com/cipherwell/Vault-Zero
 IssueTracker: https://github.com/cipherwell/Vault-Zero/issues
-Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.2.0.md
+Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.3.0.md
 
 AutoName: VaultZero
 
@@ -37,8 +37,16 @@ Builds:
       - yes
     scandelete:
       - debug.keystore
+  - versionName: 1.3.0
+    versionCode: 4
+    commit: v1.3.0
+    subdir: app
+    gradle:
+      - yes
+    scandelete:
+      - debug.keystore
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.2.0
-CurrentVersionCode: 3
+CurrentVersion: 1.3.0
+CurrentVersionCode: 4

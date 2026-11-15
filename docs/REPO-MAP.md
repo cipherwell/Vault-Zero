@@ -18,7 +18,7 @@ vault-zero-app/
 │       │   │   ├── model/                 VaultItem, payloads, audit models
 │       │   │   └── ui/                    ViewModel, screens, components, theme, backup IO
 │       │   └── res/                       strings, themes, colors, adaptive icon, shortcuts.xml
-│       ├── test/                          96 JVM/Robolectric tests
+│       ├── test/                          105 JVM/Robolectric tests
 │       └── androidTest/                   12 device tests (biometrics, migration, offline, setup)
 ├── docs/                                  Documentation — start at docs/README.md
 │   ├── README.md                          documentation index/reading paths

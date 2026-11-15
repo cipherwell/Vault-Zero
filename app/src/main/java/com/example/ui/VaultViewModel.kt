@@ -1050,6 +1050,24 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Replaces the recovery kit with a new BIP-39 128-bit phrase while keeping the vault key,
+     * records and master password. The new phrase is returned once for the user to save.
+     */
+    fun regenerateRecoveryKit(onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val phrase = repository.regenerateRecoveryKit()
+                onResult(phrase)
+                postStatusMessage("New recovery kit generated — save it offline now", durationMs = 6000L)
+                onUserInteraction()
+            } catch (e: Exception) {
+                onResult(null)
+                postStatusMessage("Could not generate a new recovery kit: ${e.message}")
+            }
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Secure Clipboard with Ownership-Aware Auto-Clear & Sensitive Flag
     // -------------------------------------------------------------------------

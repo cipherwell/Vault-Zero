@@ -4,6 +4,37 @@ All notable changes to VaultZero are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-11-15 — hardened recovery phrases
+
+### Security
+- Replaced the legacy 136-word recovery scheme with **BIP-39 English (2048 words, 128-bit
+  entropy)**. Generated kits now have 12 unique words; repeated words are rejected/regenerated.
+  The old scheme drew 11 words **with replacement** from 136 words, giving only ≈78 bits of entropy
+  and a 34% chance of a repeat (observed as "eclipse" three times).
+- Recovery derivation remains PBKDF2-HMAC-SHA256(phrase, salt, 600,000), so existing vaults and
+  backups remain compatible. Legacy 136-word phrases are still validated with their original
+  checksum.
+- Added **Settings → Generate New Recovery Kit** to rotate an existing kit: fresh BIP-39 phrase and
+  salt, same VMK/records/fingerprint/master password; the old phrase stops opening this vault while
+  old backups remain restorable with the phrase they were exported under.
+- Audited AES-256-GCM record encryption, AAD binding, VMK wrapping, KDF, recovery-at-rest wrapping,
+  backup envelope and biometric keystore usage; no new critical defect found. Full report:
+  `docs/AUDIT-2026-11-15-recovery-and-encryption.md`.
+
+### Testing
+- 105 JVM tests, 0 failures. New coverage: 24 official BIP-39 vectors cross-checked against the
+  maintained Zcash `kotlin-bip39` library (test-only), 100 random entropy cross-checks, unique-word
+  generation, legacy-phrase compatibility, tampered checksum rejection, recovery-kit rotation,
+  old/new backup restore with old/new phrases.
+
+### Changed
+- Settings displays the real `BuildConfig` version and a new recovery-kit rotation row.
+- Documentation, store description and F-Droid recipe updated for 1.3.0.
+
+### Upgrade notes
+- In-place from 1.2.x (versionCode 4, same signing key). New vaults automatically get the stronger
+  BIP-39 kit. Existing vaults keep their legacy phrase until the user rotates it in Settings.
+
 ## [1.2.0] — 2026-11-15 — first-run migration restore
 
 ### Added
@@ -85,7 +116,8 @@ All notable changes to VaultZero are documented here. Format based on
 Initial preview: encrypted vault, AES-256-GCM records, PBKDF2 100k, 12-word recovery phrase,
 TOTP, audit, generator, encrypted backups. Superseded by 1.1.0; do not use for updates.
 
-[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/cipherwell/Vault-Zero/releases/tag/v1.0.0

@@ -23,6 +23,12 @@ Only backups from the matching vault open with its 12-word phrase. Check word or
 make sure the file was not modified in transit, and retry. Nothing is written when verification
 fails. Phrase-only backups require a new master password on the new device.
 
+**My old recovery phrase no longer works after "Generate New Recovery Kit"**
+That is expected: rotation replaces this vault's recovery envelope. Use the new 12 words. Old
+backups still open with the phrase they were exported under. If the new kit is lost, restore those
+old backups (or use the master password if known); the retired phrase cannot recover the current
+vault.
+
 ## Lock/unlock
 
 **Forgot master password**

@@ -48,11 +48,12 @@ Start here. Documents are grouped by intent; every file is self-contained and li
 | [REPO-MAP.md](REPO-MAP.md) | Annotated repository tree |
 | [PRIVACY.md](PRIVACY.md) | Privacy policy (also [privacy.html](privacy.html)) |
 | [PENTEST-2026-11-15.md](PENTEST-2026-11-15.md) | Adversarial test log and findings |
+| [AUDIT-2026-11-15-recovery-and-encryption.md](AUDIT-2026-11-15-recovery-and-encryption.md) | Recovery-phrase/encryption audit, fixes and residual risks |
 | [index.html](index.html) | GitHub Pages landing page |
 
 ## Documentation conventions
 
-- **Version:** documents describe release `1.2.0` unless noted.
+- **Version:** documents describe release `1.3.0` unless noted.
 - Commands are copy-pasteable from the repository root unless a path is shown.
 - Security claims must be reproducible: link to a test, command or source file.
 - When behavior changes, update the relevant doc in the same PR (see [CONTRIBUTING.md](../CONTRIBUTING.md)).

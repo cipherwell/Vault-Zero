@@ -171,6 +171,26 @@ class VaultPreferences(
         }
     }
 
+    /**
+     * Atomically replace only the recovery-kit envelope after the user rotates their kit.
+     * The password envelope, settings, records and VMK are untouched; old kits stop opening
+     * this vault, while old backups keep their own embedded (old) recovery envelope.
+     */
+    fun rotateRecoveryEnvelope(
+        recoverySaltBase64: String,
+        encryptedVmkByRecovery: String,
+        encryptedRecoveryPhrase: String,
+        recoveryPhraseHash: String,
+    ) {
+        prefs.edit(commit = true) {
+            putString("recovery_salt_b64", recoverySaltBase64)
+            putString("encrypted_vmk_by_recovery", encryptedVmkByRecovery)
+            putString("encrypted_recovery_phrase", encryptedRecoveryPhrase)
+            remove("recovery_phrase")
+            putString("recovery_phrase_hash", recoveryPhraseHash)
+        }
+    }
+
     fun resetAll() {
         prefs.edit(commit = true) { clear() }
     }

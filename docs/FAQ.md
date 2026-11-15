@@ -51,6 +51,12 @@ launch/resume. Cancel it and use the password. Disable it in Settings.
 Re-enrolling fingerprints/changing the lock screen invalidates the hardware key. Unlock with the
 master password and re-enable biometric unlock.
 
+**Why did my old recovery phrase contain repeated words?**
+Kits generated before v1.3.0 used a custom 136-word list and sampled 11 words with replacement, so
+repeats occurred in ~34% of phrases and entropy was only ≈78 bits. New kits use the standard
+BIP-39 2048-word list (128-bit entropy) and never repeat a word. Existing phrases still work; you
+can replace one with **Settings → Generate New Recovery Kit**.
+
 **Why are screenshots black?**
 `FLAG_SECURE` blocks screenshots/screen recording/recents previews by design. Dev builds can opt
 out with a Gradle flag for automation only; never distribute those.

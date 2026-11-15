@@ -6,7 +6,7 @@
 
 **Offline, zero-knowledge password manager and encrypted vault for Android.**
 
-AES-256-GCM · PBKDF2-HMAC-SHA256 (600,000) · hardware biometrics · no network permission · no accounts · no telemetry
+AES-256-GCM · PBKDF2-HMAC-SHA256 (600,000) · BIP-39 128-bit recovery kits · hardware biometrics · no network permission · no accounts · no telemetry
 
 🌐 [cipherwell.github.io/Vault-Zero](https://cipherwell.github.io/Vault-Zero/) · 📦 [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases) · 📚 [Documentation](docs/README.md)
 
@@ -31,7 +31,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.2.0** (`versionCode 3`). Self-tested and pentested; an
+> **Status:** production release **v1.3.0** (`versionCode 4`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -72,7 +72,7 @@ More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 ### Security
 - Random 256-bit vault master key (VMK); per-record AES-256-GCM with `VaultZero_Record_v2:<id>:<type>` AAD.
 - PBKDF2-HMAC-SHA256 with **600,000 iterations** and 128-bit salts; transparent upgrade of legacy vaults on unlock.
-- 12-word checksummed recovery phrase; change master password without re-encrypting records (recovery kit stays valid).
+- **BIP-39 128-bit recovery kit** (2048-word standard, unique words); change master password without re-encrypting records; rotate an exposed kit without changing the vault.
 - Hardware-backed biometric unlock through Android Keystore + `BiometricPrompt.CryptoObject` — **per-use** authentication, invalidated when biometrics are re-enrolled. The prompt auto-appears on app open when enabled.
 - Configurable auto-lock, background lock (screen-off locks immediately; SAF picker exempt), clipboard auto-clear, `FLAG_SECURE`, Recent-Apps preview blocked.
 - Local security audit (weak/reused/stale/2FA), offline by construction.
@@ -96,7 +96,7 @@ More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 | Records | AES-256-GCM, random per-record IV, 128-bit tag, AAD bound to record id + type |
 | Key hierarchy | Random 256-bit VMK wraps records; VMK wrapped by password KEK and recovery-phrase KEK |
 | Password KDF | PBKDF2-HMAC-SHA256, 600,000 iterations, 128-bit random salt |
-| Recovery | 12-word phrase with SHA-256 checksum word; encrypted under the VMK at rest |
+| Recovery | BIP-39 12-word phrase (128-bit entropy) with unique words; legacy v1.x phrases still accepted; encrypted under the VMK at rest; rotatable in Settings |
 | Biometrics | AES-256-GCM Keystore key, `AUTH_BIOMETRIC_STRONG`, per-use auth (`CryptoObject`), StrongBox→TEE, invalidated by biometric enrolment changes |
 | Backups | AES-256-GCM envelope, redacted metadata, 8 MiB import cap, phrase/password restore |
 | Network | No `INTERNET`/`ACCESS_NETWORK_STATE` permission, no networking libraries |
@@ -109,25 +109,25 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.2.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.3.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.2.0.apk` (sideload) | 1,861,355 B | `1ea83362c53d54df10272690d7e954e2c621c712c79f6b2022b7ad27b90f15e1` |
-| `VaultZero-v1.2.0.aab` (store upload) | 4,033,502 B | `cccd472cd14d40c734b5e1c11b0e584f544404bec80c450ca7d90e6a10d83601` |
+| `VaultZero-v1.3.0.apk` (sideload) | 1,861,359 B | `223d9df58cc061d5463e5c7550744beb1c09b8e828a23027a0726e1d4d73bd6d` |
+| `VaultZero-v1.3.0.aab` (store upload) | 4,049,538 B | `3b0cb65b619f614d34554f4cf9c9470866fa31425c671c92d3f0b76ccfe63591` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ```bash
-sha256sum -c VaultZero-v1.2.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.2.0.apk
+sha256sum -c VaultZero-v1.3.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.3.0.apk
 ```
 
 See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for installation and first-run steps.
 
 > **Upgrading from v1.0.0 preview:** that build was debug-signed with a public key.
-> Uninstall it (export a backup first) before installing v1.2.0; Android will reject an
+> Uninstall it (export a backup first) before installing v1.3.0; Android will reject an
 > in-place update. Old backup files remain importable with their master password or recovery phrase.
 
 ### Requirements
@@ -154,7 +154,7 @@ instructions: [docs/BUILDING.md](docs/BUILDING.md).
 ## Testing
 
 ```bash
-./gradlew :app:testDebugUnitTest       # 96 JVM/Robolectric tests
+./gradlew :app:testDebugUnitTest       # 105 JVM/Robolectric tests
 ./gradlew :app:lintDebug               # Android Lint
 ```
 
@@ -218,6 +218,7 @@ Full annotated tree: [docs/REPO-MAP.md](docs/REPO-MAP.md).
 | [docs/BACKUP-FORMAT.md](docs/BACKUP-FORMAT.md) | Envelope schema, import/export semantics |
 | [docs/BUILDING.md](docs/BUILDING.md) | Build, dev flags, device tests |
 | [docs/TESTING.md](docs/TESTING.md) | Test matrix, commands, manual QA |
+| [docs/AUDIT-2026-11-15-recovery-and-encryption.md](docs/AUDIT-2026-11-15-recovery-and-encryption.md) | Recovery-phrase/encryption audit and fixes |
 | [docs/RELEASING.md](docs/RELEASING.md) | Signing, versioning, Play/F-Droid/GitHub release |
 | [docs/DESIGN.md](docs/DESIGN.md) | One UI-inspired design tokens & screens |
 | [docs/PENTEST-2026-11-15.md](docs/PENTEST-2026-11-15.md) | Self-directed security assessment |
