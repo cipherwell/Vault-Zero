@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import com.example.crypto.SecurityAuditEngine
 import com.example.crypto.VaultCrypto
+import com.example.data.BackupProtection
 import com.example.data.BackupVerificationException
 import com.example.data.VaultDatabase
 import com.example.data.VaultPreferences
@@ -721,10 +722,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     // Encrypted Backup Export & Import
     // -------------------------------------------------------------------------
 
-    fun exportBackupJson(onResult: (String) -> Unit) {
+    fun exportBackupJson(
+        protection: BackupProtection = BackupProtection.STANDARD,
+        onResult: (String) -> Unit,
+    ) {
         viewModelScope.launch {
             try {
-                val json = repository.exportEncryptedBackup()
+                val json = repository.exportEncryptedBackup(protection)
                 onResult(json)
                 onUserInteraction()
             } catch (e: Exception) {
