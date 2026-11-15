@@ -1,12 +1,12 @@
 # Getting started with VaultZero
 
 This guide takes you from a new phone to a working, locked-down vault. It assumes the
-production release `1.2.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
+production release `1.3.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
 (or a Play/F-Droid build once published).
 
 ## 1. Install
 
-- **Sideload:** download `VaultZero-v1.2.0.apk`, allow installation from your browser/file manager,
+- **Sideload:** download `VaultZero-v1.3.0.apk`, allow installation from your browser/file manager,
   open the APK and install. Verify the checksum/certificate if you can
   ([instructions](../releases/README.md)).
 - **Upgrading from the `v1.0.0` preview:** uninstall it first. The preview was debug-signed and
@@ -29,6 +29,18 @@ If you are moving an existing VaultZero vault to this phone, do **not** create a
 Your recovery phrase and key fingerprint stay the same — **no new seed phrase is generated**.
 Biometric unlock is device-local, so it is disabled on the new device; unlock once with the
 password/phrase and re-enable it in Settings. Restoring never overwrites an existing vault.
+
+### Upgrading a legacy recovery kit
+
+Kits generated before v1.3.0 used a smaller 136-word scheme (~78-bit entropy, repeated words
+possible). New vaults automatically use BIP-39 128-bit kits. To upgrade an existing vault:
+
+1. Unlock the vault → **Settings → Recovery & Backup → Generate New Recovery Kit**.
+2. Confirm the warning, then write down the newly displayed 12 words immediately.
+3. Export a **fresh encrypted backup**; older backups remain restorable with the old phrase.
+
+Rotation does not change your vault, records, key fingerprint or master password. The old phrase
+stops unlocking this vault, so do not lose the new one.
 
 ## 2. Create your vault
 

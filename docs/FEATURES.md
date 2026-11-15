@@ -17,7 +17,8 @@ A fresh install offers two paths: create a new vault, or **Restore from Backup**
 - Records keep their ciphertext, favourites, timestamps and last-used values; the restore refuses
   to overwrite an already-initialized vault (use Settings import to merge into an existing vault).
 - After restore the vault opens directly; biometrics must be re-enabled because they are
-  device-local.
+  device-local. New vaults and restored vaults use **BIP-39 128-bit recovery kits**; legacy v1.x
+  phrases remain accepted, and can be rotated under Settings.
 
 ## Lock screen
 
@@ -112,6 +113,10 @@ data from other apps.
 
 ### Recovery & backup
 - **View 12-Word Recovery Kit** (decrypts locally; copy button uses sensitive clipboard).
+- **Generate New Recovery Kit** — replaces the recovery envelope with a fresh BIP-39 128-bit phrase
+  and salt (same vault key/records/master password). Use it to rotate a legacy or exposed kit.
+  The old phrase stops unlocking this vault; old backups remain restorable with the phrase they
+  were exported under. Export a fresh backup afterwards.
 - **Export Encrypted Vault Backup** — standard or phrase-only, preview of record counts,
   timestamped filename.
 - **Restore / Import Encrypted Backup** — accepts master password or 12-word phrase for foreign

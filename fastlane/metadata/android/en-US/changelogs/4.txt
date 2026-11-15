@@ -1,0 +1,6 @@
+VaultZero v1.3.0:
+• Stronger recovery kits: new vaults generate BIP-39 128-bit phrases (2048-word standard) with no repeated words
+• Legacy 12-word kits and all existing backups still work
+• New Settings → Generate New Recovery Kit rotates an exposed/legacy phrase without changing your vault, records or master password
+• Security audit of recovery generation and AES-GCM encryption included; 105 tests / 0 failures
+• Settings now shows the real app version/build

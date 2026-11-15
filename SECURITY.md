@@ -1,13 +1,14 @@
 # VaultZero security policy
 
-**Version:** 1.2.0 (`versionCode 3`) · **Last updated:** 15 November 2026
+**Version:** 1.3.0 (`versionCode 4`) · **Last updated:** 15 November 2026
 
 ## Supported versions
 
 | Version | Supported |
 | --- | --- |
-| `1.2.x` (production, release-signed) | ✅ security fixes |
-| `1.1.x` (production, release-signed) | ⚠️ upgrade to 1.2.x |
+| `1.3.x` (production, release-signed) | ✅ security fixes |
+| `1.2.x` (production, release-signed) | ⚠️ upgrade to 1.3.x (weak legacy recovery kits) |
+| `1.1.x` (production, release-signed) | ❌ upgrade |
 | `1.0.0` (public preview, debug-signed) | ❌ upgrade to 1.1.0 (uninstall required) |
 
 ## Reporting a vulnerability
@@ -41,13 +42,13 @@ Full algorithm details: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md).
 | Record encryption | AES-256-GCM, random 12-byte IV, 128-bit tag, AAD v2 binding | `VaultRepositorySecurityTest` (AAD swap/tamper), `VaultCryptoTest` |
 | Key derivation | PBKDF2-HMAC-SHA256, 600,000 iterations, 16-byte salts; legacy 100k vaults upgrade atomically on unlock | `VaultCryptoTest`, `VaultRepositoryKdfMigrationTest`, `KdfMigrationDeviceTest` |
 | Key wrapping | Random VMK wrapped by password KEK and recovery KEK; verifier is domain-separated HMAC, never a password hash | `VaultRepositorySecurityTest`, `VaultCryptoTest` |
-| Recovery kit | 12-word checksummed phrase; forged/reordered phrase rejected before writes | `VaultRepositorySecurityTest`, `VaultCryptoTest` |
+| Recovery kit | BIP-39 12-word, 128-bit entropy, 2048-word standard, unique-word generation; legacy 136-word kits accepted; forged/reordered phrase rejected before writes; rotatable in Settings | `VaultCryptoTest`, `Bip39VectorsTest`, `VaultRepositoryRecoveryRotationTest` |
 | Metadata redaction | Titles/categories/tags inside the encrypted envelope; SQLite columns `[ENCRYPTED]`; backup items redacted | `VaultRepositorySecurityTest`, live SQLite inspection |
 | Biometric unlock | Keystore AES-GCM key, `setUserAuthenticationRequired(true)`, `AUTH_BIOMETRIC_STRONG`, 0-second validity, `setInvalidatedByBiometricEnrollment(true)`, StrongBox attempted; `BiometricPrompt.CryptoObject` for use | `BiometricKeyBindingTest` on Pixel 9 Pro XL (Android 17): 3/3; auth-required/per-use/invalidated, unauth `doFinal` rejected |
 | Auto biometric prompt | On launch/resume when enabled; one attempt per lock; cancel falls back to password; still a CryptoObject prompt | phone run confirmed `isCrypto: true`, `StrengthRequested: 15` |
 | Backup export | SAF only, no cloud API, no share sheet, 8 MiB cap; AES-GCM envelope; supports password **or** recovery phrase restore; optional phrase-only mode strips password envelope | `VaultRepositorySecurityTest`, `BackupFileIo`, live picker runs |
 | First-run migration | Setup-screen restore: envelope/KDF/salt validation, recovery-phrase unwrap, every record AAD-authenticated, atomic DB replace + credential commit, refuses to overwrite an initialized vault; phrase preserved, original password optionally preserved | `VaultRepositorySetupRestoreTest` (6 tests), on-device migration run |
-| Backup import | Verify-before-write: format/id/type/decryption checks; bounded KDF iterations (10k–600k), salts 16–64 B, key blobs ≤4 KiB; duplicates skipped by id or SHA-256 content fingerprint; same-id changed records update; atomic single Room transaction; optional explicit salvage of unreadable records | 96 JVM tests incl. hostile backup inputs; see [docs/BACKUP-FORMAT.md](docs/BACKUP-FORMAT.md) |
+| Backup import | Verify-before-write: format/id/type/decryption checks; bounded KDF iterations (10k–600k), salts 16–64 B, key blobs ≤4 KiB; duplicates skipped by id or SHA-256 content fingerprint; same-id changed records update; atomic single Room transaction; optional explicit salvage of unreadable records | 105 JVM tests incl. hostile backup inputs; see [docs/BACKUP-FORMAT.md](docs/BACKUP-FORMAT.md) |
 | Screen capture | `FLAG_SECURE` on every normal build; recents thumbnails disabled on API 33+; dev flag only for automation builds | release run: `screencap` returns 0 bytes |
 | Clipboard | `EXTRA_IS_SENSITIVE`, ownership-aware clearing on timeout/lock; configurable Off still wipes on vault lock | Robolectric test + device runs |
 | Background/auto lock | Configurable inactivity lock (30 s–15 m or Off); background lock (Off/15/30/60 s, default 30); `ACTION_SCREEN_OFF` locks immediately; SAF picker exempt | emulator: 35 s background → lock screen |
@@ -57,6 +58,14 @@ Full algorithm details: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md).
 | OS backup | `allowBackup=false`, data-extraction rules exclude DB/prefs; verified `adb backup` on the non-debuggable release contains no app data | release archive: 47-byte empty header |
 | Signing | Production upload key only; CI refuses debug keystore; cert `C5:4E:D9:…:831D`; APK Signature Scheme v2 | `apksigner verify`, [docs/RELEASING.md](docs/RELEASING.md) |
 | Secrets in logs | No plaintext secrets logged; verified by logcat scan | pentest F-08 |
+
+## Recovery-kit hardening and encryption audit (v1.3.0)
+
+The original recovery generator used a 136-word list and sampled 11 words **with replacement**,
+giving ≈78 bits of entropy and a 34% chance of a repeated word. v1.3.0 replaces generation with
+BIP-39 English (2048 words, 128-bit entropy, unique words), retains legacy phrase validation, and
+adds recovery-kit rotation. Full audit:
+[`docs/AUDIT-2026-11-15-recovery-and-encryption.md`](docs/AUDIT-2026-11-15-recovery-and-encryption.md).
 
 ## Adversarial assessment
 
@@ -69,6 +78,9 @@ intents and log leakage all held.
 
 ## Known limitations / residual risks
 
+0. **Recovery-kit entropy was ~78 bits before v1.3.0.** New kits use BIP-39 128-bit phrases and
+   existing vaults can rotate via Settings → Generate New Recovery Kit. Backups made with legacy
+   kits keep that lower entropy until a fresh backup is exported with a rotated kit.
 1. **Master password exists as a JVM `String`** in Compose input; it cannot be wiped from memory.
 2. **PBKDF2 is not memory-hard.** 600k iterations raises offline cracking cost but a weak master
    password remains guessable; use a long, unique passphrase.
@@ -86,8 +98,8 @@ intents and log leakage all held.
 ## Release verification
 
 ```bash
-sha256sum -c VaultZero-v1.2.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.2.0.apk
+sha256sum -c VaultZero-v1.3.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.3.0.apk
 # expected certificate SHA-256:
 # c54ed94be9f5d4f00ea7a9e8d7f1f5eb4d0eafc8f456055b6130d85b38ae831d
 ```

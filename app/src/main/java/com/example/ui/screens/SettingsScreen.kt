@@ -83,6 +83,9 @@ fun SettingsScreen(
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
     var showRecoveryDialog by remember { mutableStateOf(false) }
+    var showRotateKitConfirm by remember { mutableStateOf(false) }
+    var rotatingKit by remember { mutableStateOf(false) }
+    var newRecoveryKit by remember { mutableStateOf<String?>(null) }
     var showSpecsDialog by remember { mutableStateOf(false) }
     var backupStatus by remember { mutableStateOf<String?>(null) }
     var pendingImportJson by remember { mutableStateOf<String?>(null) }
@@ -529,6 +532,40 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Rotate recovery kit (upgrade legacy phrase / recover from exposure)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(enabled = !rotatingKit) {
+                            if (!rotatingKit) showRotateKitConfirm = true
+                        }
+                        .padding(vertical = 10.dp)
+                        .testTag("rotate_recovery_kit_row"),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = WarningAmber,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            if (rotatingKit) "Generating New Recovery Kit…" else "Generate New Recovery Kit",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Replace the old phrase with a fresh 128-bit BIP-39 kit (records/key unchanged)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Export Encrypted Backup
                 Row(
                     modifier = Modifier
@@ -625,6 +662,97 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(80.dp))
+    }
+
+    if (showRotateKitConfirm) {
+        AlertDialog(
+            onDismissRequest = { if (!rotatingKit) showRotateKitConfirm = false },
+            title = { Text("Replace Recovery Kit?") },
+            text = {
+                Text(
+                    "A new 12-word phrase will be generated and stored in this vault. Your current " +
+                        "phrase will stop unlocking this vault and any backups that depend on it. The " +
+                        "vault key, records and master password are unchanged. Export a fresh backup " +
+                        "after saving the new kit.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRotateKitConfirm = false
+                        rotatingKit = true
+                        viewModel.regenerateRecoveryKit { phrase ->
+                            rotatingKit = false
+                            newRecoveryKit = phrase
+                        }
+                    },
+                    modifier = Modifier.testTag("rotate_recovery_kit_confirm_button"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = WarningAmber,
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("Generate New Kit", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRotateKitConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    newRecoveryKit?.let { phrase ->
+        AlertDialog(
+            onDismissRequest = { newRecoveryKit = null },
+            modifier = Modifier.testTag("new_recovery_kit_dialog"),
+            title = { Text("New Emergency Recovery Kit") },
+            text = {
+                Column {
+                    Text(
+                        "Write these 12 words down and store them offline. The previous kit no " +
+                            "longer restores this vault. This is the only time the new phrase is shown.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, WarningAmber.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = phrase,
+                            fontFamily = JetBrainsMonoFamily,
+                            fontWeight = FontWeight.Bold,
+                            color = WarningAmber,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(14.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.copySecurely("Recovery Kit", phrase, true)
+                        newRecoveryKit = null
+                    },
+                    modifier = Modifier.testTag("copy_new_recovery_kit_button"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Copy & Close")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { newRecoveryKit = null }) { Text("Dismiss") }
+            }
+        )
     }
 
     if (showResetDialog) {

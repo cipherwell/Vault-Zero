@@ -558,6 +558,33 @@ class VaultRepository(
     /**
      * Locks vault by purging the active secret key reference from RAM
      */
+    /**
+     * Rotates the recovery kit while the vault is unlocked: generates a new 128-bit BIP-39
+     * phrase, derives a fresh recovery KEK/salt, wraps the SAME Vault Master Key, and replaces
+     * the recovery envelope in one atomic preference write. Records, the master password and the
+     * key fingerprint are unchanged; old backups still carry their own old recovery envelope.
+     */
+    suspend fun regenerateRecoveryKit(): String = withContext(Dispatchers.Default) {
+        val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val vmkHex = VaultCrypto.bytesToHex(key.encoded)
+        val iterations = prefs.kdfIterations.coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
+
+        val phrase = VaultCrypto.generateRecoveryPhrase()
+        val recoverySalt = VaultCrypto.generateSalt()
+        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phrase, recoverySalt, iterations)
+        val encryptedVmk = VaultCrypto.encrypt(vmkHex, recoveryKey)
+        val encryptedPhrase = VaultCrypto.encrypt(phrase, key)
+        val verifier = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY")
+
+        prefs.rotateRecoveryEnvelope(
+            recoverySaltBase64 = Base64.encodeToString(recoverySalt, Base64.NO_WRAP),
+            encryptedVmkByRecovery = encryptedVmk,
+            encryptedRecoveryPhrase = encryptedPhrase,
+            recoveryPhraseHash = verifier,
+        )
+        phrase
+    }
+
     fun lock() {
         activeSecretKey = null
     }

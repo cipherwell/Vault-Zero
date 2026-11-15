@@ -124,6 +124,15 @@ but installs a complete vault instead of merging records:
 - The `version` string does not make the file trusted: always verify checksums when moving files
   and keep the master password/recovery phrase offline.
 
+## Recovery-phrase schemes
+
+Backups do not store the phrase itself. On restore/import, VaultZero accepts either the new
+**BIP-39 12-word** phrases (v1.3.0+, 128-bit entropy) or legacy **136-word-list** phrases generated
+by v1.0.0–v1.2.0. Both derive the recovery KEK through PBKDF2-HMAC-SHA256 with the backup's
+`recoverySalt`; the checksum validation scheme is detected automatically. Existing files and old
+printed kits remain usable. New backups created after **Settings → Generate New Recovery Kit**
+require the new phrase; older backups retain their original envelope.
+
 ## Security notes
 
 - The envelope is encrypted but **portable**: anyone holding the file can attempt offline password

@@ -5,16 +5,18 @@ VaultZero has a large JVM/Robolectric security suite, a set of on-device instrum
 
 ## Test inventory (release 1.1.0)
 
-### JVM / Robolectric — 96 tests
+### JVM / Robolectric — 105 tests
 
 | Test class | Tests | Focus |
 | --- | ---: | --- |
 | `data/VaultRepositorySecurityTest` | 32 | AAD tamper/row-swap rejection, backup tamper/duplicate/merge/partial imports, hostile KDF/salt/envelope inputs, brute-force cooldown, metadata redaction, phrase/password restore, password rotation, last-used persistence/favourites |
-| `crypto/VaultCryptoTest` | 19 | AES-GCM round trips/tamper, PBKDF2, recovery phrase checksum, TOTP validity, strength/entropy, generator/passphrase options |
+| `crypto/VaultCryptoTest` | 22 | AES-GCM round trips/tamper, PBKDF2, recovery phrase checksum, TOTP validity, strength/entropy, generator/passphrase options |
 | `ExampleRobolectricTest` | 8 | end-to-end repository/vault flows, backup cross-vault import, clipboard clearing, auto-lock behaviour |
 | `core/SearchQueryTest` | 7 | search operators/aliases/combinations |
 | `core/GeneratorHistoryTest` | 6 | session history cap/format |
 | `ExampleUnitTest` | 6 | small utility/format checks |
+| `crypto/Bip39VectorsTest` | 3 | all 24 official BIP-39 vectors + 100 random entropy cross-checks against the maintained reference library; tampered checksums rejected |
+| `data/VaultRepositoryRecoveryRotationTest` | 3 | rotation preserves VMK/records/fingerprint/password, retires old phrase, old/new backup phrase compatibility, locked-vault guard |
 | `data/VaultRepositorySetupRestoreTest` | 6 | first-run migration: standard/phrase-only restore, password keep/rotate, wrong phrase, tampered record, no-overwrite |
 | `data/VaultRepositoryKdfMigrationTest` | 5 | 100k→600k re-wrap, atomicity, recovery path |
 | `core/AuditFilterTest` | 4 | audit search filters/index semantics |
