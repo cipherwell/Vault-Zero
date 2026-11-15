@@ -348,12 +348,12 @@ fun VaultStatusPill(
     }
 
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Color(0xFF111827).copy(alpha = 0.96f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, CyberEmerald.copy(alpha = 0.45f)),
-        shadowElevation = 6.dp,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        border = null,
+        shadowElevation = 2.dp,
         modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable { onDismiss() }
             .testTag("vault_status_pill")
     ) {
@@ -379,8 +379,7 @@ fun VaultStatusPill(
             Text(
                 text = status,
                 style = MaterialTheme.typography.bodySmall,
-                fontFamily = JetBrainsMonoFamily,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
