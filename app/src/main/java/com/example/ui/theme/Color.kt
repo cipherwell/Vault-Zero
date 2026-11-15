@@ -10,6 +10,9 @@ val ObsidianCardBorder = Color(0xFF222E42)
 
 val CyberEmerald = Color(0xFF00F59B)
 val CyberEmeraldDark = Color(0xFF00A868)
+
+/** Legible mint for disabled emerald controls (WCAG-friendly on the dark canvas). */
+val CyberEmeraldMuted = Color(0xFF9CF3CE)
 val CyberCyan = Color(0xFF00D2FF)
 val CyberCyanDark = Color(0xFF0090B3)
 val RoyalPurple = Color(0xFF8B5CF6)
