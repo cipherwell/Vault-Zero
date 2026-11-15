@@ -7,8 +7,8 @@
         android:shortcutShortLabel="@string/shortcut_new_login_short"
         android:shortcutLongLabel="@string/shortcut_new_login_long">
         <intent
-            android:action="com.aistudio.vaultzero.secvlt.SHORTCUT_NEW_LOGIN"
-            android:targetPackage="com.aistudio.vaultzero.secvlt"
+            android:action="com.cipherwell.vaultzero.SHORTCUT_NEW_LOGIN"
+            android:targetPackage="com.cipherwell.vaultzero"
             android:targetClass="com.example.MainActivity" />
     </shortcut>
     <shortcut
@@ -18,8 +18,8 @@
         android:shortcutShortLabel="@string/shortcut_generator_short"
         android:shortcutLongLabel="@string/shortcut_generator_long">
         <intent
-            android:action="com.aistudio.vaultzero.secvlt.SHORTCUT_GENERATOR"
-            android:targetPackage="com.aistudio.vaultzero.secvlt"
+            android:action="com.cipherwell.vaultzero.SHORTCUT_GENERATOR"
+            android:targetPackage="com.cipherwell.vaultzero"
             android:targetClass="com.example.MainActivity" />
     </shortcut>
 </shortcuts>

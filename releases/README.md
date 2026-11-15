@@ -4,25 +4,25 @@ Compiled binaries are distributed through
 [**GitHub Releases**](https://github.com/cipherwell/Vault-Zero/releases). The source tree stays clean
 for F-Droid/IzzyOnDroid; store uploads use the same source and are signed with the production key.
 
-## ⬇️ Latest: `v1.4.0` (Cipherwell identity)
+## ⬇️ Latest: `v1.5.0` (Cipherwell package identity)
 
 | Asset | File | Size | SHA-256 |
 | --- | --- | ---: | --- |
-| **APK (direct)** | [`VaultZero-v1.4.0.apk`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.4.0/VaultZero-v1.4.0.apk) | 1,861,359 B | `d29347dbf90dc771b5451d27f135f75b887d38152b6f953709536b50ee2323ef` |
-| **AAB (store upload)** | [`VaultZero-v1.4.0.aab`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.4.0/VaultZero-v1.4.0.aab) | 4,049,393 B | `7ba6f53f0200fd1d78dd56c31546f7752e2d16b6fa32d74c5ebc7ba37cd5c0f7` |
-| **Checksums** | `VaultZero-v1.4.0.apk.sha256`, `VaultZero-v1.4.0.aab.sha256` | — | full digests |
-| **Release notes** | [`v1.4.0.md`](v1.4.0.md) | — | identity, checksums, upgrade |
+| **APK (direct)** | [`VaultZero-v1.5.0.apk`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.5.0/VaultZero-v1.5.0.apk) | 1,861,347 B | `bbd41378c8404558db1810a16b668dfdfa49bd2a7cabe7a0e28dfdbc75cd753c` |
+| **AAB (store upload)** | [`VaultZero-v1.5.0.aab`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.5.0/VaultZero-v1.5.0.aab) | 4,049,447 B | `12e902c04f0e8fdcea4b11e8a54655a80bac99185e94e768f7aa33b833e1cecf` |
+| **Checksums** | `VaultZero-v1.5.0.apk.sha256`, `VaultZero-v1.5.0.aab.sha256` | — | full digests |
+| **Release notes** | [`v1.5.0.md`](v1.5.0.md) | — | package migration & checksums |
 
-**Signing certificate (new Cipherwell upload key):**
-`6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
+**Application ID:** `com.cipherwell.vaultzero`  
+**Signing certificate:** `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ```bash
-sha256sum -c VaultZero-v1.4.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.4.0.apk
+sha256sum -c VaultZero-v1.5.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.5.0.apk
 ```
 
-### ⚠️ Upgrade from earlier releases
+### Migration
 
-Earlier builds were signed by a different key. Android cannot install v1.4.0 over them: export an
-encrypted backup + recovery phrase, uninstall, install v1.4.0, then restore. Old published artifacts
-and release notes were intentionally removed during the identity migration.
+The previous package was `com.aistudio.vaultzero.secvlt`. Export an encrypted backup + recovery
+phrase, install v1.5.0, restore on first run, verify, then uninstall the old package. The new package
+uses the same Cipherwell signing identity, so future updates are normal.

@@ -31,7 +31,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.4.0** (`versionCode 6`), maintained under the **Cipherwell** identity. Self-tested and pentested; an
+> **Status:** production release **v1.5.0** (`versionCode 7`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -109,26 +109,27 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.4.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.5.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.4.0.apk` (sideload) | 1,861,359 B | `d29347dbf90dc771b5451d27f135f75b887d38152b6f953709536b50ee2323ef` |
-| `VaultZero-v1.4.0.aab` (store upload) | 4,049,393 B | `7ba6f53f0200fd1d78dd56c31546f7752e2d16b6fa32d74c5ebc7ba37cd5c0f7` |
+| `VaultZero-v1.5.0.apk` (sideload) | 1,861,347 B | `bbd41378c8404558db1810a16b668dfdfa49bd2a7cabe7a0e28dfdbc75cd753c` |
+| `VaultZero-v1.5.0.aab` (store upload) | 4,049,447 B | `12e902c04f0e8fdcea4b11e8a54655a80bac99185e94e768f7aa33b833e1cecf` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ```bash
-sha256sum -c VaultZero-v1.4.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.4.0.apk
+sha256sum -c VaultZero-v1.5.0.apk.sha256
+apksigner verify --print-certs VaultZero-v1.5.0.apk
 ```
 
 See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for installation and first-run steps.
 
-> **Upgrading from any earlier release:** v1.4.0 uses a new production signing key. Android cannot
-> update an older install in place. Export an encrypted backup + recovery phrase, uninstall, install
-> v1.4.0, then restore. Earlier GitHub releases/assets were removed during the identity migration.
+> **Upgrading from any earlier release:** v1.5.0 is a new Android package
+> (`com.cipherwell.vaultzero`). Export an encrypted backup + recovery phrase, install v1.5.0, restore
+> on first run, verify, then uninstall the old package. Earlier GitHub releases/assets were removed
+> during the identity migration.
 
 ### Requirements
 Android 7.0 (API 24) or newer. No Google Play Services, no network, no account.

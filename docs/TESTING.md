@@ -51,7 +51,7 @@ after the run, deleting the vault and biometric preference. Install and invoke m
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb shell am instrument -w -e class com.example.crypto.BiometricKeyBindingTest \
-  com.aistudio.vaultzero.secvlt.test/androidx.test.runner.AndroidJUnitRunner
+  com.cipherwell.vaultzero.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 The biometric test asserts the Keystore key is per-use auth-required, `doFinal` is rejected
@@ -97,6 +97,18 @@ biometrics are enrolled; it clears only its own test enrolment state.
 - [ ] Large font/display size: no clipped primary actions.
 - [ ] RTL layout sanity.
 - [ ] Screenshot pack refreshed (see [SCREENSHOTS.md](SCREENSHOTS.md)).
+
+## Reproducible release build
+
+The unsigned release APK is reproducible across clean builds at different paths. Verify locally:
+
+```bash
+./scripts/verify-reproducible.sh
+```
+
+The `Reproducibility check` GitHub workflow runs the same script manually. The F-Droid recipe
+declares the developer binary and allowed signing cert so F-Droid can verify/copy the signature when
+its builder reproduces the build.
 
 ## CI
 

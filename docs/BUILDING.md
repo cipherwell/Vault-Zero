@@ -68,7 +68,7 @@ vault and biometric preferences. When device state matters, install and invoke m
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb shell am instrument -w -e class com.example.data.VaultSetupDeviceTest \
-  com.aistudio.vaultzero.secvlt.test/androidx.test.runner.AndroidJUnitRunner
+  com.cipherwell.vaultzero.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 `VaultSetupDeviceTest` seeds a demo vault (destructive); `VaultSetupOnlyDeviceTest` creates a
@@ -80,6 +80,15 @@ Emulator notes:
 - Enrol a fingerprint in the emulator's own Settings if you want to exercise biometric code; use
   `adb emu finger touch 1` to satisfy a prompt.
 - Use a debug build with `-PallowScreenshots=true` for screenshots; release builds block capture.
+
+## Reproducible builds
+
+```bash
+./scripts/verify-reproducible.sh
+```
+
+This builds the unsigned release twice from the committed tree at two paths and compares the APKs
+byte-for-byte. The CI job `Reproducibility check` runs the same script on demand.
 
 ## Release builds
 

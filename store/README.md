@@ -33,7 +33,7 @@ this directory.
 
 ## Permanent decisions (before first Play upload)
 
-- `applicationId` is immutable once published. Current: `com.aistudio.vaultzero.secvlt`.
+- `applicationId` is immutable once published. Current: `com.cipherwell.vaultzero`.
 - Contact email is required by Play (add the maintainer's address in the Play Console; it is not
   stored in this repository).
 - Privacy policy URL: enable GitHub Pages for `main` → `/docs`; then

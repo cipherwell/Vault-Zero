@@ -1,15 +1,15 @@
 # Getting started with VaultZero
 
 This guide takes you from a new phone to a working, locked-down vault. It assumes the
-production release `1.4.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
+production release `1.5.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
 (or a Play/F-Droid build once published).
 
 ## 1. Install
 
-- **Sideload:** download `VaultZero-v1.4.0.apk`, allow installation from your browser/file manager,
+- **Sideload:** download `VaultZero-v1.5.0.apk`, allow installation from your browser/file manager,
   open the APK and install. Verify the checksum/certificate if you can
   ([instructions](../releases/README.md)).
-- **Upgrading from an earlier release:** uninstall it first. v1.4.0 uses a new signing key, so Android will refuse an in-place update. Export a backup + recovery phrase, uninstall, install v1.4.0, then restore.
+- **Upgrading from an earlier release:** v1.5.0 is a new package, so install it alongside the old app. Export an encrypted backup + recovery phrase from the old app, install v1.5.0, restore on first run, verify, then uninstall the old package.
 
 ### Migrating from your old phone (no new seed phrase)
 

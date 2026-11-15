@@ -14,14 +14,14 @@ outside the repository.
 
 **Back the keystore and password up offline (two copies) before the first store upload.** Never
 commit them. Losing the key blocks updating an installed app; leaking it allows malicious updates.
-v1.4.0 introduced the Cipherwell signing identity. Earlier releases were removed; installed builds
-from the previous key cannot update in place. Never use `debug.keystore` as a release identity.
+v1.5.0 moved the app to the `com.cipherwell.vaultzero` package. Earlier packages cannot update in
+place; migrate with an encrypted backup + recovery phrase. Never use `debug.keystore` as a release identity.
 
 ## 1. Prepare the version
 
 1. Bump `versionCode` (+1) and `versionName` (semver) in `app/build.gradle.kts`.
 2. Add `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (≤500 chars for Play).
-3. Update `fdroid/com.aistudio.vaultzero.secvlt.yml` (current version/code + new build entry with
+3. Update `fdroid/com.cipherwell.vaultzero.yml` (current version/code + new build entry with
    the git tag) and [releases/](../releases/README.md) with a new `v<version>.md`.
 4. Update [CHANGELOG.md](../CHANGELOG.md) and any docs with version-specific statements.
 5. Commit the release changes, then tag: `git tag -a v<version> -m "VaultZero v<version>"`.
@@ -88,6 +88,12 @@ cd "$DIST" && sha256sum VaultZero-v$VERSION.* > checksums
 Update `releases/v<version>.md`, `releases/README.md`, `README.md` and the `.sha256` files in the
 repo with the final sizes/digests. Commit the documentation.
 
+## Reproducibility
+
+Run `./scripts/verify-reproducible.sh` before release. The F-Droid metadata declares `Binaries` and
+`AllowedAPKSigningKeys` so F-Droid can verify the developer-signed APK against its own build and use
+the developer signature if reproducible.
+
 ## 5. Publish
 
 ### GitHub
@@ -129,7 +135,7 @@ Follow [store/PLAY_LISTING.md](../store/PLAY_LISTING.md):
 6. Test the internal build, then promote.
 
 ### F-Droid
-Push the tag, update `fdroid/com.aistudio.vaultzero.secvlt.yml` (build entry/tag), and open a merge
+Push the tag, update `fdroid/com.cipherwell.vaultzero.yml` (build entry/tag), and open a merge
 request to `fdroiddata` (see [fdroid/README.md](../fdroid/README.md)). F-Droid rebuilds and signs
 with its own key; the recipe removes `debug.keystore` from the source scan. `AutoUpdateMode` uses
 tags, so every release needs a matching tag.

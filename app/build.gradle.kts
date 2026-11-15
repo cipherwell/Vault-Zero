@@ -9,11 +9,11 @@ android {
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.aistudio.vaultzero.secvlt"
+    applicationId = "com.cipherwell.vaultzero"
     minSdk = 24
     targetSdk = 36
-    versionCode = 6
-    versionName = "1.4.0"
+    versionCode = 7
+    versionName = "1.5.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

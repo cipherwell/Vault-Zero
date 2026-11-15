@@ -240,8 +240,8 @@ class MainActivity : FragmentActivity() {
     private companion object {
         const val REQUEST_EXPORT = 5101
         const val REQUEST_IMPORT = 5102
-        const val ACTION_SHORTCUT_NEW_LOGIN = "com.aistudio.vaultzero.secvlt.SHORTCUT_NEW_LOGIN"
-        const val ACTION_SHORTCUT_GENERATOR = "com.aistudio.vaultzero.secvlt.SHORTCUT_GENERATOR"
+        const val ACTION_SHORTCUT_NEW_LOGIN = "com.cipherwell.vaultzero.SHORTCUT_NEW_LOGIN"
+        const val ACTION_SHORTCUT_GENERATOR = "com.cipherwell.vaultzero.SHORTCUT_GENERATOR"
     }
 
     override fun onNewIntent(intent: Intent) {

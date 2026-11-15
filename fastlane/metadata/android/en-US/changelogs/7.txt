@@ -1,0 +1,6 @@
+VaultZero v1.5.0:
+• New Android package identity: com.cipherwell.vaultzero
+• Cipherwell project identity, BIP-39 128-bit recovery kits, hardware biometrics
+• First-run restore from encrypted backup with your existing recovery phrase
+• AES-256-GCM records, verified backups, fully offline; 105 tests / 0 failures
+• Existing installs: export a backup, install v1.5.0, restore, uninstall the old package

@@ -3,6 +3,24 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.5.0] — 2026-11-15
+
+### Changed
+- Application ID moved from `com.aistudio.vaultzero.secvlt` to **`com.cipherwell.vaultzero`**,
+  completing the Cipherwell identity migration. This is a new Android package; the old package can
+  be uninstalled after migrating data through an encrypted backup.
+- F-Droid metadata file renamed to `com.cipherwell.vaultzero.yml`; store/privacy/docs links updated.
+
+### Security
+- Same Cipherwell signing identity, AES-256-GCM vault format, BIP-39 recovery kits, verified
+  backups and offline posture as 1.4.0.
+- 105 JVM tests / 0 failures; lint clean.
+
+### Upgrade notes
+- `com.cipherwell.vaultzero` installs alongside the old package. Export an encrypted backup +
+  recovery phrase from the old app, install v1.5.0, restore, then uninstall the old package.
+- v1.4.0 and earlier GitHub releases were removed in favour of the new package identity.
+
 ## [1.4.0] — 2026-11-15
 
 ### Changed

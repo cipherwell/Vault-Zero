@@ -49,16 +49,16 @@ All functionality is local; no login/account is required. Reviewers can create a
   `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ## Important release note
-`v1.4.0` is the first release under the **Cipherwell** identity and a new production
-signing key. Installs of v1.3.1 or earlier cannot be updated in place; users must
-export a backup + recovery phrase, uninstall, install v1.4.0, and restore. Play has
-no prior uploads, so it is a fresh first upload there.
+`v1.5.0` is the first release under the final Cipherwell package
+(`com.cipherwell.vaultzero`). Older packages cannot update in place; users must export
+an encrypted backup + recovery phrase, install v1.5.0, restore, and then uninstall the
+old app. Play has no prior uploads, so this is a fresh first upload there.
 
 ## Play Console steps (after creating the app)
 1. Enable GitHub Pages (`main` → `/docs`) so the privacy URL resolves.
 2. Create the app; complete App content (privacy policy, data safety, content
    rating, target audience, ads = no).
-3. Upload `VaultZero-v1.4.0.aab` to the internal testing track first.
+3. Upload `VaultZero-v1.5.0.aab` to the internal testing track first.
 4. Add store listing assets/text from this folder.
 5. Install from internal testing on a device and complete the checklist in
    `../docs/RELEASING.md` before promoting to production.

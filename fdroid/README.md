@@ -2,12 +2,12 @@
 
 **Status:** F-Droid submission is **deferred** until the public repo passes F-Droid’s 3-month maintenance rule (Quality point 6). The earlier New App MR was closed for that policy and for not using the template. Resubmit after ~21 January 2027 with the filled template, full commit hash, AuthorEmail and `New App` label. Builds and the recipe below are otherwise ready.
 
-- **Package ID:** `com.aistudio.vaultzero.secvlt`
-- **Version to submit:** `1.4.0` (`versionCode` 6), tag **`v1.4.0`** (new Cipherwell signing identity)
+- **Package ID:** `com.cipherwell.vaultzero`
+- **Version to submit:** `1.5.0` (`versionCode` 7), tag **`v1.5.0`** (package `com.cipherwell.vaultzero`)
 - **License:** MIT (recognized FOSS)
 - **Source/issue tracker:** https://github.com/cipherwell/Vault-Zero
 - **Website:** https://cipherwell.github.io/Vault-Zero/
-- **F-Droid recipe:** [`com.aistudio.vaultzero.secvlt.yml`](com.aistudio.vaultzero.secvlt.yml)
+- **F-Droid recipe:** [`com.cipherwell.vaultzero.yml`](com.cipherwell.vaultzero.yml)
 - **Build pattern:** standard Gradle — `gradle: - yes` with `subdir: app` (F-Droid runs Gradle in `app/`; the parent Gradle settings are resolved automatically, and the resulting APK is found in `app/build/outputs/apk/release`)
 - **Network/signing requirements:** none; release builds become **unsigned** when no production
   keystore environment is present, so F-Droid can sign with its own key.
@@ -41,20 +41,20 @@ Create a GitLab account and fork <https://gitlab.com/fdroid/fdroiddata> in the G
 ```bash
 git clone --depth=1 https://gitlab.com/<YOUR_GITLAB_USER>/fdroiddata.git
 cd fdroiddata
-git checkout -b com.aistudio.vaultzero.secvlt
+git checkout -b com.cipherwell.vaultzero
 mkdir -p metadata
-cp /path/to/vault-zero-app/fdroid/com.aistudio.vaultzero.secvlt.yml \
-   metadata/com.aistudio.vaultzero.secvlt.yml
+cp /path/to/vault-zero-app/fdroid/com.cipherwell.vaultzero.yml \
+   metadata/com.cipherwell.vaultzero.yml
 ```
 
 The recipe must be copied unchanged unless you deliberately bump the version (keep
-`commit: v1.4.0` and `CurrentVersion: 1.4.0` aligned).
+`commit: v1.5.0` and `CurrentVersion: 1.5.0` aligned).
 
 ## 2. Validate the metadata (recommended)
 
 > Local validation performed for this recipe: `fdroid readmeta`, `fdroid rewritemeta` and
 > `fdroid lint` pass, and `fdroid build --test --no-refresh --no-tarball
-> com.aistudio.vaultzero.secvlt:6` successfully built the unsigned APK from tag v1.4.0 with
+> com.cipherwell.vaultzero:7` successfully built the unsigned APK from tag v1.5.0 with
 > fdroidserver 2.4.2 (Gradle 9.3.1, JDK 17, Android SDK 36).
 
 F-Droid's CI will build it, but local linting saves a review round-trip. The documented server-tools
@@ -78,9 +78,9 @@ export JAVA_HOME=$(java -XshowSettings:properties -version 2>&1 > /dev/null \
   | grep 'java.home' | awk -F'=' '{print $2}' | tr -d ' ')
 cd /build
 fdroid readmeta
-fdroid rewritemeta com.aistudio.vaultzero.secvlt
-fdroid lint com.aistudio.vaultzero.secvlt
-fdroid build com.aistudio.vaultzero.secvlt
+fdroid rewritemeta com.cipherwell.vaultzero
+fdroid lint com.cipherwell.vaultzero
+fdroid build com.cipherwell.vaultzero
 ```
 
 Notes for this app:
@@ -97,14 +97,14 @@ Notes for this app:
 ## 3. Open the merge request
 
 ```bash
-git add metadata/com.aistudio.vaultzero.secvlt.yml
-git commit -m "New App: com.aistudio.vaultzero.secvlt"
-git push -u origin com.aistudio.vaultzero.secvlt
+git add metadata/com.cipherwell.vaultzero.yml
+git commit -m "New App: com.cipherwell.vaultzero"
+git push -u origin com.cipherwell.vaultzero
 ```
 
 Open a merge request from your fork branch against `fdroid/fdroiddata:master`:
 
-- **Title:** `New App: com.aistudio.vaultzero.secvlt`
+- **Title:** `New App: com.cipherwell.vaultzero`
 - **Label:** `New App` (if the label is available)
 - Describe the app in two lines, link the source/website and mention that signing is
   F-Droid-managed.
@@ -120,7 +120,7 @@ the author, so state that in the MR.
   F-Droid build server.
 - After merge, builds are published in the next cycle (typically ~24–48 h after signing).
 - Watch the pipeline and MR comments; answer packager questions.
-- Once live: <https://f-droid.org/packages/com.aistudio.vaultzero.secvlt/>
+- Once live: <https://f-droid.org/packages/com.cipherwell.vaultzero/>
 
 ## 5. Future releases
 
@@ -138,7 +138,7 @@ The recipe uses tags + versionName/versionCode in `app/build.gradle.kts`:
 - F-Droid metadata filename = package ID.
 - Category `Security`/`System`; licence MIT; no anti-features.
 - The built APK has no network permission; no anti-feature declarations are needed.
-- Changelog is currently linked to `releases/v1.4.0.md`; future version bumps should update it.
+- Changelog is currently linked to `releases/v1.5.0.md`; future version bumps should update it.
 - F-Droid builds cannot be compared bit-for-bit with the GitHub APK because the signing keys and
   build environment differ; reproducible builds are not required for inclusion.
 
