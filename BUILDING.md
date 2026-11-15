@@ -117,33 +117,34 @@ That sets `BuildConfig.DEV_DISABLE_AUTO_LOCK`, which makes the ViewModel treat
 the timeout as `0` ("never lock") and replaces the Settings timeout chips with a
 dev-build notice. Release builds never receive the flag.
 
-## Verifying a hardened release build
+## Building the production release
 
-Release builds are R8-shrunk and obfuscated (`app/proguard-rules.pro`). The release
-signing config reads `KEYSTORE_PATH` / `STORE_PASSWORD` / `KEY_PASSWORD`; for a
-local smoke test use a throwaway upload key (never commit it):
+Production releases must be signed with the upload keystore (never the debug
+keystore). The keystore and passwords live outside the repository:
 
 ```bash
-keytool -genkeypair -v -keystore /tmp/vz-release-test.jks \
-  -storepass android -keypass android -alias upload \
-  -keyalg RSA -keysize 2048 -validity 10000 \
-  -dname "CN=Vault Zero Release Test,O=VaultZero,C=US"
-
-KEYSTORE_PATH=/tmp/vz-release-test.jks STORE_PASSWORD=android KEY_PASSWORD=android \
-  ./gradlew :app:assembleRelease
+source ~/.vaultzero-release/keystore.env
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+export ANDROID_HOME=$HOME/Android/Sdk
+./gradlew :app:assembleRelease :app:bundleRelease
 ```
+
+Full release checklist, signing identity, store upload and F-Droid steps live in
+[`RELEASING.md`](RELEASING.md). The certificate fingerprint is
+`c54ed94be9f5d4f00ea7a9e8d7f1f5eb4d0eafc8f456055b6130d85b38ae831d`.
 
 What to check afterwards:
 
-- `unzip -p app/build/outputs/apk/release/app-release.apk classes.dex | strings \
-  | grep -c 'com/example/ui/screens/SettingsScreenKt'` → `0` (UI obfuscated)
-- same command for `com/example/crypto/VaultCrypto` → non-zero (pinned for
-  crash forensics)
-- install and launch: the lock screen renders and logcat has no `FATAL EXCEPTION`
-
-The release APK has a different signing identity from the debug APK, so installing
-it requires uninstalling the debug app first — which deletes the on-device vault.
-Re-seed afterwards with `VaultSetupDeviceTest` (see above).
+- `apksigner verify --print-certs` reports the production certificate and APK
+  Signature Scheme v2 (`Verifies`).
+- `aapt2 dump badging` shows no `application-debuggable` line.
+- `aapt2 dump permissions` must not contain `INTERNET`/`ACCESS_NETWORK_STATE`.
+- Install on a clean device, create a vault, and confirm `screencap` returns
+  0 bytes and `run-as` fails ("package not debuggable").
+- `adb backup -noapk <pkg>` must produce an archive with no app-data entries
+  (`allowBackup=false` on the non-debuggable build).
+- The old `v1.0.0` preview is debug-signed; installing this build over it requires
+  an uninstall first.
 
 ## Security posture
 

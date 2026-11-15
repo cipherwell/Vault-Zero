@@ -1,0 +1,7 @@
+VaultZero v1.1.0:
+• One UI-inspired redesign with light, dark and system themes
+• 600k-round PBKDF2 and hardware per-use biometric unlock, auto-prompted on open
+• Verified backups with master password or recovery phrase, phrase-only export, duplicate-safe/salvage imports
+• Change master password, live 2FA dashboard, audit search filters, undo delete
+• Background lock, configurable timeouts, launcher shortcuts, passphrase options
+• Fully offline: no network permission, no telemetry, no accounts

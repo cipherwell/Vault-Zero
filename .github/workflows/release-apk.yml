@@ -1,4 +1,4 @@
-name: Build & Publish Android APK Release
+name: Build & Publish Android Release
 
 on:
   push:
@@ -13,54 +13,83 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 21 (Required by AGP 9.1.1 & Gradle 9.3.1)
+      - name: Set up JDK 17 (validated toolchain)
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Set up Gradle 9.3.1
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
 
-      - name: Build Signed Installable Release APK
+      - name: Require production signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.VAULTZERO_KEYSTORE_BASE64 }}
         run: |
-          if [ -f debug.keystore.base64 ]; then
-            base64 -d debug.keystore.base64 > debug.keystore
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Missing VAULTZERO_KEYSTORE_BASE64 secret."
+            echo "Releases must be signed with the production upload key; the debug keystore is never acceptable."
+            exit 1
           fi
-          cp debug.keystore /tmp/upload.jks
-          keytool -changealias -keystore /tmp/upload.jks -storepass android -keypass android -alias androiddebugkey -destalias upload
-          KEYSTORE_PATH=/tmp/upload.jks STORE_PASSWORD=android KEY_PASSWORD=android gradle :app:assembleRelease
-          rm -f /tmp/upload.jks
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+
+      - name: Validate version/tag consistency
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION_NAME=$(grep -E 'versionName = "' app/build.gradle.kts | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          VERSION_CODE=$(grep -E 'versionCode =' app/build.gradle.kts | head -1 | sed -E 's/[^0-9]//g')
+          if [ "$TAG" != "$VERSION_NAME" ]; then
+            echo "::error::Tag v$TAG does not match versionName $VERSION_NAME"
+            exit 1
+          fi
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      - name: Unit tests & lint
+        run: ./gradlew --console=plain :app:testDebugUnitTest :app:lintDebug
+
+      - name: Build signed APK + AAB
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
+          STORE_PASSWORD: ${{ secrets.VAULTZERO_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.VAULTZERO_KEY_PASSWORD }}
+        run: |
+          ./gradlew --console=plain :app:assembleRelease :app:bundleRelease
           mkdir -p build/release-assets
-          cp app/build/outputs/apk/release/app-release.apk build/release-assets/VaultZero-v1.0.0.apk
+          cp app/build/outputs/apk/release/app-release.apk "build/release-assets/VaultZero-v${VERSION_NAME}.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "build/release-assets/VaultZero-v${VERSION_NAME}.aab"
           cd build/release-assets
-          sha256sum VaultZero-v1.0.0.apk > VaultZero-v1.0.0.apk.sha256
+          sha256sum "VaultZero-v${VERSION_NAME}.apk" > "VaultZero-v${VERSION_NAME}.apk.sha256"
+          sha256sum "VaultZero-v${VERSION_NAME}.aab" > "VaultZero-v${VERSION_NAME}.aab.sha256"
 
-      - name: Upload APK Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: VaultZero-v1.0.0-APK
-          path: |
-            build/release-assets/VaultZero-v1.0.0.apk
-            build/release-assets/VaultZero-v1.0.0.apk.sha256
+      - name: Verify signing identity
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER=$(find "$SDK/build-tools" -name apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs "build/release-assets/VaultZero-v${VERSION_NAME}.apk"
+          "$APKSIGNER" verify --print-certs "build/release-assets/VaultZero-v${VERSION_NAME}.apk" \
+            | grep -q "c54ed94be9f5d4f00ea7a9e8d7f1f5eb4d0eafc8f456055b6130d85b38ae831d" \
+            || { echo "::error::Unexpected signing certificate"; exit 1; }
 
-      - name: Publish Latest GitHub Release (v1.0.0)
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "VaultZero v1.0.0 — Zero-Knowledge Offline Android Vault"
-          body_path: releases/v1.0.0.md
-          make_latest: true
+          tag_name: ${{ github.ref_name }}
+          body_path: releases/${{ github.ref_name }}.md
           files: |
-            build/release-assets/VaultZero-v1.0.0.apk
-            build/release-assets/VaultZero-v1.0.0.apk.sha256
+            build/release-assets/VaultZero-v${{ env.VERSION_NAME }}.apk
+            build/release-assets/VaultZero-v${{ env.VERSION_NAME }}.aab
+            build/release-assets/VaultZero-v${{ env.VERSION_NAME }}.apk.sha256
+            build/release-assets/VaultZero-v${{ env.VERSION_NAME }}.aab.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
