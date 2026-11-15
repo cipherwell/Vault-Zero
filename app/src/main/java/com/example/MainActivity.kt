@@ -52,9 +52,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.example.core.ThemeMode
-import com.example.ui.BiometricPromptRequest
 import com.example.ui.BiometricPurpose
-import com.example.crypto.BiometricBackupKeyManager
 import com.example.crypto.BiometricKeyManager
 import androidx.core.view.WindowCompat
 import androidx.compose.runtime.LaunchedEffect
@@ -152,8 +150,8 @@ class MainActivity : FragmentActivity() {
         // Listen for Biometric Prompt trigger events from ViewModel
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.biometricPromptEvent.collect { request ->
-                    launchNativeBiometricPrompt(request)
+                viewModel.biometricPromptEvent.collect { purpose ->
+                    launchNativeBiometricPrompt(purpose)
                 }
             }
         }
@@ -211,15 +209,7 @@ class MainActivity : FragmentActivity() {
      * cipher handed to [viewModel] only becomes usable after a successful
      * authentication of that exact cipher.
      */
-    /**
-     * Show the biometric prompt with the right Keystore CryptoObject:
-     * - vault key (unlock/enrol)
-     * - saved backup key (RESTORE_BACKUP / ENROLL_BACKUP), the "fingerprint decryption"
-     *   path where the backup's key is unwrapped without typing its phrase.
-     */
-    private fun launchNativeBiometricPrompt(request: BiometricPromptRequest) {
-        val purpose = request.purpose
-        val fingerprint = request.backupFingerprint
+    private fun launchNativeBiometricPrompt(purpose: BiometricPurpose) {
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
         val canAuth = BiometricManager.from(this).canAuthenticate(authenticators)
         if (canAuth == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
@@ -236,51 +226,30 @@ class MainActivity : FragmentActivity() {
         val cipher = when (purpose) {
             BiometricPurpose.UNLOCK -> BiometricKeyManager.getDecryptCipher(this)
             BiometricPurpose.ENROLL -> BiometricKeyManager.getEncryptCipher(this)
-            BiometricPurpose.RESTORE_BACKUP -> {
-                if (fingerprint == null) {
-                    viewModel.onBiometricError("No saved backup was selected.")
-                    return
-                }
-                BiometricBackupKeyManager.getDecryptCipher(this, fingerprint)
-            }
-            BiometricPurpose.ENROLL_BACKUP -> BiometricBackupKeyManager.getEncryptCipher()
         }
         if (cipher == null) {
             viewModel.onBiometricError(
-                when (purpose) {
-                    BiometricPurpose.UNLOCK ->
-                        "Biometric key is no longer valid (re-enrolled or removed). " +
-                            "Unlock with your Master Password and enable it again."
-                    BiometricPurpose.ENROLL ->
-                        "Could not prepare the secure biometric key. Check device security settings."
-                    BiometricPurpose.RESTORE_BACKUP ->
-                        "The saved backup key is no longer available. Import with your recovery phrase once, then save it again."
-                    BiometricPurpose.ENROLL_BACKUP ->
-                        "Could not prepare the biometric backup key. Check device security settings."
+                if (purpose == BiometricPurpose.UNLOCK) {
+                    "Biometric key is no longer valid (re-enrolled or removed). " +
+                        "Unlock with your Master Password and enable it again."
+                } else {
+                    "Could not prepare the secure biometric key. Check device security settings."
                 }
             )
             return
         }
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(
-                when (purpose) {
-                    BiometricPurpose.UNLOCK -> "Unlock VaultZero"
-                    BiometricPurpose.ENROLL -> "Enable biometric unlock"
-                    BiometricPurpose.RESTORE_BACKUP -> "Restore saved backup"
-                    BiometricPurpose.ENROLL_BACKUP -> "Save backup for fingerprint restore"
-                }
-            )
+            .setTitle(if (purpose == BiometricPurpose.ENROLL) "Enable biometric unlock" else "Unlock VaultZero")
             .setSubtitle(
-                when (purpose) {
-                    BiometricPurpose.UNLOCK -> "Authenticate to unwrap your vault key"
-                    BiometricPurpose.ENROLL -> "Authenticate to wrap your vault key with this device"
-                    BiometricPurpose.RESTORE_BACKUP -> "Authenticate to decrypt this backup without its phrase"
-                    BiometricPurpose.ENROLL_BACKUP -> "Authenticate to wrap this backup's key with this device"
+                if (purpose == BiometricPurpose.ENROLL) {
+                    "Authenticate to wrap your vault key with this device"
+                } else {
+                    "Authenticate to unwrap your vault key"
                 }
             )
             .setAllowedAuthenticators(authenticators)
-            .setNegativeButtonText("Cancel")
+            .setNegativeButtonText("Use Master Password")
             .build()
 
         val executor = ContextCompat.getMainExecutor(this)
@@ -294,12 +263,6 @@ class MainActivity : FragmentActivity() {
                     when (purpose) {
                         BiometricPurpose.UNLOCK -> viewModel.onBiometricVerified(authenticated)
                         BiometricPurpose.ENROLL -> viewModel.onBiometricEnrollmentVerified(authenticated)
-                        BiometricPurpose.RESTORE_BACKUP -> {
-                            if (fingerprint != null) {
-                                viewModel.onBackupRestoreVerified(authenticated, fingerprint)
-                            }
-                        }
-                        BiometricPurpose.ENROLL_BACKUP -> viewModel.onBackupEnrollVerified(authenticated)
                     }
                 }
 
