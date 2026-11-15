@@ -9,6 +9,8 @@ import com.example.core.ThemeMode
 import com.example.ui.backup.BackupPickerChannel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,6 +51,8 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -85,6 +89,8 @@ fun SettingsScreen(
     var pendingImportName by remember { mutableStateOf<String?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
     val themeMode by viewModel.themeMode.collectAsState()
+    val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
+    val clipboardSeconds by viewModel.clipboardTimeoutSeconds.collectAsState()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -263,19 +269,24 @@ fun SettingsScreen(
                 } else {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        listOf(30 to "30s", 60 to "1m", 300 to "5m", 900 to "15m").forEach { (sec, label) ->
-                            FilterChip(
-                                selected = viewModel.autoLockSeconds == sec,
-                                onClick = { viewModel.updateAutoLock(sec) },
-                                label = { Text(label, fontSize = 11.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = CyberCyan.copy(alpha = 0.25f),
-                                    selectedLabelColor = CyberCyan
-                                )
-                            )
-                        }
+                        listOf(0 to "Off", 30 to "30s", 60 to "1m", 300 to "5m", 900 to "15m")
+                            .forEach { (sec, label) ->
+                                SecurityOptionChip(
+                                    label = label,
+                                    selected = autoLockSeconds == sec,
+                                    modifier = Modifier.weight(1f),
+                                ) { viewModel.updateAutoLock(sec) }
+                            }
+                    }
+                    if (autoLockSeconds == 0) {
+                        Text(
+                            text = "Off: the vault stays unlocked until you tap the lock button.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarningAmber,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
                 }
 
@@ -298,23 +309,24 @@ fun SettingsScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
-                    listOf(15 to "15s", 30 to "30s", 60 to "60s").forEach { (sec, label) ->
-                        FilterChip(
-                            selected = viewModel.clipboardTimeoutSeconds == sec,
-                            onClick = { viewModel.updateClipboardTimeout(sec) },
-                            label = { Text(label, fontSize = 11.sp) },
-                            shape = CircleShape,
-                            border = null,
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                selectedLabelColor = CyberEmerald
-                            )
-                        )
-                    }
+                    listOf(0 to "Off", 15 to "15s", 30 to "30s", 60 to "60s")
+                        .forEach { (sec, label) ->
+                            SecurityOptionChip(
+                                label = label,
+                                selected = clipboardSeconds == sec,
+                                modifier = Modifier.weight(1f),
+                            ) { viewModel.updateClipboardTimeout(sec) }
+                        }
+                }
+                if (clipboardSeconds == 0) {
+                    Text(
+                        text = "Off: copied secrets stay on the clipboard until you copy something else.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarningAmber,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -638,6 +650,39 @@ fun SettingsScreen(
             confirmButton = {
                 Button(onClick = { showSpecsDialog = false }) { Text("Close") }
             }
+        )
+    }
+}
+
+/** One UI pill chip used for the security timeout options. */
+@Composable
+private fun SecurityOptionChip(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .height(34.dp)
+            .clip(CircleShape)
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                else MaterialTheme.colorScheme.surfaceContainerHigh
+            )
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

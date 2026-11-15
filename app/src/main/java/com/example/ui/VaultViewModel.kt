@@ -147,6 +147,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _biometricEnabled = MutableStateFlow(false)
     val biometricEnabled: StateFlow<Boolean> = _biometricEnabled.asStateFlow()
 
+    private val _autoLockSeconds = MutableStateFlow(60)
+    val autoLockSeconds: StateFlow<Int> = _autoLockSeconds.asStateFlow()
+
+    private val _clipboardTimeoutSeconds = MutableStateFlow(30)
+    val clipboardTimeoutSeconds: StateFlow<Int> = _clipboardTimeoutSeconds.asStateFlow()
+
     private val _generatorConfig = MutableStateFlow(GeneratorConfig())
     val generatorConfig: StateFlow<GeneratorConfig> = _generatorConfig.asStateFlow()
 
@@ -201,6 +207,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             repository.setBiometricEnabled(false)
         }
         _biometricEnabled.value = repository.isBiometricEnabled()
+        _autoLockSeconds.value = repository.autoLockSeconds
+        _clipboardTimeoutSeconds.value = repository.clipboardTimeoutSeconds
         regeneratePassword()
         startClockTicker()
     }
@@ -210,12 +218,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     val recoveryPhrase: String
         get() = repository.getDecryptedRecoveryPhrase()
-
-    val autoLockSeconds: Int
-        get() = repository.autoLockSeconds
-
-    val clipboardTimeoutSeconds: Int
-        get() = repository.clipboardTimeoutSeconds
 
     val isDarkTheme: Boolean
         get() = repository.isDarkTheme()
@@ -866,15 +868,19 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         onUserInteraction()
     }
 
+    /** 0 disables automatic locking (manual lock still available). */
     fun updateAutoLock(seconds: Int) {
+        if (_autoLockSeconds.value == seconds) return
+        _autoLockSeconds.value = seconds
         repository.setAutoLockSeconds(seconds)
         resetAutoLockTimer()
-        postStatusMessage("Auto-lock updated")
     }
 
+    /** 0 keeps copied secrets on the clipboard until it is overwritten. */
     fun updateClipboardTimeout(seconds: Int) {
+        if (_clipboardTimeoutSeconds.value == seconds) return
+        _clipboardTimeoutSeconds.value = seconds
         repository.setClipboardTimeoutSeconds(seconds)
-        postStatusMessage("Clipboard timeout updated")
     }
 
     /**

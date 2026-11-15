@@ -8,7 +8,11 @@ import com.example.crypto.VaultCrypto
 /**
  * Typed wrapper around the vault's SharedPreferences file.
  *
- * Every write uses [edit] with `commit = true` on purpose. The default (`apply`)
+ * Vault-critical writes use [edit] with `commit = true` on purpose (crash-safe,
+ * synchronous). User-interface preferences (auto-lock, clipboard timeout, theme)
+ * use the default asynchronous `apply`: they are re-read on next launch and a lost
+ * last change on a process crash is harmless, while a blocking disk write on every
+ * chip tap is exactly the jank the settings screen showed. The default (`apply`)
  * defers the disk write to a background thread, which is wrong for key material:
  * if the process dies right after [saveEnvelopeCredentials] or a KDF re-wrap
  * reports success, the envelope (and the only copy of the wrapped VMK) must
@@ -87,11 +91,11 @@ class VaultPreferences(
 
     var autoLockSeconds: Int
         get() = prefs.getInt("auto_lock_seconds", 60)
-        set(value) = prefs.edit(commit = true) { putInt("auto_lock_seconds", value) }
+        set(value) = prefs.edit { putInt("auto_lock_seconds", value) }
 
     var clipboardTimeoutSeconds: Int
         get() = prefs.getInt("clipboard_timeout_seconds", 30)
-        set(value) = prefs.edit(commit = true) { putInt("clipboard_timeout_seconds", value) }
+        set(value) = prefs.edit { putInt("clipboard_timeout_seconds", value) }
 
     var isBiometricEnabled: Boolean
         get() = prefs.getBoolean("is_biometric_enabled", false)
@@ -100,11 +104,11 @@ class VaultPreferences(
     /** One UI appearance: "system" (default), "light" or "dark". */
     var themeMode: String
         get() = prefs.getString("theme_mode", "system") ?: "system"
-        set(value) = prefs.edit(commit = true) { putString("theme_mode", value) }
+        set(value) = prefs.edit { putString("theme_mode", value) }
 
     var isDarkTheme: Boolean
         get() = prefs.getBoolean("is_dark_theme", true)
-        set(value) = prefs.edit(commit = true) { putBoolean("is_dark_theme", value) }
+        set(value) = prefs.edit { putBoolean("is_dark_theme", value) }
 
     fun saveEnvelopeCredentials(
         passwordHash: String,
