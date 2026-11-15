@@ -8,6 +8,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.ui.VaultSortOption
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -121,6 +127,17 @@ fun VaultListScreen(
     val sortOption by viewModel.sortOption.collectAsState()
     val listState = rememberLazyListState()
 
+    // One UI large-title behaviour: the title collapses into a compact bar as the
+    // content scrolls, and the pinned controls stay put.
+    val collapsed by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 56
+        }
+    }
+    val titleSize by animateFloatAsState(if (collapsed) 20f else 34f, label = "vaultTitleSize")
+    val headerPadding by animateDpAsState(if (collapsed) 6.dp else 14.dp, label = "vaultHeaderPad")
+    val statusAlpha by animateFloatAsState(if (collapsed) 0f else 1f, label = "vaultStatusAlpha")
+
     // A shorter filtered list must start at the top: keeping the scroll offset
     // was the "category changed but the screen still shows something else" bug.
     LaunchedEffect(searchQuery, selectedType, favoritesOnly, sortOption) {
@@ -168,19 +185,25 @@ fun VaultListScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                    .padding(horizontal = 20.dp, vertical = headerPadding),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
                     Text(
                         text = "Vault",
-                        style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontSize = titleSize.sp,
+                            lineHeight = (titleSize * 1.15f).sp,
+                        ),
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.alpha(statusAlpha)
+                    ) {
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
@@ -625,10 +648,17 @@ private fun OneUiVaultRow(
     onToggleFavorite: () -> Unit,
     onCopyPrimary: (String, String) -> Unit,
 ) {
+    val haptics = LocalHapticFeedback.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                },
+            )
             .background(
                 if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
                 else Color.Transparent

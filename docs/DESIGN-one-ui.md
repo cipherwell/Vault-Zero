@@ -50,3 +50,18 @@ hairline inset dividers and chevrons, title in the upper area, controls
 
 **Appearance** — System / Light / Dark selector in Settings, persisted; system bar
 icon appearance follows the resolved theme.
+
+## Interaction patterns
+
+- **Collapsing large title** (vault list): the 34sp `Vault` title and its status
+  line shrink/fade to a compact 20sp bar once the list scrolls (~56px threshold),
+  while the search field and filter chips stay pinned. One UI's "expanded /
+  collapsed, never in between" title rule.
+- **Grouped sections**: when Group-by-type is on, each type renders a section
+  label above its own rounded card (One UI-style grouped settings list).
+- **Bottom sheets**: item detail is a full-width sheet with a grab handle, 30dp
+  top corners, a dim scrim that also dismisses on tap (separate sibling, so sheet
+  buttons keep their clicks).
+- **Haptics**: long-press enters multi-select with `HapticFeedbackType.LongPress`.
+- **Toast**: status/copy feedback is a neutral `surfaceContainerHighest` capsule
+  with a blue check, not a bordered neon pill.
