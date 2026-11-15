@@ -9,8 +9,8 @@ tree and are signed with the production upload key.
 
 | Asset | File | Size | SHA-256 |
 | --- | --- | --- | --- |
-| **APK (direct)** | [`VaultZero-v1.1.0.apk`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.1.0/VaultZero-v1.1.0.apk) | 1,800,311 B | `682a081cae0349b312d494137545e5c789752b9b7191bcef9c3dc7bedba131d6` |
-| **AAB (store upload)** | [`VaultZero-v1.1.0.aab`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.1.0/VaultZero-v1.1.0.aab) | 3,959,508 B | `0b60dd18eb2545f8ba7ca695a253fdd06d406616095eeba0b77ad747ba3d6410` |
+| **APK (direct)** | [`VaultZero-v1.1.0.apk`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.1.0/VaultZero-v1.1.0.apk) | 1,844,971 B | `407c23e56666764ff874c60ceb5afe57a20828c44b41bd79a55a48114b0d3d82` |
+| **AAB (store upload)** | [`VaultZero-v1.1.0.aab`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.1.0/VaultZero-v1.1.0.aab) | 4,004,032 B | `bbfdad31fd459347a2100e3d1eae63d37a57abb86b0351687cb7317e83411bc3` |
 | **Checksums** | `VaultZero-v1.1.0.apk.sha256`, `VaultZero-v1.1.0.aab.sha256` | — | full digests in files |
 | **Release notes** | [`v1.1.0.md`](v1.1.0.md) | — | — |
 | **Web portal** | [`docs/index.html`](../docs/index.html) | — | GitHub Pages |

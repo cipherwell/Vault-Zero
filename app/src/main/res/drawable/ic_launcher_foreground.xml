@@ -4,8 +4,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- One UI squircle -->
     <path
         android:fillColor="#4DA6FF"
-        android:fillType="evenOdd"
-        android:pathData="M54,26 C65,31 74,32 84,32 C84,48 82,63 74,73 C67,81 60,85 54,88 C48,85 41,81 34,73 C26,63 24,48 24,32 C34,32 43,31 54,26 Z M54,45 A5.5,5.5 0 1 0 54.01,45 Z M51,50 L57,50 L58,64 L50,64 Z" />
+        android:pathData="M21,40 C21,29 29,21 40,21 L68,21 C79,21 87,29 87,40 L87,68 C87,79 79,87 68,87 L40,87 C29,87 21,79 21,68 Z" />
+    <!-- keyhole head ring (blue zero inside) -->
+    <path
+        android:fillColor="#05070A"
+        android:pathData="M54,28.6 A13.4,13.4 0 1 0 54,55.4 A13.4,13.4 0 1 0 54,28.6 Z" />
+    <path
+        android:fillColor="#4DA6FF"
+        android:pathData="M54,34.5 A7.1,7.1 0 1 0 54,48.7 A7.1,7.1 0 1 0 54,34.5 Z" />
+    <!-- stem -->
+    <path
+        android:fillColor="#05070A"
+        android:pathData="M49,50 L59,50 L59,74 C59,76.2 57,78 54,78 C51,78 49,76.2 49,74 Z" />
 </vector>
