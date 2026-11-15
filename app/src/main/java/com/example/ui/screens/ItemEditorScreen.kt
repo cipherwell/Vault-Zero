@@ -29,6 +29,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.ui.EditFocus
+import kotlinx.coroutines.delay
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,8 +65,25 @@ import com.example.ui.theme.CyberEmerald
 fun ItemEditorDialog(
     item: VaultItem,
     onSave: (VaultItem) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    initialFocus: EditFocus? = null
 ) {
+    val titleFocus = remember { FocusRequester() }
+    val passwordFocus = remember { FocusRequester() }
+    val totpFocus = remember { FocusRequester() }
+
+    LaunchedEffect(initialFocus) {
+        if (initialFocus != null) {
+            // Wait for the dialog to lay out before grabbing focus (otherwise the
+            // request is dropped and the keyboard never opens).
+            delay(300)
+            when (initialFocus) {
+                EditFocus.PASSWORD -> passwordFocus
+                EditFocus.TOTP -> totpFocus
+                else -> titleFocus
+            }.requestFocus()
+        }
+    }
     var title by remember { mutableStateOf(item.title) }
     var category by remember { mutableStateOf(item.category) }
 
@@ -178,7 +200,7 @@ fun ItemEditorDialog(
                     label = { Text("Title / Label") },
                     placeholder = { Text("e.g. GitHub, AWS Prod, Personal Card") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("editor_title_input"),
+                    modifier = Modifier.fillMaxWidth().testTag("editor_title_input").focusRequester(titleFocus),
                     shape = RoundedCornerShape(12.dp)
                 )
 
@@ -235,7 +257,7 @@ fun ItemEditorDialog(
                                     }
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth().testTag("editor_password_input"),
+                            modifier = Modifier.fillMaxWidth().testTag("editor_password_input").focusRequester(passwordFocus),
                             shape = RoundedCornerShape(12.dp)
                         )
 
@@ -252,7 +274,7 @@ fun ItemEditorDialog(
                             label = { Text("2FA Authenticator Secret (Optional Base32)") },
                             placeholder = { Text("e.g. JBSWY3DPEHPK3PXP") },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag("editor_totp_input").focusRequester(totpFocus),
                             shape = RoundedCornerShape(12.dp)
                         )
 

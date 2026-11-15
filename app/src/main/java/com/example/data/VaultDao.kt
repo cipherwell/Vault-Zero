@@ -24,6 +24,9 @@ interface VaultDao {
     @Query("DELETE FROM vault_items WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("DELETE FROM vault_items WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<String>)
+
     @Query("UPDATE vault_items SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun updateFavorite(id: String, isFavorite: Boolean)
 

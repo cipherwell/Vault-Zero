@@ -487,6 +487,13 @@ class VaultRepository(
         dao.deleteById(id)
     }
 
+    /** Delete several records in one transaction (bulk selection action). */
+    suspend fun deleteItems(ids: Collection<String>) = withContext(Dispatchers.IO) {
+        if (!isUnlocked) throw IllegalStateException("Vault is locked")
+        if (ids.isEmpty()) return@withContext
+        dao.deleteByIds(ids.toList())
+    }
+
     suspend fun clearVault() = withContext(Dispatchers.IO) {
         dao.clearAll()
         prefs.resetAll()

@@ -30,6 +30,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
+import com.example.core.VaultGrouping
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -99,9 +110,15 @@ fun VaultListScreen(
     val favoritesOnly by viewModel.favoritesOnly.collectAsState()
     val clockTicker by viewModel.clockTicker.collectAsState()
     val clipboardStatus by viewModel.clipboardStatus.collectAsState()
+    val selectionActive by viewModel.selectionActive.collectAsState()
+    val selectedIds by viewModel.selectedIds.collectAsState()
+    val groupByType by viewModel.groupByType.collectAsState()
 
     var showCreateMenu by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+    var showBulkDelete by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = selectionActive) { viewModel.clearSelection() }
     val sortOption by viewModel.sortOption.collectAsState()
     val listState = rememberLazyListState()
 
@@ -117,6 +134,41 @@ fun VaultListScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            if (selectionActive) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { viewModel.clearSelection() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Exit selection",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Text(
+                        text = "${selectedIds.size} selected",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = { if (selectedIds.isNotEmpty()) showBulkDelete = true },
+                        enabled = selectedIds.isNotEmpty(),
+                        modifier = Modifier.testTag("bulk_delete_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete selected",
+                            tint = if (selectedIds.isNotEmpty()) DangerRed else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            } else {
             // Header
             Row(
                 modifier = Modifier
@@ -185,6 +237,31 @@ fun VaultListScreen(
                                 }
                             )
                         }
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("Group by type") },
+                            onClick = {
+                                viewModel.setGroupByType(!groupByType)
+                                showSortMenu = false
+                            },
+                            trailingIcon = {
+                                if (groupByType) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Select items") },
+                            onClick = {
+                                viewModel.enterSelectionMode()
+                                showSortMenu = false
+                            }
+                        )
                     }
                 }
 
@@ -202,6 +279,7 @@ fun VaultListScreen(
                     )
                 }
                 }
+            }
             }
 
             // Search Bar
@@ -372,16 +450,67 @@ fun VaultListScreen(
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(items, key = { it.id }) { item ->
-                        VaultItemCard(
-                            item = item,
-                            clockTicker = clockTicker,
-                            onTap = { viewModel.viewItem(item) },
-                            onToggleFavorite = { viewModel.toggleFavorite(item) },
-                            onCopyPrimary = { label, value ->
-                                viewModel.copySecurely(label, value, isSensitive = true)
+                    if (groupByType) {
+                        VaultGrouping.group(items).forEach { section ->
+                            item(key = "section-${section.type.name}") {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = section.title.uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = section.count.toString(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = JetBrainsMonoFamily,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                        )
+                            items(section.items, key = { it.id }) { item ->
+                                VaultItemCard(
+                                    item = item,
+                                    clockTicker = clockTicker,
+                                    selectionActive = selectionActive,
+                                    selected = item.id in selectedIds,
+                                    onTap = {
+                                        if (selectionActive) viewModel.toggleSelection(item.id) else viewModel.viewItem(item)
+                                    },
+                                    onLongClick = {
+                                        if (selectionActive) viewModel.toggleSelection(item.id)
+                                        else viewModel.enterSelectionMode(item.id)
+                                    },
+                                    onToggleFavorite = { viewModel.toggleFavorite(item) },
+                                    onCopyPrimary = { label, value ->
+                                        viewModel.copySecurely(label, value, isSensitive = true)
+                                    }
+                                )
+                            }
+                        }
+                    } else {
+                        items(items, key = { it.id }) { item ->
+                            VaultItemCard(
+                                item = item,
+                                clockTicker = clockTicker,
+                                selectionActive = selectionActive,
+                                selected = item.id in selectedIds,
+                                onTap = {
+                                    if (selectionActive) viewModel.toggleSelection(item.id) else viewModel.viewItem(item)
+                                },
+                                onLongClick = {
+                                    if (selectionActive) viewModel.toggleSelection(item.id)
+                                    else viewModel.enterSelectionMode(item.id)
+                                },
+                                onToggleFavorite = { viewModel.toggleFavorite(item) },
+                                onCopyPrimary = { label, value ->
+                                    viewModel.copySecurely(label, value, isSensitive = true)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -401,6 +530,31 @@ fun VaultListScreen(
             Icon(Icons.Default.Add, contentDescription = "Add item")
         }
 
+        if (showBulkDelete) {
+            AlertDialog(
+                onDismissRequest = { showBulkDelete = false },
+                title = { Text("Delete ${selectedIds.size} selected?") },
+                text = {
+                    Text(
+                        "These encrypted records are removed from this device permanently. " +
+                            "This cannot be undone."
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.deleteSelectedItems()
+                            showBulkDelete = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
+                    ) { Text("Delete") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBulkDelete = false }) { Text("Cancel") }
+                }
+            )
+        }
+
         // Type Selection Modal Bottom Sheet / Dialog
         if (showCreateMenu) {
             CreateTypeSelectorDialog(
@@ -414,36 +568,35 @@ fun VaultListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VaultItemCard(
     item: VaultItem,
     clockTicker: Long,
+    selectionActive: Boolean,
+    selected: Boolean,
     onTap: () -> Unit,
+    onLongClick: () -> Unit,
     onToggleFavorite: () -> Unit,
     onCopyPrimary: (String, String) -> Unit
 ) {
+    val outlineColor = if (selected) CyberEmerald.copy(alpha = 0.8f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) CyberEmerald.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
         ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, outlineColor),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onTap() }
+            .combinedClickable(onClick = onTap, onLongClick = onLongClick)
             .testTag("vault_item_${item.id}")
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 VaultTypeIcon(type = item.type)
-
                 Spacer(modifier = Modifier.width(14.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = item.title,
@@ -452,9 +605,7 @@ private fun VaultItemCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-
                     Spacer(modifier = Modifier.height(1.dp))
-
                     val subtitle = when (val p = item.payload) {
                         is LoginPayload -> p.username.ifEmpty { p.url }
                         is CardPayload -> if (p.cardNumber.length >= 4) "•••• ${p.cardNumber.takeLast(4)}" else p.brand
@@ -463,7 +614,6 @@ private fun VaultItemCard(
                         is NotePayload -> p.content.lines().firstOrNull() ?: "Encrypted note"
                         is IdentityPayload -> "${p.idType} · ${p.fullName}"
                     }
-
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
@@ -473,53 +623,74 @@ private fun VaultItemCard(
                     )
                 }
 
-                IconButton(
-                    onClick = onToggleFavorite,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = if (item.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (item.isFavorite) "Remove from favorites" else "Add to favorites",
-                        tint = if (item.isFavorite) CyberEmerald else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                val (copyLabel, copyValue) = when (val p = item.payload) {
-                    is LoginPayload -> Pair("Password", p.password)
-                    is CardPayload -> Pair("Card number", p.cardNumber)
-                    is ApiSecretPayload -> Pair("API key", p.apiKey.ifEmpty { p.secretToken })
-                    is CryptoPayload -> Pair("Public address", p.publicAddress)
-                    is NotePayload -> Pair("Note", p.content)
-                    is IdentityPayload -> Pair("ID number", p.idNumber)
-                }
-
-                if (copyValue.isNotEmpty()) {
-                    var justCopied by remember { mutableStateOf(false) }
-                    LaunchedEffect(justCopied) {
-                        if (justCopied) {
-                            delay(1400L)
-                            justCopied = false
+                if (selectionActive) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(if (selected) CyberEmerald else Color.Transparent)
+                            .border(
+                                1.5.dp,
+                                if (selected) CyberEmerald else MaterialTheme.colorScheme.outline,
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (selected) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = Color.Black,
+                                modifier = Modifier.size(15.dp)
+                            )
                         }
                     }
-                    IconButton(
-                        onClick = {
-                            justCopied = true
-                            onCopyPrimary(copyLabel, copyValue)
-                        },
-                        modifier = Modifier.size(32.dp).testTag("quick_copy_${item.id}")
-                    ) {
+                } else {
+                    IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
                         Icon(
-                            imageVector = if (justCopied) Icons.Default.Check else Icons.Default.ContentCopy,
-                            contentDescription = "Copy $copyLabel",
-                            tint = if (justCopied) CyberEmerald else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.size(17.dp)
+                            imageVector = if (item.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (item.isFavorite) "Remove from favorites" else "Add to favorites",
+                            tint = if (item.isFavorite) CyberEmerald else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
                         )
+                    }
+
+                    val (copyLabel, copyValue) = when (val p = item.payload) {
+                        is LoginPayload -> Pair("Password", p.password)
+                        is CardPayload -> Pair("Card number", p.cardNumber)
+                        is ApiSecretPayload -> Pair("API key", p.apiKey.ifEmpty { p.secretToken })
+                        is CryptoPayload -> Pair("Public address", p.publicAddress)
+                        is NotePayload -> Pair("Note", p.content)
+                        is IdentityPayload -> Pair("ID number", p.idNumber)
+                    }
+
+                    if (copyValue.isNotEmpty()) {
+                        var justCopied by remember { mutableStateOf(false) }
+                        LaunchedEffect(justCopied) {
+                            if (justCopied) {
+                                delay(1400L)
+                                justCopied = false
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                justCopied = true
+                                onCopyPrimary(copyLabel, copyValue)
+                            },
+                            modifier = Modifier.size(32.dp).testTag("quick_copy_${item.id}")
+                        ) {
+                            Icon(
+                                imageVector = if (justCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                                contentDescription = "Copy $copyLabel",
+                                tint = if (justCopied) CyberEmerald else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
                     }
                 }
             }
 
-            if (item.type == VaultType.LOGIN) {
+            if (!selectionActive && item.type == VaultType.LOGIN) {
                 val login = item.payload as LoginPayload
                 if (login.totpSecret.isNotEmpty()) {
                     val totp = VaultCrypto.generateTotp(login.totpSecret, clockTicker)
