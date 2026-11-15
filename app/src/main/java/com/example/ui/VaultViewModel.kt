@@ -57,6 +57,9 @@ enum class VaultLockState {
     RECOVERING
 }
 
+/** Launcher shortcut intents. */
+enum class ShortcutAction { NEW_LOGIN, GENERATOR }
+
 /** What a biometric prompt is being shown for. */
 enum class BiometricPurpose { UNLOCK, ENROLL }
 
@@ -73,7 +76,20 @@ enum class VaultSortOption(val label: String) {
     FAVORITES_FIRST("Favorites first"),
     TITLE("Title A–Z"),
     RECENT("Recently updated"),
+    RECENTLY_USED("Recently used"),
 }
+
+/** Recently deleted records kept in memory for a short undo window. */
+data class DeletedBatch(val items: List<VaultItem>, val label: String)
+
+/** Summary of a verified import, shown in a result dialog. */
+data class ImportOutcome(
+    val imported: Int,
+    val updated: Int,
+    val duplicatesSkipped: Int,
+    val skippedInvalid: Int,
+    val summary: String,
+)
 
 enum class VaultNavTab {
     VAULT,
@@ -90,7 +106,9 @@ data class GeneratorConfig(
     val includeSymbols: Boolean = true,
     val avoidAmbiguous: Boolean = true,
     val isPassphraseMode: Boolean = false,
-    val passphraseWords: Int = 4
+    val passphraseWords: Int = 4,
+    val passphraseSeparator: String = "-",
+    val passphraseCapitalise: Boolean = false
 )
 
 class VaultViewModel(application: Application) : AndroidViewModel(application) {
@@ -184,6 +202,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val passwordStrength: StateFlow<VaultCrypto.PasswordStrength> = _passwordStrength.asStateFlow()
 
     // Real-time second clock for live TOTP animations
+    private val _recentlyDeleted = MutableStateFlow<DeletedBatch?>(null)
+    val recentlyDeleted: StateFlow<DeletedBatch?> = _recentlyDeleted.asStateFlow()
+    private var deletedExpiryJob: Job? = null
+
+    private val _importOutcome = MutableStateFlow<ImportOutcome?>(null)
+    val importOutcome: StateFlow<ImportOutcome?> = _importOutcome.asStateFlow()
+
+    private val _backgroundLockSeconds = MutableStateFlow(30)
+    val backgroundLockSeconds: StateFlow<Int> = _backgroundLockSeconds.asStateFlow()
+
     private val _clockTicker = MutableStateFlow(System.currentTimeMillis())
     val clockTicker: StateFlow<Long> = _clockTicker.asStateFlow()
 
@@ -228,6 +256,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _biometricEnabled.value = repository.isBiometricEnabled()
         _autoLockSeconds.value = repository.autoLockSeconds
         _clipboardTimeoutSeconds.value = repository.clipboardTimeoutSeconds
+        _backgroundLockSeconds.value = repository.backgroundLockSeconds
         _sortOption.value = VaultSortOption.entries
             .firstOrNull { it.name == repository.sortOption } ?: VaultSortOption.FAVORITES_FIRST
         _groupByType.value = repository.groupByType
@@ -283,6 +312,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 VaultSortOption.TITLE -> filtered.sortedBy { it.title.lowercase() }
                 VaultSortOption.RECENT -> filtered.sortedByDescending { it.updatedAt }
+                VaultSortOption.RECENTLY_USED -> filtered.sortedWith(
+                    compareByDescending<VaultItem> { it.lastUsedAt }.thenByDescending { it.updatedAt },
+                )
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -527,6 +559,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         // timeout job, Off mode relies on this ownership-checked wipe.
         clipboardJob?.cancel()
         clearSensitiveClipboardIfOwned()
+        _recentlyDeleted.value = null
+        deletedExpiryJob?.cancel()
         if (autoLocked) {
             postStatusMessage("Vault auto-locked due to inactivity")
         } else {
@@ -541,6 +575,17 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     // -------------------------------------------------------------------------
     // Navigation & Filtering
     // -------------------------------------------------------------------------
+
+    /** Applied immediately; if the vault is locked the action lands after unlock. */
+    fun handleShortcut(action: ShortcutAction) {
+        when (action) {
+            ShortcutAction.GENERATOR -> setTab(VaultNavTab.GENERATOR)
+            ShortcutAction.NEW_LOGIN -> {
+                setTab(VaultNavTab.VAULT)
+                startCreateItem(VaultType.LOGIN)
+            }
+        }
+    }
 
     fun setTab(tab: VaultNavTab) {
         _currentTab.value = tab
@@ -610,14 +655,70 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteSelectedItems() {
         val ids = _selectedIds.value
         if (ids.isEmpty()) return
+        val items = allItems.value.filter { it.id in ids }
+        rememberDeleted(items, "Deleted ${items.size} ${if (items.size == 1) "item" else "items"}")
         viewModelScope.launch {
             try {
                 repository.deleteItems(ids)
                 clearSelection()
             } catch (e: Exception) {
+                _recentlyDeleted.value = null
                 postStatusMessage("Delete failed: ${e.message}")
             }
         }
+    }
+
+    private fun rememberDeleted(items: List<VaultItem>, label: String) {
+        if (items.isEmpty()) return
+        _recentlyDeleted.value = DeletedBatch(items, label)
+        deletedExpiryJob?.cancel()
+        deletedExpiryJob = viewModelScope.launch {
+            delay(10_000)
+            _recentlyDeleted.value = null
+        }
+    }
+
+    fun undoDelete() {
+        val batch = _recentlyDeleted.value ?: return
+        _recentlyDeleted.value = null
+        deletedExpiryJob?.cancel()
+        viewModelScope.launch {
+            try {
+                batch.items.forEach { repository.saveItem(it) }
+                postStatusMessage(
+                    "Restored ${batch.items.size} ${if (batch.items.size == 1) "item" else "items"}"
+                )
+            } catch (e: Exception) {
+                postStatusMessage("Could not restore: ${e.message}")
+            }
+        }
+    }
+
+    fun dismissDeletedBatch() {
+        _recentlyDeleted.value = null
+        deletedExpiryJob?.cancel()
+    }
+
+    /** Favourite (or un-favourite) every selected record. */
+    fun setSelectedFavorite(favorite: Boolean) {
+        val ids = _selectedIds.value
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                repository.setFavorite(ids, favorite)
+                postStatusMessage(
+                    if (favorite) "Marked ${ids.size} as favourite" else "Removed favourite from ${ids.size}"
+                )
+            } catch (e: Exception) {
+                postStatusMessage("Could not update favourites: ${e.message}")
+            }
+        }
+    }
+
+    fun updateBackgroundLock(seconds: Int) {
+        if (_backgroundLockSeconds.value == seconds) return
+        _backgroundLockSeconds.value = seconds
+        repository.setBackgroundLockSeconds(seconds)
     }
 
     fun clearFilters() {
@@ -705,6 +806,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteItem(item: VaultItem) {
+        rememberDeleted(listOf(item), "Deleted '${item.title}'")
         viewModelScope.launch {
             try {
                 repository.deleteItem(item.id)
@@ -797,6 +899,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 pendingPartialImportJson = null
                 pendingPartialImportPassword = null
                 _importVerificationPrompt.value = null
+                _importOutcome.value = ImportOutcome(
+                    imported = report.imported,
+                    updated = report.updated,
+                    duplicatesSkipped = report.duplicatesSkipped,
+                    skippedInvalid = report.skippedInvalid,
+                    summary = msg,
+                )
                 postStatusMessage(msg)
                 onUserInteraction()
             } catch (prompt: BackupVerificationException) {
@@ -836,6 +945,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _importVerificationPrompt.value = null
     }
 
+    fun dismissImportOutcome() {
+        _importOutcome.value = null
+    }
+
     /**
      * Rotate the master password: verifies the current one, re-wraps the VMK with
      * a fresh salt/KEK at 600k iterations, and leaves records and the recovery kit
@@ -873,8 +986,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     // Secure Clipboard with Ownership-Aware Auto-Clear & Sensitive Flag
     // -------------------------------------------------------------------------
 
-    fun copySecurely(label: String, value: String, isSensitive: Boolean = true) {
+    fun copySecurely(
+        label: String,
+        value: String,
+        isSensitive: Boolean = true,
+        itemId: String? = null,
+    ) {
         if (value.isEmpty()) return
+        if (itemId != null) {
+            viewModelScope.launch { repository.markUsed(itemId) }
+        }
         val clip = ClipData.newPlainText(label, value)
         if (isSensitive) {
             try {
@@ -971,7 +1092,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun regeneratePassword() {
         val config = _generatorConfig.value
         val password = if (config.isPassphraseMode) {
-            VaultCrypto.generatePassphrase(config.passphraseWords)
+            VaultCrypto.generatePassphrase(
+                wordCount = config.passphraseWords,
+                separator = config.passphraseSeparator,
+                capitalise = config.passphraseCapitalise,
+            )
         } else {
             VaultCrypto.generatePassword(
                 length = config.length,

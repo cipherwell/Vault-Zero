@@ -649,12 +649,17 @@ object VaultCrypto {
         return result.joinToString("")
     }
 
-    fun generatePassphrase(wordCount: Int = 4, separator: String = "-"): String {
+    fun generatePassphrase(
+        wordCount: Int = 4,
+        separator: String = "-",
+        capitalise: Boolean = false,
+    ): String {
         require(wordCount in 3..12) { "Passphrase word count must be between 3 and 12" }
         val words = PASSPHRASE_WORDLIST
         val selected = ArrayList<String>(wordCount)
         for (i in 0 until wordCount) {
-            selected.add(words[secureRandom.nextInt(words.size)])
+            val word = words[secureRandom.nextInt(words.size)]
+            selected.add(if (capitalise) word.replaceFirstChar { it.uppercaseChar() } else word)
         }
         return selected.joinToString(separator)
     }

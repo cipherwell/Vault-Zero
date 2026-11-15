@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_login"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_login_short"
+        android:shortcutLongLabel="@string/shortcut_new_login_long">
+        <intent
+            android:action="com.aistudio.vaultzero.secvlt.SHORTCUT_NEW_LOGIN"
+            android:targetPackage="com.aistudio.vaultzero.secvlt"
+            android:targetClass="com.example.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="generator"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_generator_short"
+        android:shortcutLongLabel="@string/shortcut_generator_long">
+        <intent
+            android:action="com.aistudio.vaultzero.secvlt.SHORTCUT_GENERATOR"
+            android:targetPackage="com.aistudio.vaultzero.secvlt"
+            android:targetClass="com.example.MainActivity" />
+    </shortcut>
+</shortcuts>

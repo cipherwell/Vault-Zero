@@ -207,6 +207,7 @@ data class VaultItem(
     val isFavorite: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
+    val lastUsedAt: Long = 0L,
     val tags: List<String> = emptyList(),
     val payload: ItemPayload
 ) {

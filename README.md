@@ -136,6 +136,17 @@ apksigner verify --print-certs VaultZero-v1.0.0.apk
   - A backup with unreadable records is rejected by default, with an explicit **"Import readable records"** option (after confirmation) that salvage-imports the authenticated entries and reports how many records were skipped. Saved backups are named `vaultzero-backup-YYYYMMDD-HHMM.json`.
 - **Audit-backed list filters**: `is:weak`, `is:reused`, `is:stale`, `is:no2fa`, `is:clean` — find vulnerable records directly from the vault search bar.
 - **Safety guards**: the item editor asks before discarding unsaved edits, and backup operations show progress and lock out duplicate taps.
+- **Safety & speed details**:
+  - **Undo delete**: single and bulk deletes keep an in-memory undo pill for a few seconds; the removed records are re-inserted with their original ids/timestamps.
+  - **2FA dashboard**: "2FA codes" in the vault menu shows every live TOTP code with countdown and copy, computed on the fly; nothing is persisted.
+  - **Copy 2FA from the list**: the inline code row on a login copies the current code (and marks the item as recently used).
+  - **Recently used sort** (new) orders by when secrets were last viewed or copied; `lastUsedAt` is a non-secret column added by a non-destructive Room v1→v2 migration.
+  - **Bulk favourite** from multi-select.
+  - **Launcher shortcuts**: long-press the app icon → *New login* or *Generator*; taps taken while locked are deferred until unlock.
+  - **Lock in background**: configurable Off/15s/30s/1m; the screen-off receiver locks immediately, and the SAF picker is exempt so backups never lock out mid-flow.
+  - **Auto-hide secrets**: a revealed password re-masks itself after 15 s.
+  - **Backup dialogs**: export shows an entry/type preview, imports end with a verified result dialog (new/updated/duplicates/unreadable counts).
+  - **Passphrase options**: separator (`-`, `.`, `_`, space) and word capitalisation.
 - **Hardened Runtime Hygiene**:
   - `FLAG_SECURE` screenshot/screen-recording blocking, Android 13+ `ClipData.EXTRA_IS_SENSITIVE` clipboard masking with a 30-second auto-scrub timer, background auto-lock timeout, and Optional **Panic Wipe** after 5 consecutive failed unlock attempts.
 
@@ -193,7 +204,7 @@ gradle :app:assembleRelease
 ```
 
 ### Run Unit & Robolectric Security Suite
-VaultZero includes a comprehensive JUnit 4 + Robolectric test suite (84 tests) verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and verified/duplicate-safe `.vzero` backup recovery (repeated imports, mixed repeat+new files, in-place updates, tamper rejection, partial-salvage imports, atomic fail-closed writes), recovery-phrase restore and phrase-only exports, master-password rotation (records and recovery kit preserved), audit-backed list filters, and the unsaved-editor guard:
+VaultZero includes a comprehensive JUnit 4 + Robolectric test suite (88 tests) verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and verified/duplicate-safe `.vzero` backup recovery (repeated imports, mixed repeat+new files, in-place updates, tamper rejection, partial-salvage imports, atomic fail-closed writes), recovery-phrase restore and phrase-only exports, master-password rotation (records and recovery kit preserved), audit-backed list filters, and the unsaved-editor guard:
 
 ```bash
 gradle :app:testDebugUnitTest

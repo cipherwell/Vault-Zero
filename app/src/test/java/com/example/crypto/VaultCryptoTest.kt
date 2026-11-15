@@ -220,4 +220,27 @@ class VaultCryptoTest {
         assertEquals(32, first.size)
         assertFalse(first.contentEquals(second))
     }
+
+    @Test
+    fun `passphrase separator and capitalisation are applied`() {
+        val default = VaultCrypto.generatePassphrase(wordCount = 5)
+        assertEquals(5, default.split("-").size)
+
+        val dotted = VaultCrypto.generatePassphrase(wordCount = 4, separator = ".")
+        assertEquals(4, dotted.split(".").size)
+
+        val spaced = VaultCrypto.generatePassphrase(wordCount = 3, separator = " ")
+        assertEquals(3, spaced.split(" ").size)
+
+        repeat(20) {
+            val capitalised = VaultCrypto.generatePassphrase(
+                wordCount = 4,
+                separator = "-",
+                capitalise = true,
+            )
+            capitalised.split("-").forEach { word ->
+                assertTrue("word '$word' should start uppercase", word.first().isUpperCase())
+            }
+        }
+    }
 }

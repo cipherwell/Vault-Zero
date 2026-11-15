@@ -329,6 +329,36 @@ fun GeneratorScreen(
                         )
                     )
 
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Separator",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("-" to "-", "." to ".", "_" to "_", " " to "space").forEach { (sep, label) ->
+                            FilterChip(
+                                selected = config.passphraseSeparator == sep,
+                                onClick = {
+                                    viewModel.updateGeneratorConfig(config.copy(passphraseSeparator = sep))
+                                },
+                                label = { Text(label, fontSize = 12.sp) },
+                                shape = CircleShape,
+                                border = null,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    GeneratorToggleRow(
+                        title = "Capitalise Words",
+                        checked = config.passphraseCapitalise,
+                        onCheckedChange = {
+                            viewModel.updateGeneratorConfig(config.copy(passphraseCapitalise = it))
+                        }
+                    )
+
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = "Passphrases trade symbols for word entropy. Use a unique passphrase per account and store it here.",

@@ -93,6 +93,11 @@ class VaultPreferences(
         get() = prefs.getInt("auto_lock_seconds", 60)
         set(value) = prefs.edit { putInt("auto_lock_seconds", value) }
 
+    /** Lock when the app leaves the foreground/ screen off after N seconds (0 = off). */
+    var backgroundLockSeconds: Int
+        get() = prefs.getInt("background_lock_seconds", 30)
+        set(value) = prefs.edit { putInt("background_lock_seconds", value) }
+
     var clipboardTimeoutSeconds: Int
         get() = prefs.getInt("clipboard_timeout_seconds", 30)
         set(value) = prefs.edit { putInt("clipboard_timeout_seconds", value) }

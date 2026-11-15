@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">VaultZero</string>
+    <string name="shortcut_new_login_short">New login</string>
+    <string name="shortcut_new_login_long">Create a new login</string>
+    <string name="shortcut_generator_short">Generator</string>
+    <string name="shortcut_generator_long">Generate a password</string>
 </resources>
