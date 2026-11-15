@@ -11,6 +11,12 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.crypto.BiometricKeyManager
+import com.example.core.GeneratedCredential
+import com.example.core.GeneratorHistory
+import com.example.core.SearchQuery
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import com.example.crypto.SecurityAuditEngine
 import com.example.crypto.VaultCrypto
 import com.example.data.VaultDatabase
@@ -45,6 +51,9 @@ enum class VaultLockState {
     UNLOCKED,
     RECOVERING
 }
+
+/** Which editor field an external action (e.g. the audit "Fix" button) should focus. */
+enum class EditFocus { PASSWORD, TOTP, CARD_NUMBER, NOTE_CONTENT, SEED_PHRASE, API_KEY, ID_NUMBER }
 
 enum class VaultSortOption(val label: String) {
     FAVORITES_FIRST("Favorites first"),
@@ -89,6 +98,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val selectedTypeFilter: StateFlow<VaultType?> = _selectedTypeFilter.asStateFlow()
 
     private val _sortOption = MutableStateFlow(VaultSortOption.FAVORITES_FIRST)
+    private val _groupByType = MutableStateFlow(false)
+    val groupByType: StateFlow<Boolean> = _groupByType.asStateFlow()
+
+    private val _selectionActive = MutableStateFlow(false)
+    val selectionActive: StateFlow<Boolean> = _selectionActive.asStateFlow()
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
+
+    private val _editFocus = MutableStateFlow<EditFocus?>(null)
+    val editFocus: StateFlow<EditFocus?> = _editFocus.asStateFlow()
+
+    private val generatorHistoryStore = GeneratorHistory()
+    private val _generatorHistory = MutableStateFlow<List<GeneratedCredential>>(emptyList())
+    val generatorHistory: StateFlow<List<GeneratedCredential>> = _generatorHistory.asStateFlow()
     private val _favoritesOnly = MutableStateFlow(false)
     val sortOption: StateFlow<VaultSortOption> = _sortOption.asStateFlow()
     val favoritesOnly: StateFlow<Boolean> = _favoritesOnly.asStateFlow()
@@ -186,43 +209,24 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val allItems: StateFlow<List<VaultItem>> = repository.getVaultItemsFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** Parse the query once per debounce window instead of per keystroke. */
+    @OptIn(FlowPreview::class)
+    private val searchSpecFlow = _searchQuery
+        .debounce(140)
+        .map { SearchQuery.parse(it) }
+
+    @OptIn(FlowPreview::class)
     val filteredItems: StateFlow<List<VaultItem>> = combine(
         allItems,
-        _searchQuery,
+        searchSpecFlow,
         _selectedTypeFilter,
         _favoritesOnly,
         _sortOption,
-    ) { items, query, typeFilter, favsOnly, sortOption ->
-        val cleanQuery = query.trim()
+    ) { items, spec, typeFilter, favsOnly, sortOption ->
         items.filter { item ->
-            val matchesQuery = if (cleanQuery.isEmpty()) true else {
-                val payloadMatch = when (val p = item.payload) {
-                    is LoginPayload -> p.username.contains(cleanQuery, ignoreCase = true) ||
-                            p.url.contains(cleanQuery, ignoreCase = true) ||
-                            p.notes.contains(cleanQuery, ignoreCase = true)
-                    is CardPayload -> p.cardholderName.contains(cleanQuery, ignoreCase = true) ||
-                            p.brand.contains(cleanQuery, ignoreCase = true) ||
-                            p.cardNumber.takeLast(4).contains(cleanQuery, ignoreCase = true) ||
-                            p.notes.contains(cleanQuery, ignoreCase = true)
-                    is ApiSecretPayload -> p.serviceName.contains(cleanQuery, ignoreCase = true) ||
-                            p.environment.contains(cleanQuery, ignoreCase = true) ||
-                            p.scopes.contains(cleanQuery, ignoreCase = true) ||
-                            p.endpointUrl.contains(cleanQuery, ignoreCase = true)
-                    is CryptoPayload -> p.walletName.contains(cleanQuery, ignoreCase = true) ||
-                            p.network.contains(cleanQuery, ignoreCase = true) ||
-                            p.publicAddress.contains(cleanQuery, ignoreCase = true)
-                    is NotePayload -> p.content.contains(cleanQuery, ignoreCase = true)
-                    is IdentityPayload -> p.fullName.contains(cleanQuery, ignoreCase = true) ||
-                            p.idType.contains(cleanQuery, ignoreCase = true)
-                }
-                item.title.contains(cleanQuery, ignoreCase = true) ||
-                        item.category.contains(cleanQuery, ignoreCase = true) ||
-                        item.tags.any { it.contains(cleanQuery, ignoreCase = true) } ||
-                        payloadMatch
-            }
-            val matchesType = typeFilter == null || item.type == typeFilter
-            val matchesFav = !favsOnly || item.isFavorite
-            matchesQuery && matchesType && matchesFav
+            SearchQuery.matches(item, spec) &&
+                (typeFilter == null || item.type == typeFilter) &&
+                (!favsOnly || item.isFavorite)
         }.let { filtered ->
             when (sortOption) {
                 VaultSortOption.FAVORITES_FIRST -> filtered.sortedWith(
@@ -469,6 +473,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun lockVault(autoLocked: Boolean = false) {
         repository.lock()
+        clearSelection()
+        generatorHistoryStore.clear()
+        _generatorHistory.value = emptyList()
+        _editFocus.value = null
         _lockState.value = VaultLockState.LOCKED
         _viewingItem.value = null
         _editingItem.value = null
@@ -497,6 +505,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
+        clearSelection()
         onUserInteraction()
     }
 
@@ -505,6 +514,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         // Category and favorites are mutually exclusive views. Leaving both on
         // ANDs them and shows an empty screen, which reads as a broken filter.
         if (type != null) _favoritesOnly.value = false
+        clearSelection()
         onUserInteraction()
     }
 
@@ -512,12 +522,54 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val next = !_favoritesOnly.value
         _favoritesOnly.value = next
         if (next) _selectedTypeFilter.value = null
+        clearSelection()
         onUserInteraction()
     }
 
     fun setSortOption(option: VaultSortOption) {
         _sortOption.value = option
         onUserInteraction()
+    }
+
+    fun setGroupByType(enabled: Boolean) {
+        _groupByType.value = enabled
+        onUserInteraction()
+    }
+
+    // -------------------------------------------------------------------------
+    // Multi-select
+    // -------------------------------------------------------------------------
+
+    fun enterSelectionMode(initialId: String? = null) {
+        _selectionActive.value = true
+        if (initialId != null) _selectedIds.value = setOf(initialId)
+        onUserInteraction()
+    }
+
+    fun toggleSelection(id: String) {
+        _selectedIds.value = if (id in _selectedIds.value) _selectedIds.value - id else _selectedIds.value + id
+        if (_selectedIds.value.isEmpty() && _selectionActive.value) {
+            // Keep the mode open so the user can keep picking; close on demand.
+        }
+        onUserInteraction()
+    }
+
+    fun clearSelection() {
+        _selectionActive.value = false
+        _selectedIds.value = emptySet()
+    }
+
+    fun deleteSelectedItems() {
+        val ids = _selectedIds.value
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                repository.deleteItems(ids)
+                clearSelection()
+            } catch (e: Exception) {
+                postStatusMessage("Delete failed: ${e.message}")
+            }
+        }
     }
 
     fun clearFilters() {
@@ -565,7 +617,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         startCreateItem(type = VaultType.LOGIN, prefilledPassword = currentGenerated)
     }
 
-    fun startEditItem(item: VaultItem) {
+    fun startEditItem(item: VaultItem, focus: EditFocus? = null) {
+        _editFocus.value = focus
         if (_lockState.value != VaultLockState.UNLOCKED) return
         _viewingItem.value = null
         _editingItem.value = item
@@ -573,6 +626,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun dismissEditItem() {
+        _editFocus.value = null
         _editingItem.value = null
         onUserInteraction()
     }
@@ -777,11 +831,25 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
         _generatedPassword.value = password
         _passwordStrength.value = VaultCrypto.calculateStrength(password)
+        generatorHistoryStore.add(
+            GeneratedCredential(
+                value = password,
+                isPassphrase = config.isPassphraseMode,
+                createdAtMillis = System.currentTimeMillis(),
+            )
+        )
+        _generatorHistory.value = generatorHistoryStore.snapshot()
     }
 
     // -------------------------------------------------------------------------
     // Settings
     // -------------------------------------------------------------------------
+
+    fun clearGeneratorHistory() {
+        generatorHistoryStore.clear()
+        _generatorHistory.value = emptyList()
+        onUserInteraction()
+    }
 
     fun updateAutoLock(seconds: Int) {
         repository.setAutoLockSeconds(seconds)

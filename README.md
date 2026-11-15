@@ -10,6 +10,30 @@
 
 ---
 
+### Search syntax
+
+The vault search accepts plain terms plus narrowers:
+
+```
+type:login | card | api | crypto | note | identity
+is:fav            (favorites only)
+tag:work          (records carrying that tag)
+```
+
+Tokens combine, e.g. `type:login netflix` or `is:fav type:card`. Unknown
+`prefix:value` text is treated as a plain term. Queries are debounced (140 ms).
+
+### Vault ergonomics
+
+- Long-press any row (or use the ⋮ menu → "Select items") for multi-select and
+  bulk delete, with a confirmation step.
+- ⋮ menu → "Group by type" renders section headers with per-type counts.
+- Sort: Favorites first / Title A–Z / Recently updated.
+- Generator keeps a **session-only** history (10 entries, RAM only, masked in the
+  UI, cleared automatically when the vault locks).
+- Audit findings link straight into the editor with the offending field focused
+  (password for weak/reused/stale, 2FA secret for malformed TOTP).
+
 > **Interface verification:** every screen and interactive flow was driven on the
 > live emulator (unlock, search, filters, favorites, item detail/edit/create/delete,
 > generator + save-to-vault, audit, recovery kit, settings, lock). Logic that can be

@@ -233,6 +233,7 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
     val currentTab by viewModel.currentTab.collectAsState()
     val viewingItem by viewModel.viewingItem.collectAsState()
     val editingItem by viewModel.editingItem.collectAsState()
+    val editFocus by viewModel.editFocus.collectAsState()
     val clipboardStatus by viewModel.clipboardStatus.collectAsState()
 
     // Handle back button
@@ -308,7 +309,8 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
             ItemEditorDialog(
                 item = item,
                 onSave = { updatedItem -> viewModel.saveItem(updatedItem) },
-                onDismiss = { viewModel.dismissEditItem() }
+                onDismiss = { viewModel.dismissEditItem() },
+                initialFocus = editFocus
             )
         }
 

@@ -41,6 +41,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,6 +58,7 @@ import com.example.ui.GeneratorConfig
 import com.example.ui.VaultViewModel
 import com.example.ui.components.StrengthMeter
 import com.example.ui.theme.CyberCyan
+import com.example.core.GeneratedCredential
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.JetBrainsMonoFamily
 
@@ -68,6 +70,7 @@ fun GeneratorScreen(
     val config by viewModel.generatorConfig.collectAsState()
     val password by viewModel.generatedPassword.collectAsState()
     val strength by viewModel.passwordStrength.collectAsState()
+    val history by viewModel.generatorHistory.collectAsState()
 
     Column(
         modifier = modifier
@@ -331,6 +334,83 @@ fun GeneratorScreen(
                 }
             }
         }
+
+        if (history.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(14.dp))
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "SESSION HISTORY",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "In memory only · cleared when the vault locks",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        TextButton(onClick = { viewModel.clearGeneratorHistory() }) {
+                            Text("Clear", fontSize = 12.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    history.forEach { entry ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (entry.isPassphrase) "Passphrase · ${entry.length} chars" else "Password · ${entry.length} chars",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "••••••••••  ${relativeTime(entry.createdAtMillis)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    viewModel.copySecurely("Generated credential", entry.value, isSensitive = true)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copy generated credential",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun relativeTime(createdAtMillis: Long): String {
+    val diffSeconds = ((System.currentTimeMillis() - createdAtMillis) / 1000).coerceAtLeast(0)
+    return when {
+        diffSeconds < 45 -> "just now"
+        diffSeconds < 60 * 60 -> "${diffSeconds / 60} min ago"
+        else -> "${diffSeconds / 3600} h ago"
     }
 }
 

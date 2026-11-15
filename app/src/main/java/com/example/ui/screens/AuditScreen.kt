@@ -45,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.Severity
 import com.example.model.Vulnerability
+import com.example.model.VulnerabilityType
+import com.example.ui.EditFocus
 import com.example.ui.VaultViewModel
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
@@ -256,7 +258,12 @@ fun AuditScreen(
                     onFix = {
                         val targetItem = allItems.find { it.id == vuln.itemId }
                         if (targetItem != null) {
-                            viewModel.startEditItem(targetItem)
+                            // Land in the field the finding is about.
+                            val focus = when (vuln.type) {
+                                VulnerabilityType.MISSING_2FA -> EditFocus.TOTP
+                                else -> EditFocus.PASSWORD
+                            }
+                            viewModel.startEditItem(targetItem, focus)
                         }
                     }
                 )

@@ -128,6 +128,25 @@ class VaultRepositorySecurityTest {
         assertTrue("a record whose GCM tag fails must not decrypt", repository.getVaultItemsFlow().first().isEmpty())
     }
 
+    @Test
+    fun `bulk delete removes exactly the selected records`() = runTest {
+        repository.saveItem(login("bulk-a", "Alpha", "pw-a"))
+        repository.saveItem(login("bulk-b", "Beta", "pw-b"))
+        repository.saveItem(login("bulk-c", "Gamma", "pw-c"))
+
+        repository.deleteItems(listOf("bulk-a", "bulk-c"))
+
+        val remaining = db.vaultDao().getAllList().map { it.id }
+        assertEquals(listOf("bulk-b"), remaining)
+    }
+
+    @Test
+    fun `bulk delete ignores an empty selection`() = runTest {
+        repository.saveItem(login("keep", "Keep", "pw"))
+        repository.deleteItems(emptyList())
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
     // ---- authenticated backups ----
 
     @Test

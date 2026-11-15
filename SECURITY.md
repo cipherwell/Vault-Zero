@@ -32,6 +32,7 @@ Keystore/StrongBox (which are delegated to the platform).
 | Brute force | 5 failed unlocks engage a 30 s cooldown; the cooldown is checked before deriving keys | `VaultRepositorySecurityTest.five failed unlocks lock out...` |
 | Audit integrity | Weak/reused/stale/malformed-TOTP rules tested directly; TOTP secrets below the RFC 4226 floor never render a code | `SecurityAuditEngineTest`, `VaultCryptoTest` |
 | Release build | R8 shrink + obfuscate (UI classes renamed, `crypto`/`data`/`model` pinned for crash forensics), `debuggable=false` | release APK dex inspection + install/launch on AVD |
+| Generator history | Session-only, in RAM, capped at 10 masked entries; never persisted and cleared on lock | `GeneratorHistory`, `VaultViewModel.lockVault` |
 | Dev switches | `-PallowScreenshots=true` and `-PdevDisableAutoLock=true` exist only behind BuildConfig flags; release builds never set them | `BUILDING.md`, BuildConfig |
 
 ## Known gaps / next hardening steps
@@ -56,7 +57,7 @@ Keystore/StrongBox (which are delegated to the platform).
 ## Verifying the claims
 
 ```bash
-./gradlew :app:testDebugUnitTest            # 47 tests (crypto, KDF migration, security paths, audit rules)
+./gradlew :app:testDebugUnitTest            # 62 tests (crypto, KDF migration, security paths, audit rules)
 adb shell am instrument -w -e class com.example.OfflineSecurityTest \
   com.aistudio.vaultzero.secvlt.test/androidx.test.runner.AndroidJUnitRunner
 ```
