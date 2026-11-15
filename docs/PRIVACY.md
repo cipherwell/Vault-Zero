@@ -1,6 +1,6 @@
 # VaultZero privacy policy
 
-**Last updated: 15 November 2026**
+**Last updated: 15 November 2026 · Applies to VaultZero 1.1.0+**
 
 VaultZero is an offline password manager and encrypted vault. It is designed so
 that the developer cannot access, collect, or sell your data — the app has **no
@@ -43,5 +43,7 @@ app's release notes. Because the app has no network permission, policy updates
 are delivered with app releases, not remotely.
 
 ## Contact
-Cipherwell — `[ADD CONTACT EMAIL]`
-Repository: https://github.com/cipherwell/Vault-Zero
+Cipherwell — contact via GitHub: <https://github.com/cipherwell> or open an issue at
+<https://github.com/cipherwell/Vault-Zero/issues>. Security reports: use the private advisory
+flow at <https://github.com/cipherwell/Vault-Zero/security/advisories/new>.
+Repository: <https://github.com/cipherwell/Vault-Zero>
