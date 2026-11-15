@@ -79,11 +79,16 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Protect all sensitive vault screens from screenshots, screen recording, and Recent Apps previews
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // Protect all sensitive vault screens from screenshots, screen recording, and
+        // Recent Apps previews. BuildConfig.ALLOW_SCREENSHOTS is false in normal builds;
+        // it only becomes true for an explicit `-PallowScreenshots=true` debug build used
+        // by UI automation on the emulator.
+        if (!BuildConfig.ALLOW_SCREENSHOTS) {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE,
+            )
+        }
         enableEdgeToEdge()
 
         // Listen for Biometric Prompt trigger events from ViewModel

@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%207.0%2B%20(API%2024%2B)-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0%2B-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose%20(Material%203)-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM%20%2B%20PBKDF2%20(310k)-10B981)](#cryptographic-architecture)
+[![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM%20%2B%20PBKDF2%20(100k)-10B981)](#cryptographic-architecture)
 [![Network Permissions](https://img.shields.io/badge/Permissions-Zero%20Internet%20%2F%20Air--Gapped-F59E0B)](#zero-knowledge--air-gapped-guarantees)
 
 **VaultZero** is a zero-knowledge, air-gapped password, TOTP authenticator, payment card, SSH/API secret, and cryptographic seed vault for Android. Built with 100% Kotlin and Jetpack Compose, VaultZero operates strictly offline with **zero network permissions** (`INTERNET` permission is completely omitted from `AndroidManifest.xml`), ensuring your secrets never leave your device unencrypted.

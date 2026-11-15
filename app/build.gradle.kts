@@ -16,6 +16,15 @@ android {
     versionName = "1.0.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Screenshot protection is ON for every normal build. The only way to see the
+    // UI from automation is an explicit, opt-in debug build:
+    //   ./gradlew assembleDebug -PallowScreenshots=true
+    buildConfigField(
+      "boolean",
+      "ALLOW_SCREENSHOTS",
+      (project.findProperty("allowScreenshots") as String? ?: "false"),
+    )
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
