@@ -37,6 +37,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -71,8 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.VaultViewModel
 import com.example.ui.components.ZeroKnowledgeSecurityBadge
-import com.example.ui.theme.CyberCyan
-import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
@@ -97,6 +96,7 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
     val clipboardSeconds by viewModel.clipboardTimeoutSeconds.collectAsState()
+    val backupBusy by viewModel.backupBusy.collectAsState()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -166,8 +166,8 @@ fun SettingsScreen(
 
         // Vault identity: one flat panel; the fingerprint is the only mono accent.
         Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
@@ -253,11 +253,11 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         Card(
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -268,7 +268,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Text("Auto-Lock Inactivity", style = MaterialTheme.typography.bodyMedium)
                     }
@@ -315,7 +315,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = CyberEmerald, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Text("Auto-Clear Clipboard", style = MaterialTheme.typography.bodyMedium)
                     }
@@ -354,7 +354,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.Fingerprint, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Fingerprint, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text("Fast Biometric Unlock", style = MaterialTheme.typography.bodyMedium)
@@ -365,7 +365,7 @@ fun SettingsScreen(
                     Switch(
                         checked = biometricEnabled,
                         onCheckedChange = { viewModel.toggleBiometric(it) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = CyberCyan, checkedTrackColor = CyberCyan.copy(alpha = 0.3f))
+                        colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.onPrimary, checkedTrackColor = MaterialTheme.colorScheme.primary)
                     )
                 }
 
@@ -402,27 +402,76 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { viewModel.lockVault() }
+                        .padding(vertical = 10.dp)
+                        .testTag("lock_now_row"),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Lock Vault Now", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Lock immediately and clear copied secrets",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = "Lock",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // Tools & Recovery
-        Text(
-            text = "RECOVERY & BACKUP",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            letterSpacing = 1.sp
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "RECOVERY & BACKUP",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 1.sp
+            )
+            if (backupBusy) {
+                Spacer(modifier = Modifier.width(10.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Working…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
         Card(
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -451,12 +500,12 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable { showExportDialog = true }
+                        .clickable(enabled = !backupBusy) { showExportDialog = true }
                         .padding(vertical = 10.dp)
                         .testTag("export_backup_row"),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(22.dp))
+                    Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Export Encrypted Vault Backup", fontWeight = FontWeight.SemiBold)
@@ -471,14 +520,14 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable {
+                        .clickable(enabled = !backupBusy) {
                             BackupPickerChannel.requestImport()
                         }
                         .padding(vertical = 10.dp)
                         .testTag("import_backup_row"),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Default.Upload, contentDescription = null, tint = CyberEmerald, modifier = Modifier.size(22.dp))
+                    Icon(imageVector = Icons.Default.Upload, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Restore / Import Encrypted Backup", fontWeight = FontWeight.SemiBold)
@@ -497,7 +546,7 @@ fun SettingsScreen(
                         .padding(vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Default.Shield, contentDescription = null, tint = CyberEmerald, modifier = Modifier.size(22.dp))
+                    Icon(imageVector = Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Cryptographic Specifications", fontWeight = FontWeight.SemiBold)
@@ -604,7 +653,7 @@ fun SettingsScreen(
                         }
                         showRecoveryDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
                     Text("Copy & Close")
                 }
@@ -666,7 +715,7 @@ fun SettingsScreen(
                         pendingImportName = null
                     },
                     enabled = pendingImportJson != null,
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
                     Text("Decrypt & Import")
                 }
@@ -747,7 +796,7 @@ fun SettingsScreen(
                         val suffix = if (exportPhraseOnly) "-phrase" else ""
                         BackupPickerChannel.requestExport("vaultzero-backup-$stamp$suffix.json")
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
                     Text("Choose file")
                 }
@@ -782,7 +831,7 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = { viewModel.confirmPartialImport() },
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
                     Text("Import readable records")
                 }
@@ -844,7 +893,7 @@ fun SettingsScreen(
                         }
                     },
                     enabled = currentPw.isNotBlank() && newPw.isNotBlank() && confirmPw.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
                     Text("Change Password")
                 }

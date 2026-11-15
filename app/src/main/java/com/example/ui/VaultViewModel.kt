@@ -14,6 +14,8 @@ import com.example.crypto.BiometricKeyManager
 import com.example.core.GeneratedCredential
 import com.example.core.ThemeMode
 import com.example.core.GeneratorHistory
+import com.example.core.AuditFilter
+import com.example.core.AuditIndex
 import com.example.core.SearchQuery
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -120,6 +122,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _editFocus = MutableStateFlow<EditFocus?>(null)
     val editFocus: StateFlow<EditFocus?> = _editFocus.asStateFlow()
+
+    private val _backupBusy = MutableStateFlow(false)
+    val backupBusy: StateFlow<Boolean> = _backupBusy.asStateFlow()
 
     private val _importVerificationPrompt = MutableStateFlow<ImportVerificationPrompt?>(null)
     val importVerificationPrompt: StateFlow<ImportVerificationPrompt?> =
@@ -259,8 +264,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _favoritesOnly,
         _sortOption,
     ) { items, spec, typeFilter, favsOnly, sortOption ->
+        // Audit-backed filters need a report; compute it only when used so the
+        // normal list path stays free of per-tick audit work.
+        val auditIndex = if (spec.audit.isEmpty()) {
+            null
+        } else {
+            AuditIndex.from(SecurityAuditEngine.analyzeVault(items))
+        }
         items.filter { item ->
             SearchQuery.matches(item, spec) &&
+                (auditIndex == null || auditIndex.matches(item.id, spec.audit)) &&
                 (typeFilter == null || item.type == typeFilter) &&
                 (!favsOnly || item.isFavorite)
         }.let { filtered ->
@@ -727,12 +740,15 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         onResult: (String) -> Unit,
     ) {
         viewModelScope.launch {
+            _backupBusy.value = true
             try {
                 val json = repository.exportEncryptedBackup(protection)
                 onResult(json)
                 onUserInteraction()
             } catch (e: Exception) {
                 postStatusMessage("Export failed: ${e.message}")
+            } finally {
+                _backupBusy.value = false
             }
         }
     }
@@ -743,6 +759,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         allowPartial: Boolean = false,
     ) {
         viewModelScope.launch {
+            _backupBusy.value = true
             try {
                 val report = repository.importEncryptedBackup(
                     jsonString = json,
@@ -799,6 +816,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 postStatusMessage("Import rejected — nothing was written: ${e.message}")
             } catch (e: Exception) {
                 postStatusMessage("Import failed — nothing was written: ${e.message ?: "invalid backup"}")
+            } finally {
+                _backupBusy.value = false
             }
         }
     }

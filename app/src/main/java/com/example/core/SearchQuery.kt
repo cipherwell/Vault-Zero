@@ -15,6 +15,7 @@ import com.example.model.VaultType
  *
  *   type:login   type:card   type:api   type:crypto   type:note   type:identity
  *   is:fav (favorites only)  is:all (clears the favorite constraint)
+ *   is:weak  is:reused  is:stale  is:no2fa  is:clean   (audit-backed filters)
  *   tag:work
  *
  * Unknown `prefix:value` tokens are treated as plain text, so typing a URL or a
@@ -25,9 +26,11 @@ data class SearchSpec(
     val type: VaultType? = null,
     val favoritesOnly: Boolean? = null,
     val tags: List<String> = emptyList(),
+    val audit: Set<AuditFilter> = emptySet(),
 ) {
     val isEmpty: Boolean
-        get() = terms.isEmpty() && type == null && favoritesOnly == null && tags.isEmpty()
+        get() = terms.isEmpty() && type == null && favoritesOnly == null &&
+            tags.isEmpty() && audit.isEmpty()
 }
 
 object SearchQuery {
@@ -52,6 +55,7 @@ object SearchQuery {
         if (raw.isBlank()) return SearchSpec()
         val terms = mutableListOf<String>()
         val tags = mutableListOf<String>()
+        val audit = linkedSetOf<AuditFilter>()
         var type: VaultType? = null
         var favorites: Boolean? = null
 
@@ -62,19 +66,20 @@ object SearchQuery {
                 prefix.isEmpty() || value.isEmpty() -> terms += token
                 prefix == "type" || prefix == "t" ->
                     TYPE_ALIASES[value.lowercase()]?.let { type = it } ?: terms.add(token)
-                prefix == "is" || prefix == "fav" || prefix == "favorite" -> when (value.lowercase()) {
-                    "fav", "favorite", "favourite", "true", "yes" -> favorites = true
-                    "all", "any", "false", "no" -> favorites = false
-                    else -> terms += token
-                }
+                prefix == "is" || prefix == "fav" || prefix == "favorite" ->
+                    when (value.lowercase()) {
+                        "fav", "favorite", "favourite", "true", "yes" -> favorites = true
+                        "all", "any", "false", "no" -> favorites = false
+                        else -> AuditFilter.fromToken(value)?.let { audit += it } ?: run { terms += token }
+                    }
                 prefix == "tag" -> tags += value.lowercase()
                 else -> terms += token
             }
         }
-        return SearchSpec(terms, type, favorites, tags)
+        return SearchSpec(terms, type, favorites, tags, audit)
     }
 
-    /** True when [item] satisfies every constraint in [spec]. */
+    /** True when [item] satisfies every non-audit constraint in [spec]. */
     fun matches(item: VaultItem, spec: SearchSpec): Boolean {
         if (spec.type != null && item.type != spec.type) return false
         if (spec.favoritesOnly == true && !item.isFavorite) return false

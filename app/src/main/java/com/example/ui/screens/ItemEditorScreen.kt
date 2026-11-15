@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -143,8 +145,28 @@ fun ItemEditorDialog(
 
     val strength = remember(password) { VaultCrypto.calculateStrength(password) }
 
+    // Unsaved-changes guard: closing the editor with typed secrets must be intentional.
+    val currentSnapshot = remember(title, category, username, password, url, totpSecret, notes,
+        cardholderName, cardNumber, expMonth, expYear, cvv, pin, brand, cardNotes,
+        serviceName, apiKey, secretToken, environment, scopes, endpointUrl, apiNotes,
+        walletName, network, publicAddress, seedPhrase, privateKey, derivationPath, cryptoNotes,
+        noteContent, fullName, idType, idNumber, birthDate, expiryDate, idNotes) {
+        listOf(title, category, username, password, url, totpSecret, notes,
+            cardholderName, cardNumber, expMonth, expYear, cvv, pin, brand, cardNotes,
+            serviceName, apiKey, secretToken, environment, scopes, endpointUrl, apiNotes,
+            walletName, network, publicAddress, seedPhrase, privateKey, derivationPath, cryptoNotes,
+            noteContent, fullName, idType, idNumber, birthDate, expiryDate, idNotes)
+            .joinToString("\u0000")
+    }
+    val initialSnapshot = remember { currentSnapshot }
+    val hasUnsavedChanges = currentSnapshot != initialSnapshot
+    var showDiscardConfirm by remember { mutableStateOf(false) }
+    fun requestClose() {
+        if (hasUnsavedChanges) showDiscardConfirm = true else onDismiss()
+    }
+
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { requestClose() },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Card(
@@ -186,7 +208,7 @@ fun ItemEditorDialog(
                             )
                         }
                     }
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = { requestClose() }) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = "Close editor")
                     }
                 }
@@ -586,7 +608,7 @@ fun ItemEditorDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedButton(
-                        onClick = onDismiss,
+                        onClick = { requestClose() },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(18.dp)
                     ) {
@@ -634,5 +656,30 @@ fun ItemEditorDialog(
                 }
             }
         }
+    }
+
+    if (showDiscardConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirm = false },
+            title = { Text("Discard changes?") },
+            text = {
+                Text(
+                    "You have unsaved edits in this entry. Closing now will lose them.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardConfirm = false
+                    onDismiss()
+                }) {
+                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardConfirm = false }) { Text("Keep editing") }
+            }
+        )
     }
 }
