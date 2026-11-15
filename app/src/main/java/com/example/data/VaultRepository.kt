@@ -221,7 +221,7 @@ class VaultRepository(
         }
         if (salt.size < VaultCrypto.SALT_LENGTH_BYTES) return@withContext false
 
-        val iterations = prefs.kdfIterations.coerceAtLeast(10_000)
+        val iterations = prefs.kdfIterations.coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
 
         // Check both exact input and trimmed input for robustness
         val candidates = listOf(password, password.trim()).distinct()
@@ -250,6 +250,9 @@ class VaultRepository(
                                 prefs.encryptedRecoveryPhrase = VaultCrypto.encrypt(legacyPhrase, vmk)
                                 prefs.clearLegacyPlaintextRecoveryPhrase()
                             }
+                            // Transparently strengthen the KDF envelope when this
+                            // vault predates the current PBKDF2 work factor.
+                            upgradeKdfIfNeeded(candidate.trim(), vmkHex, iterations)
                             purgeLegacyDemoItemsIfPresent(vmk)
                             return@withContext true
                         }
@@ -285,7 +288,7 @@ class VaultRepository(
         if (prefs.encryptedVmkByRecovery.isEmpty() || prefs.recoverySaltBase64.isEmpty()) return@withContext false
 
         try {
-            val iterations = prefs.kdfIterations.coerceAtLeast(10_000)
+            val iterations = prefs.kdfIterations.coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
             val recoverySalt = Base64.decode(prefs.recoverySaltBase64, Base64.NO_WRAP)
             if (recoverySalt.size < VaultCrypto.SALT_LENGTH_BYTES) return@withContext false
 
@@ -609,6 +612,67 @@ class VaultRepository(
             }
         }
         importedCount
+    }
+
+    /**
+     * Re-wrap both key envelopes with the current [VaultCrypto.DEFAULT_ITERATIONS]
+     * after a successful password unlock of a vault created with a weaker KDF.
+     *
+     * The VMK itself is never re-keyed, so every encrypted record stays valid;
+     * only the password and recovery KEKs (and their salts) rotate. Both
+     * envelopes rotate together because the iteration count is global for the
+     * vault: if the recovery phrase cannot be read, the whole upgrade is skipped
+     * rather than leaving a recovery path that no longer derives.
+     *
+     * The write is a single SharedPreferences commit; any failure leaves the
+     * previous envelope and iteration count untouched.
+     *
+     * @return true when the envelopes were upgraded
+     */
+    private fun upgradeKdfIfNeeded(
+        cleanPassword: String,
+        vmkHex: String,
+        currentIterations: Int,
+    ): Boolean {
+        if (cleanPassword.isEmpty() || currentIterations >= VaultCrypto.DEFAULT_ITERATIONS) return false
+        return try {
+            val vmk = SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
+            if (prefs.encryptedRecoveryPhrase.isEmpty()) return false
+            val recoveryPhrase = VaultCrypto.decrypt(prefs.encryptedRecoveryPhrase, vmk)
+            if (!VaultCrypto.validateRecoveryPhrase(recoveryPhrase, enforceChecksum = false)) return false
+
+            val newPasswordSalt = VaultCrypto.generateSalt()
+            val newPasswordKey = VaultCrypto.deriveKey(
+                cleanPassword,
+                newPasswordSalt,
+                VaultCrypto.DEFAULT_ITERATIONS,
+            )
+            val newPasswordVerifier = VaultCrypto.createKeyVerifier(newPasswordKey, "PASSWORD")
+
+            val newRecoverySalt = VaultCrypto.generateSalt()
+            val newRecoveryKey = VaultCrypto.deriveKeyFromPhrase(
+                recoveryPhrase,
+                newRecoverySalt,
+                VaultCrypto.DEFAULT_ITERATIONS,
+            )
+            val newRecoveryVerifier = VaultCrypto.createKeyVerifier(newRecoveryKey, "RECOVERY")
+
+            prefs.saveEnvelopeCredentials(
+                passwordHash = newPasswordVerifier,
+                saltBase64 = Base64.encodeToString(newPasswordSalt, Base64.NO_WRAP),
+                recoverySaltBase64 = Base64.encodeToString(newRecoverySalt, Base64.NO_WRAP),
+                encryptedVmkByPassword = VaultCrypto.encrypt(vmkHex, newPasswordKey),
+                encryptedVmkByRecovery = VaultCrypto.encrypt(vmkHex, newRecoveryKey),
+                // Still encrypted under the unchanged VMK.
+                encryptedRecoveryPhrase = prefs.encryptedRecoveryPhrase,
+                recoveryPhraseHash = newRecoveryVerifier,
+                keyFingerprint = prefs.keyFingerprint,
+                kdfIterations = VaultCrypto.DEFAULT_ITERATIONS,
+            )
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     private suspend fun purgeLegacyDemoItemsIfPresent(key: SecretKey) {

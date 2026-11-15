@@ -2,62 +2,69 @@ package com.example.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.example.crypto.VaultCrypto
 
-class VaultPreferences(context: Context) {
+/**
+ * Typed wrapper around the vault's SharedPreferences file.
+ *
+ * Every write uses [edit] with `commit = true` on purpose. The default (`apply`)
+ * defers the disk write to a background thread, which is wrong for key material:
+ * if the process dies right after [saveEnvelopeCredentials] or a KDF re-wrap
+ * reports success, the envelope (and the only copy of the wrapped VMK) must
+ * already be on disk. The cost is one synchronous write per security-state
+ * change, not per keystroke.
+ */
+class VaultPreferences(
+    context: Context,
+    prefsName: String = SECURE_PREFS_NAME,
+) {
 
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("vaultzero_secure_prefs", Context.MODE_PRIVATE)
+        context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+
+    companion object {
+        /** Production prefs file. */
+        const val SECURE_PREFS_NAME = "vaultzero_secure_prefs"
+
+        /** Isolated file used by instrumentation tests, never the real vault. */
+        const val TEST_PREFS_NAME = "vaultzero_test_prefs"
+    }
 
     var isInitialized: Boolean
         get() = prefs.getBoolean("is_initialized", false)
-        set(value) {
-            prefs.edit().putBoolean("is_initialized", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putBoolean("is_initialized", value) }
 
     var masterPasswordHash: String
         get() = prefs.getString("master_password_hash", "") ?: ""
-        set(value) {
-            prefs.edit().putString("master_password_hash", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("master_password_hash", value) }
 
     var saltBase64: String
         get() = prefs.getString("master_salt_b64", "") ?: ""
-        set(value) {
-            prefs.edit().putString("master_salt_b64", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("master_salt_b64", value) }
 
     var recoverySaltBase64: String
         get() = prefs.getString("recovery_salt_b64", "") ?: ""
-        set(value) {
-            prefs.edit().putString("recovery_salt_b64", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("recovery_salt_b64", value) }
 
     var kdfIterations: Int
         get() = prefs.getInt("kdf_iterations", VaultCrypto.DEFAULT_ITERATIONS)
-        set(value) {
-            prefs.edit().putInt("kdf_iterations", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putInt("kdf_iterations", value) }
 
     var encryptedVmkByPassword: String
         get() = prefs.getString("encrypted_vmk_by_password", "") ?: ""
-        set(value) {
-            prefs.edit().putString("encrypted_vmk_by_password", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("encrypted_vmk_by_password", value) }
 
     var encryptedVmkByRecovery: String
         get() = prefs.getString("encrypted_vmk_by_recovery", "") ?: ""
-        set(value) {
-            prefs.edit().putString("encrypted_vmk_by_recovery", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("encrypted_vmk_by_recovery", value) }
 
     var encryptedRecoveryPhrase: String
         get() = prefs.getString("encrypted_recovery_phrase", "") ?: ""
-        set(value) {
-            prefs.edit()
-                .putString("encrypted_recovery_phrase", value)
-                .remove("recovery_phrase")
-                .commit()
+        set(value) = prefs.edit(commit = true) {
+            putString("encrypted_recovery_phrase", value)
+            // One-time migration away from the legacy plaintext copy.
+            remove("recovery_phrase")
         }
 
     /**
@@ -67,44 +74,32 @@ class VaultPreferences(context: Context) {
         get() = prefs.getString("recovery_phrase", "") ?: ""
 
     fun clearLegacyPlaintextRecoveryPhrase() {
-        prefs.edit().remove("recovery_phrase").commit()
+        prefs.edit(commit = true) { remove("recovery_phrase") }
     }
 
     var recoveryPhraseHash: String
         get() = prefs.getString("recovery_phrase_hash", "") ?: ""
-        set(value) {
-            prefs.edit().putString("recovery_phrase_hash", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("recovery_phrase_hash", value) }
 
     var keyFingerprint: String
         get() = prefs.getString("key_fingerprint", "VZ-0000-0000-0000-0000") ?: "VZ-0000-0000-0000-0000"
-        set(value) {
-            prefs.edit().putString("key_fingerprint", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putString("key_fingerprint", value) }
 
     var autoLockSeconds: Int
         get() = prefs.getInt("auto_lock_seconds", 60)
-        set(value) {
-            prefs.edit().putInt("auto_lock_seconds", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putInt("auto_lock_seconds", value) }
 
     var clipboardTimeoutSeconds: Int
         get() = prefs.getInt("clipboard_timeout_seconds", 30)
-        set(value) {
-            prefs.edit().putInt("clipboard_timeout_seconds", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putInt("clipboard_timeout_seconds", value) }
 
     var isBiometricEnabled: Boolean
         get() = prefs.getBoolean("is_biometric_enabled", false)
-        set(value) {
-            prefs.edit().putBoolean("is_biometric_enabled", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putBoolean("is_biometric_enabled", value) }
 
     var isDarkTheme: Boolean
         get() = prefs.getBoolean("is_dark_theme", true)
-        set(value) {
-            prefs.edit().putBoolean("is_dark_theme", value).commit()
-        }
+        set(value) = prefs.edit(commit = true) { putBoolean("is_dark_theme", value) }
 
     fun saveEnvelopeCredentials(
         passwordHash: String,
@@ -117,22 +112,23 @@ class VaultPreferences(context: Context) {
         keyFingerprint: String,
         kdfIterations: Int = VaultCrypto.DEFAULT_ITERATIONS
     ) {
-        prefs.edit()
-            .putString("master_password_hash", passwordHash)
-            .putString("master_salt_b64", saltBase64)
-            .putString("recovery_salt_b64", recoverySaltBase64)
-            .putInt("kdf_iterations", kdfIterations)
-            .putString("encrypted_vmk_by_password", encryptedVmkByPassword)
-            .putString("encrypted_vmk_by_recovery", encryptedVmkByRecovery)
-            .putString("encrypted_recovery_phrase", encryptedRecoveryPhrase)
-            .remove("recovery_phrase")
-            .putString("recovery_phrase_hash", recoveryPhraseHash)
-            .putString("key_fingerprint", keyFingerprint)
-            .putBoolean("is_initialized", true)
-            .commit()
+        prefs.edit(commit = true) {
+            putString("master_password_hash", passwordHash)
+            putString("master_salt_b64", saltBase64)
+            putString("recovery_salt_b64", recoverySaltBase64)
+            putInt("kdf_iterations", kdfIterations)
+            putString("encrypted_vmk_by_password", encryptedVmkByPassword)
+            putString("encrypted_vmk_by_recovery", encryptedVmkByRecovery)
+            putString("encrypted_recovery_phrase", encryptedRecoveryPhrase)
+            // The recovery phrase is only ever stored encrypted under the VMK.
+            remove("recovery_phrase")
+            putString("recovery_phrase_hash", recoveryPhraseHash)
+            putString("key_fingerprint", keyFingerprint)
+            putBoolean("is_initialized", true)
+        }
     }
 
     fun resetAll() {
-        prefs.edit().clear().commit()
+        prefs.edit(commit = true) { clear() }
     }
 }
