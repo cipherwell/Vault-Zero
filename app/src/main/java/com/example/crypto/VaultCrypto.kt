@@ -23,7 +23,20 @@ object VaultCrypto {
     const val GCM_IV_LENGTH_BYTES = 12
     const val GCM_TAG_LENGTH_BITS = 128
     const val GCM_TAG_LENGTH_BYTES = 16
-    const val DEFAULT_ITERATIONS = 100_000
+    /**
+     * PBKDF2-HMAC-SHA256 work factor for every NEW key envelope and for the
+     * transparent upgrade of old ones. 600_000 follows the OWASP Password
+     * Storage Cheat Sheet recommendation for SHA-256 (2023+).
+     *
+     * Raising this value is backwards compatible: the iteration count an
+     * envelope was created with is stored in [VaultPreferences.kdfIterations],
+     * and VaultRepository re-wraps older envelopes on the first successful
+     * password unlock.
+     */
+    const val DEFAULT_ITERATIONS = 600_000
+
+    /** Oldest work factor still accepted when opening an existing vault. */
+    const val MIN_ACCEPTED_ITERATIONS = 10_000
     const val KEY_LENGTH_BITS = 256
     const val KEY_LENGTH_BYTES = 32
     const val SALT_LENGTH_BYTES = 16

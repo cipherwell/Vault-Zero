@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%207.0%2B%20(API%2024%2B)-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0%2B-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose%20(Material%203)-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM%20%2B%20PBKDF2%20(100k)-10B981)](#cryptographic-architecture)
+[![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM%20%2B%20PBKDF2%20(600k)-10B981)](#cryptographic-architecture)
 [![Network Permissions](https://img.shields.io/badge/Permissions-Zero%20Internet%20%2F%20Air--Gapped-F59E0B)](#zero-knowledge--air-gapped-guarantees)
 
 **VaultZero** is a zero-knowledge, air-gapped password, TOTP authenticator, payment card, SSH/API secret, and cryptographic seed vault for Android. Built with 100% Kotlin and Jetpack Compose, VaultZero operates strictly offline with **zero network permissions** (`INTERNET` permission is completely omitted from `AndroidManifest.xml`), ensuring your secrets never leave your device unencrypted.
@@ -76,7 +76,7 @@ apksigner verify --print-certs VaultZero-v1.0.0.apk
 - **Per-Record GCM AAD Row Binding**:
   - Every record's AES-256-GCM authentication tag is cryptographically bound to its `id`, `type`, `createdAt`, `updatedAt`, and `isFavorite` metadata via Additional Authenticated Data (AAD), preventing cross-row ciphertext swapping in SQLite or backup files.
 - **Dual-Envelope Key Wrapping & Instant Key Rotation**:
-  - A random 256-bit **Vault Master Key (VMK)** encrypts vault records and is wrapped independently by your **Master Password KEK** and your **12-Word Recovery Phrase KEK** (`PBKDF2-HMAC-SHA256`, 100,000 iterations).
+  - A random 256-bit **Vault Master Key (VMK)** encrypts vault records and is wrapped independently by your **Master Password KEK** and your **12-Word Recovery Phrase KEK** (`PBKDF2-HMAC-SHA256`, 600,000 iterations).
 - **Hardware-Backed Biometric Unlock**:
   - Uses Android Keystore (`AES/GCM/NoPadding`, StrongBox hardware-backed where supported) paired with `BiometricPrompt.CryptoObject` for hardware-authenticated biometric unlocking.
 - **Interactive Security Audit & Entropy Dashboard**:
@@ -95,7 +95,7 @@ apksigner verify --print-certs VaultZero-v1.0.0.apk
 | Component | Specification |
 | :--- | :--- |
 | **Data Encryption Cipher** | `AES-256-GCM` (`AES/GCM/NoPadding`) with 96-bit `SecureRandom` IV and 128-bit authentication tag |
-| **Key Derivation Function (KDF)** | `PBKDF2WithHmacSHA256` with **100,000 iterations** and 128-bit CSPRNG salt |
+| **Key Derivation Function (KDF)** | `PBKDF2WithHmacSHA256` with **600,000 iterations** and 128-bit CSPRNG salt |
 | **Key Hierarchy** | 256-bit random **Vault Master Key (VMK)** wrapped independently by Master Password KEK and Recovery Phrase KEK |
 | **Record AAD Binding** | `VaultZero-Record-v2\|<id>\|<type>\|<createdAt>\|<updatedAt>\|<isFavorite>` |
 | **Recovery Phrase Format** | 12-word mnemonic from curated 256-word cryptographic dictionary with **SHA-256 checksum** embedded in the 12th word |
