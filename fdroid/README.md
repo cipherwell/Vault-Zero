@@ -10,7 +10,7 @@ is opened and reviewed.
 - **Source/issue tracker:** https://github.com/cipherwell/Vault-Zero
 - **Website:** https://cipherwell.github.io/Vault-Zero/
 - **F-Droid recipe:** [`com.aistudio.vaultzero.secvlt.yml`](com.aistudio.vaultzero.secvlt.yml)
-- **Build pattern:** standard Gradle — `gradle: - yes`, project root (no `subdir`)
+- **Build pattern:** standard Gradle — `gradle: - yes` with `subdir: app` (F-Droid runs Gradle in `app/`; the parent Gradle settings are resolved automatically, and the resulting APK is found in `app/build/outputs/apk/release`)
 - **Network/signing requirements:** none; release builds become **unsigned** when no production
   keystore environment is present, so F-Droid can sign with its own key.
 
@@ -54,6 +54,11 @@ The recipe must be copied unchanged unless you deliberately bump the version (ke
 
 ## 2. Validate the metadata (recommended)
 
+> Local validation performed for this recipe: `fdroid readmeta`, `fdroid rewritemeta` and
+> `fdroid lint` pass, and `fdroid build --test --no-refresh --no-tarball
+> com.aistudio.vaultzero.secvlt:5` successfully built the unsigned APK from tag `v1.3.1` with
+> fdroidserver 2.4.2 (Gradle 9.3.1, JDK 17, Android SDK 36).
+
 F-Droid's CI will build it, but local linting saves a review round-trip. The documented server-tools
 container approach:
 
@@ -85,7 +90,9 @@ Notes for this app:
 - The build needs **JDK 17+**, Android SDK **36**, and network access for Gradle/Maven on the
   builder.
 - The release variant is unsigned when `KEYSTORE_PATH` is unset; F-Droid signs afterwards.
-- The Gradle wrapper and version catalog are committed; no `subdir` is needed.
+- The Gradle wrapper and version catalog are committed. F-Droid removes the wrapper jar and uses
+  its own Gradle; `subdir: app` is required so F-Droid looks in `app/build/outputs` (verified with
+  fdroidserver 2.4.2).
 - Test-only dependency `cash.z.ecc.android:kotlin-bip39-jvm` (FOSS, test scope) is fetched by Gradle
   and is not packaged in the APK.
 
