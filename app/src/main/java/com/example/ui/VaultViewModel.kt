@@ -1,6 +1,7 @@
 package com.example.ui
 
 import android.app.Application
+import com.example.BuildConfig
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -234,10 +235,18 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Dev builds can opt out of auto-lock (`-PdevDisableAutoLock=true`); the
+     * stored user preference still wins for every normal build, and 0 keeps
+     * meaning "never lock".
+     */
+    private fun effectiveAutoLockSeconds(): Int =
+        if (BuildConfig.DEV_DISABLE_AUTO_LOCK) 0 else repository.autoLockSeconds
+
     private fun resetAutoLockTimer() {
         lastInteractionRealtime = SystemClock.elapsedRealtime()
         autoLockJob?.cancel()
-        val seconds = repository.autoLockSeconds
+        val seconds = effectiveAutoLockSeconds()
         if (seconds > 0 && _lockState.value == VaultLockState.UNLOCKED) {
             autoLockJob = viewModelScope.launch {
                 delay(seconds * 1000L)
@@ -252,7 +261,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun checkAutoLockTimeout(nowRealtime: Long = SystemClock.elapsedRealtime()) {
         if (_lockState.value == VaultLockState.UNLOCKED) {
-            val seconds = repository.autoLockSeconds
+            val seconds = effectiveAutoLockSeconds()
             if (seconds > 0 && (nowRealtime - lastInteractionRealtime) >= seconds * 1000L) {
                 lockVault(autoLocked = true)
             }

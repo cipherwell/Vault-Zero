@@ -87,3 +87,17 @@ QA build an explicit opt-in variant:
 
 `BuildConfig.ALLOW_SCREENSHOTS` is `false` unless that property is passed, so a
 release/normal debug build keeps the protection.
+
+## Auto-lock on a test device
+
+Auto-lock is on for every normal build (60 s default, user-selectable 30 s–15 m).
+While iterating on the emulator, build with the dev switch instead of changing
+user settings:
+
+```bash
+./gradlew :app:assembleDebug -PdevDisableAutoLock=true
+```
+
+That sets `BuildConfig.DEV_DISABLE_AUTO_LOCK`, which makes the ViewModel treat
+the timeout as `0` ("never lock") and replaces the Settings timeout chips with a
+dev-build notice. Release builds never receive the flag.

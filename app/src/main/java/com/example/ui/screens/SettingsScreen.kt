@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import com.example.BuildConfig
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -178,20 +179,28 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(30 to "30s", 60 to "1m", 300 to "5m", 900 to "15m").forEach { (sec, label) ->
-                        FilterChip(
-                            selected = viewModel.autoLockSeconds == sec,
-                            onClick = { viewModel.updateAutoLock(sec) },
-                            label = { Text(label, fontSize = 11.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = CyberCyan.copy(alpha = 0.25f),
-                                selectedLabelColor = CyberCyan
+                if (BuildConfig.DEV_DISABLE_AUTO_LOCK) {
+                    Text(
+                        text = "Auto-lock is disabled in this dev build (-PdevDisableAutoLock=true).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarningAmber
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(30 to "30s", 60 to "1m", 300 to "5m", 900 to "15m").forEach { (sec, label) ->
+                            FilterChip(
+                                selected = viewModel.autoLockSeconds == sec,
+                                onClick = { viewModel.updateAutoLock(sec) },
+                                label = { Text(label, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = CyberCyan.copy(alpha = 0.25f),
+                                    selectedLabelColor = CyberCyan
+                                )
                             )
-                        )
+                        }
                     }
                 }
 
