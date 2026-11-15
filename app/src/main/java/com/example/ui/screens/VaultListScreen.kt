@@ -96,6 +96,7 @@ import com.example.model.LoginPayload
 import com.example.model.NotePayload
 import com.example.model.VaultItem
 import com.example.model.VaultType
+import com.example.ui.VaultNavTab
 import com.example.ui.VaultViewModel
 import com.example.ui.components.TotpLiveBadge
 import com.example.ui.components.VaultTypeIcon
@@ -432,7 +433,7 @@ fun VaultListScreen(
                             else -> "Your vault is empty"
                         }
                         val emptyBody = when {
-                            searchQuery.isNotEmpty() -> "Try a different search term or clear the filter."
+                            searchQuery.isNotEmpty() -> "Try a different term, or use type:login, is:weak or tag:work."
                             favoritesOnly -> "Tap the heart on any item to pin it here."
                             selectedType != null -> "Add an item of this type with the + button."
                             else -> "Tap the + button below to securely store your logins, cards, and secrets."
@@ -471,9 +472,27 @@ fun VaultListScreen(
                                     viewModel.clearFilters()
                                     viewModel.setSearchQuery("")
                                 },
-                                shape = RoundedCornerShape(10.dp)
+                                shape = CircleShape
                             ) {
                                 Text("Clear filters", fontSize = 13.sp)
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Button(
+                                    onClick = { showCreateMenu = true },
+                                    shape = CircleShape,
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Add item", fontSize = 13.sp)
+                                }
+                                OutlinedButton(
+                                    onClick = { viewModel.setTab(VaultNavTab.GENERATOR) },
+                                    shape = CircleShape,
+                                ) {
+                                    Text("Generator", fontSize = 13.sp)
+                                }
                             }
                         }
                     }
