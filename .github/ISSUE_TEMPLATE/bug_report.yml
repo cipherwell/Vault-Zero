@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a reproducible defect in VaultZero
+title: "[bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not include secrets** (passwords, TOTP seeds, recovery phrases, backup files).
+        Security vulnerabilities must be reported privately via
+        https://github.com/cipherwell/Vault-Zero/security/advisories/new — not here.
+  - type: input
+    id: version
+    attributes:
+      label: VaultZero version
+      description: Settings → About or the release/APK filename (e.g. 1.1.0, versionCode 2)
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: Pixel 9 Pro XL, Android 17 / emulator API 34
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a clean state if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead? Include error text (redact secrets).
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I am using the latest production release (not a debug build).
+          required: true
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I have not included secrets or unredacted backup data.
+          required: true

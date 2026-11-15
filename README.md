@@ -1,213 +1,245 @@
-# VaultZero — Zero-Knowledge Offline-First Cryptographic Vault for Android
+<div align="center">
 
-[![Platform](https://img.shields.io/badge/Platform-Android%207.0%2B%20(API%2024%2B)-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0%2B-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose%20(Material%203)-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM%20%2B%20PBKDF2%20(600k)-10B981)](#cryptographic-architecture)
-[![Network Permissions](https://img.shields.io/badge/Permissions-Zero%20Internet%20%2F%20Air--Gapped-F59E0B)](#zero-knowledge--air-gapped-guarantees)
+<img src="docs/screenshots/oneui-vault-dark.png" width="220" alt="VaultZero vault screen">
 
-**VaultZero** is a zero-knowledge, air-gapped password, TOTP authenticator, payment card, SSH/API secret, and cryptographic seed vault for Android. Built with 100% Kotlin and Jetpack Compose, VaultZero operates strictly offline with **zero network permissions** (`INTERNET` permission is completely omitted from `AndroidManifest.xml`), ensuring your secrets never leave your device unencrypted.
+# VaultZero
+
+**Offline, zero-knowledge password manager and encrypted vault for Android.**
+
+AES-256-GCM · PBKDF2-HMAC-SHA256 (600,000) · hardware biometrics · no network permission · no accounts · no telemetry
+
+[![Release](https://img.shields.io/github/v/release/cipherwell/Vault-Zero?label=release&style=flat-square)](https://github.com/cipherwell/Vault-Zero/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/Android-7.0%2B%20(API%2024)-3DDC84?style=flat-square&logo=android&logoColor=white)](#requirements)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](#tech-stack)
+[![Offline](https://img.shields.io/badge/network%20access-none-black?style=flat-square)](#security-at-a-glance)
+
+</div>
 
 ---
 
-### Search syntax
+## What is VaultZero?
 
-The vault search accepts plain terms plus narrowers:
+VaultZero is a local-first Android vault for passwords, 2FA codes, payment cards, API keys,
+crypto wallets/seed phrases, secure notes and identity documents. It is built with Kotlin and
+Jetpack Compose and is deliberately incapable of connecting to the internet: the app declares
+**no `INTERNET` permission** and contains no networking code.
 
-```
-type:login | card | api | crypto | note | identity
-is:fav            (favorites only)
-tag:work          (records carrying that tag)
-```
+Everything is encrypted on the device with a random 256-bit vault key, wrapped by your master
+password and a 12-word recovery phrase. Backups are encrypted files written through Android's
+system file picker — there is no account, cloud sync, analytics or remote service.
 
-Tokens combine, e.g. `type:login netflix` or `is:fav type:card`. Unknown
-`prefix:value` text is treated as a plain term. Queries are debounced (140 ms).
+> **Status:** production release **v1.1.0** (`versionCode 2`). Self-tested and pentested; an
+> independent audit is still recommended before relying on it for high-risk secrets.
 
-### Vault ergonomics
+## Table of contents
 
-- Long-press any row (or use the ⋮ menu → "Select items") for multi-select and
-  bulk delete, with a confirmation step.
-- ⋮ menu → "Group by type" renders section headers with per-type counts.
-- Sort: Favorites first / Title A–Z / Recently updated.
-- Generator keeps a **session-only** history (10 entries, RAM only, masked in the
-  UI, cleared automatically when the vault locks).
-- Audit findings link straight into the editor with the offending field focused
-  (password for weak/reused/stale, 2FA secret for malformed TOTP).
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [Security at a glance](#security-at-a-glance)
+- [Download & install](#download--install)
+- [Build from source](#build-from-source)
+- [Testing](#testing)
+- [Architecture](#architecture)
+- [Repository map](#repository-map)
+- [Documentation](#documentation)
+- [Privacy](#privacy)
+- [Contributing](#contributing)
+- [License](#license)
 
-### Design language — One UI inspired
+## Screenshots
 
-The interface follows Samsung One UI (7–8.5 era): two grounds only (#000000 dark,
-#FAFAFA light), a single blue accent, generously rounded (12–30dp) containers,
-grouped list cards with hairline dividers, thumb-reach controls (floating pill
-navigation, header actions) and a system-font type scale. Settings has a
-System / Light / Dark appearance selector. Full token reference and the sources
-studied: [`docs/DESIGN-one-ui.md`](docs/DESIGN-one-ui.md).
+| Vault (dark) | Light theme | 2FA dashboard |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/oneui-vault-dark.png" width="240"> | <img src="docs/screenshots/oneui-vault-light.png" width="240"> | <img src="docs/screenshots/oneui-totp-dashboard.png" width="240"> |
+| **Settings** | **Generator** | **Audit** |
+| <img src="docs/screenshots/oneui-settings-security.png" width="240"> | <img src="docs/screenshots/oneui-generator-dark.png" width="240"> | <img src="docs/screenshots/oneui-audit-dark.png" width="240"> |
 
-> **Interface verification:** every screen and interactive flow was driven on the
-> live emulator (unlock, search, filters, favorites, item detail/edit/create/delete,
-> generator + save-to-vault, audit, recovery kit, settings, lock). Logic that can be
-> asserted without pixels is covered by the 47 JVM tests.
+More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 
-> **Security posture:** see [`SECURITY.md`](SECURITY.md) for the enforced controls,
-> how each is verified, and the known gaps. Short version: no network permission of
-> any kind, encrypted backups leave the app only through a Storage Access Framework
-> document you pick yourself, and nothing but the launcher is exported.
+## Features
 
+### Vault
+- Six record types: **Logins**, **Payment cards**, **API secrets**, **Crypto wallets**, **Secure notes**, **Identities**.
+- AES-256-GCM per-record encryption with AAD binding; titles, categories and tags are encrypted too — SQLite only stores `[ENCRYPTED]` placeholders.
+- Live RFC 6238 TOTP codes (30 s) inline in the list and in a dedicated **2FA dashboard**.
+- Search operators: `type:login`, `tag:work`, `is:fav`, and audit-backed filters `is:weak`, `is:reused`, `is:stale`, `is:no2fa`, `is:clean`.
+- Sort by favourites, title, recently updated or recently used; optional grouping by type; multi-select bulk delete/favourite; undo delete.
+- Copy actions are sensitive-clipboard aware; revealed secrets re-mask after 15 seconds.
 
-## 📲 Download & Installation
+### Security
+- Random 256-bit vault master key (VMK); per-record AES-256-GCM with `VaultZero_Record_v2:<id>:<type>` AAD.
+- PBKDF2-HMAC-SHA256 with **600,000 iterations** and 128-bit salts; transparent upgrade of legacy vaults on unlock.
+- 12-word checksummed recovery phrase; change master password without re-encrypting records (recovery kit stays valid).
+- Hardware-backed biometric unlock through Android Keystore + `BiometricPrompt.CryptoObject` — **per-use** authentication, invalidated when biometrics are re-enrolled. The prompt auto-appears on app open when enabled.
+- Configurable auto-lock, background lock (screen-off locks immediately; SAF picker exempt), clipboard auto-clear, `FLAG_SECURE`, Recent-Apps preview blocked.
+- Local security audit (weak/reused/stale/2FA), offline by construction.
 
-Production builds (R8-shrunk, release-signed, no debug key) are published on [**GitHub Releases**](https://github.com/cipherwell/Vault-Zero/releases). The CI workflow signs tagged releases only when the production keystore secrets are configured; it never falls back to the debug keystore.
+### Backups
+- Versioned encrypted envelope via Android's Storage Access Framework only.
+- Restore with the source master password **or** 12-word recovery phrase; optional **phrase-only** export (password envelope stripped).
+- Verified imports before any write: duplicate-safe merges, in-place updates, atomic Room transaction, explicit salvage of readable records from a damaged file.
+- Timestamped filenames; import/export progress feedback.
 
-| Channel | Version | Size | Minimum Android | Link |
-| :--- | :--- | :--- | :--- | :--- |
-| **Latest APK (GitHub Releases)** | `v1.1.0` | 1,844,971 B | Android 7.0+ (API 24+) | [**⬇️ Download `VaultZero-v1.1.0.apk`**](https://github.com/cipherwell/Vault-Zero/releases/latest/download/VaultZero-v1.1.0.apk) |
-| **AAB (store upload)** | `v1.1.0` | 4,004,032 B | API 24+ | [**`VaultZero-v1.1.0.aab`**](https://github.com/cipherwell/Vault-Zero/releases/latest) |
-| **Releases & verification center** | — | — | — | [`releases/README.md`](releases/README.md) |
-| **Release notes & security spec** | `v1.1.0` | — | — | [`releases/v1.1.0.md`](releases/v1.1.0.md) |
-| **Web download portal** | — | — | Browser | [`docs/index.html`](docs/index.html) |
+### Design & ergonomics
+- One UI-inspired design: true-black/`#FAFAFA` grounds, single accent blue, squircle containers, floating pill navigation, large collapsing title.
+- Light / dark / system appearance; launcher shortcuts (*New login*, *Generator*); passphrase separator/capitalisation options.
 
-> ⚠️ **Upgrading from the `v1.0.0` preview:** that build was signed with a debug
-> certificate. Uninstall the preview (export a backup first) before installing
-> `v1.1.0`. Backup files from the preview remain importable with their master
-> password or recovery phrase. Details: [`releases/v1.1.0.md`](releases/v1.1.0.md).
+## Security at a glance
 
-### Install steps
-1. Download the APK from GitHub Releases.
-2. Open the file; allow "Install unknown apps" for the browser/file manager if prompted.
-3. Install and open VaultZero.
-4. Create a strong **Master Password** (8+ characters) and store the **12-word recovery kit** offline. The vault starts empty.
+| Area | Implementation |
+| --- | --- |
+| Records | AES-256-GCM, random per-record IV, 128-bit tag, AAD bound to record id + type |
+| Key hierarchy | Random 256-bit VMK wraps records; VMK wrapped by password KEK and recovery-phrase KEK |
+| Password KDF | PBKDF2-HMAC-SHA256, 600,000 iterations, 128-bit random salt |
+| Recovery | 12-word phrase with SHA-256 checksum word; encrypted under the VMK at rest |
+| Biometrics | AES-256-GCM Keystore key, `AUTH_BIOMETRIC_STRONG`, per-use auth (`CryptoObject`), StrongBox→TEE, invalidated by biometric enrolment changes |
+| Backups | AES-256-GCM envelope, redacted metadata, 8 MiB import cap, phrase/password restore |
+| Network | No `INTERNET`/`ACCESS_NETWORK_STATE` permission, no networking libraries |
+| Screen capture | `FLAG_SECURE`, recents screenshot disabled on API 33+ |
+| At rest | SQLite titles/categories/tags redacted; prefs contain only wrapped keys, salts, verifiers |
+| Offline | No accounts, cloud, analytics, crash reporting, ads or trackers |
 
-### Verify APK Integrity (SHA-256 Checksum)
+Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & evidence:
+[SECURITY.md](SECURITY.md) · threat model: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
 
-**Official `v1.1.0` SHA-256 Digests:**
+## Download & install
 
-```text
-407c23e56666764ff874c60ceb5afe57a20828c44b41bd79a55a48114b0d3d82  VaultZero-v1.1.0.apk
-bbfdad31fd459347a2100e3d1eae63d37a57abb86b0351687cb7317e83411bc3  VaultZero-v1.1.0.aab
-```
+Latest production release: **[GitHub Releases → v1.1.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
-Production signing certificate SHA-256:
+| Artifact | Size | SHA-256 |
+| --- | --- | --- |
+| `VaultZero-v1.1.0.apk` (sideload) | 1,844,971 B | `407c23e56666764ff874c60ceb5afe57a20828c44b41bd79a55a48114b0d3d82` |
+| `VaultZero-v1.1.0.aab` (store upload) | 4,004,032 B | `bbfdad31fd459347a2100e3d1eae63d37a57abb86b0351687cb7317e83411bc3` |
+
+Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
-Before installing on high-security devices, you can verify the APK signature and SHA-256 checksum:
-
 ```bash
-# Verify SHA-256 checksum (Linux / macOS)
-shasum -a 256 VaultZero-v1.1.0.apk
-
-# Or verify automatically against the checksum file in /releases:
-cd releases && shasum -a 256 -c VaultZero-v1.1.0.apk.sha256
-
-# Verify SHA-256 checksum (Windows PowerShell)
-Get-FileHash .\VaultZero-v1.1.0.apk -Algorithm SHA256
-
-# Verify APK signing certificate using Android SDK apksigner
+sha256sum -c VaultZero-v1.1.0.apk.sha256
 apksigner verify --print-certs VaultZero-v1.1.0.apk
 ```
 
----
+See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for installation and first-run steps.
 
-## 🛡️ Key Features
+> **Upgrading from v1.0.0 preview:** that build was debug-signed with a public key.
+> Uninstall it (export a backup first) before installing v1.1.0; Android will reject an
+> in-place update. Old backup files remain importable with their master password or recovery phrase.
 
-- **6 Specialized Secret Vault Types**:
-  - **Logins & Passwords**: Website/app credentials, username, password, live RFC 6238 **TOTP 2FA code generator** with 30-second countdown ring, notes, and custom fields.
-  - **Payment Cards**: Cardholder name, masked card number, brand, expiration, CVV, and billing PIN.
-  - **Secure Notes**: Markdown-friendly encrypted notes for sensitive documents and recovery codes.
-  - **Crypto Wallets & Seed Phrases**: 12/24-word mnemonic phrase grid viewer, network selector, public address, and private key storage.
-  - **API & Developer Secrets**: Environment (`PROD`, `STAGING`, `DEV`), Bearer/API tokens, SSH keys, endpoint URLs, and expiration alerts.
-- **Full Record Metadata Encryption (`_vz_meta_v2`)**:
-  - Not just secret payloads—record **titles**, **categories**, and **tags** are serialized inside the AES-256-GCM encrypted envelope and redacted (`[REDACTED]`) in raw SQLite columns and backup JSON envelopes.
-- **Per-Record GCM AAD Row Binding**:
-  - Every record's AES-256-GCM authentication tag is cryptographically bound to its `id`, `type`, `createdAt`, `updatedAt`, and `isFavorite` metadata via Additional Authenticated Data (AAD), preventing cross-row ciphertext swapping in SQLite or backup files.
-- **Dual-Envelope Key Wrapping & Instant Key Rotation**:
-  - A random 256-bit **Vault Master Key (VMK)** encrypts vault records and is wrapped independently by your **Master Password KEK** and your **12-Word Recovery Phrase KEK** (`PBKDF2-HMAC-SHA256`, 600,000 iterations).
-- **Hardware-Backed Biometric Unlock**:
-  - Uses Android Keystore (`AES/GCM/NoPadding`, StrongBox hardware-backed where supported) paired with `BiometricPrompt.CryptoObject` for hardware-authenticated biometric unlocking.
-- **Interactive Security Audit & Entropy Dashboard**:
-  - Real-time calculation of Shannon + character-pool entropy (in bits), weak/reused/compromised password detection, aging secret alerts (>180 days), and malformed Base32 2FA validation (without penalizing logins that do not use 2FA).
-- **Built-In Cryptographic Toolkit**:
-  - High-entropy random **Password Generator** and **EFF Diceware Passphrase Generator** powered by `java.security.SecureRandom`.
-- **Self-Contained Encrypted `.vzero` Backups**:
-  - Export and restore portable, tamper-evident `.vzero` encrypted vault containers using Android's zero-permission Storage Access Framework (SAF), with full Master Password or 12-Word Recovery Phrase cross-device restoration.
-  - Backups can be restored with the source vault's **master password OR its 12-word recovery phrase** (every export already carries the vault key wrapped under the recovery phrase). An export option **"12-word recovery phrase only"** strips the password envelope, producing a file that only that phrase can open. Biometrics remain a local convenience (they unlock this vault, not a foreign backup file).
-  - **Change Master Password** in Settings rotates the password-derived envelope (fresh salt, 600k PBKDF2, atomic swap). Records are encrypted under the vault key, so they are not re-encrypted, and the 12-word recovery kit keeps working.
-  - The vault list's **sort order and group-by-type preference persist across launches**.
-  - Imports are **verified before anything is written**: the whole envelope is checked and every record is authenticated/decrypted first, then records are classified per-record — newly restored, updated in place (same record id, changed content), or skipped as duplicates (same id or same type + title + category + tags + secret payload). Merged files containing a mix of repeats and new data bring in exactly the new data, and the write is one atomic database transaction so a rejected or interrupted import never leaves partial data.
-  - A backup with unreadable records is rejected by default, with an explicit **"Import readable records"** option (after confirmation) that salvage-imports the authenticated entries and reports how many records were skipped. Saved backups are named `vaultzero-backup-YYYYMMDD-HHMM.json`.
-- **Audit-backed list filters**: `is:weak`, `is:reused`, `is:stale`, `is:no2fa`, `is:clean` — find vulnerable records directly from the vault search bar.
-- **Safety guards**: the item editor asks before discarding unsaved edits, and backup operations show progress and lock out duplicate taps.
-- **Safety & speed details**:
-  - **Undo delete**: single and bulk deletes keep an in-memory undo pill for a few seconds; the removed records are re-inserted with their original ids/timestamps.
-  - **2FA dashboard**: "2FA codes" in the vault menu shows every live TOTP code with countdown and copy, computed on the fly; nothing is persisted.
-  - **Copy 2FA from the list**: the inline code row on a login copies the current code (and marks the item as recently used).
-  - **Recently used sort** (new) orders by when secrets were last viewed or copied; `lastUsedAt` is a non-secret column added by a non-destructive Room v1→v2 migration.
-  - **Bulk favourite** from multi-select.
-  - **Launcher shortcuts**: long-press the app icon → *New login* or *Generator*; taps taken while locked are deferred until unlock.
-  - **Lock in background**: configurable Off/15s/30s/1m; the screen-off receiver locks immediately, and the SAF picker is exempt so backups never lock out mid-flow.
-  - **Auto-hide secrets**: a revealed password re-masks itself after 15 s.
-  - **Adversarial assessment**: a documented self-pentest (`docs/PENTEST-2026-11-15.md`) covers tampering, brute force, capture, hostile intents and backup abuse.
-  - **Backup dialogs**: export shows an entry/type preview, imports end with a verified result dialog (new/updated/duplicates/unreadable counts).
-  - **Passphrase options**: separator (`-`, `.`, `_`, space) and word capitalisation.
-- **Automatic biometric prompt**: on launch/resume the fingerprint prompt appears by itself when biometric unlock is enabled (one attempt per lock; cancel falls back to the password screen).
-- **Hardened Runtime Hygiene**:
-  - `FLAG_SECURE` screenshot/screen-recording blocking, Android 13+ `ClipData.EXTRA_IS_SENSITIVE` clipboard masking with a 30-second auto-scrub timer, background auto-lock timeout, and Optional **Panic Wipe** after 5 consecutive failed unlock attempts.
+### Requirements
+Android 7.0 (API 24) or newer. No Google Play Services, no network, no account.
 
----
+## Build from source
 
-## 🔐 Cryptographic Architecture
-
-| Component | Specification |
-| :--- | :--- |
-| **Data Encryption Cipher** | `AES-256-GCM` (`AES/GCM/NoPadding`) with 96-bit `SecureRandom` IV and 128-bit authentication tag |
-| **Key Derivation Function (KDF)** | `PBKDF2WithHmacSHA256` with **600,000 iterations** and 128-bit CSPRNG salt |
-| **Key Hierarchy** | 256-bit random **Vault Master Key (VMK)** wrapped independently by Master Password KEK and Recovery Phrase KEK |
-| **Record AAD Binding** | `VaultZero-Record-v2\|<id>\|<type>\|<createdAt>\|<updatedAt>\|<isFavorite>` |
-| **Recovery Phrase Format** | 12-word mnemonic from curated 256-word cryptographic dictionary with **SHA-256 checksum** embedded in the 12th word |
-| **Biometric Hardware Key** | Android Keystore `AES-256-GCM` key (`setUserAuthenticationRequired`, StrongBox preferred) via `BiometricPrompt.CryptoObject` |
-
----
-
-## 🔒 Zero-Knowledge & Air-Gapped Guarantees
-
-- **Zero Network Access**: `AndroidManifest.xml` requests **no `android.permission.INTERNET`**. The app cannot transmit telemetry, analytics, or vault data to any remote server.
-- **Disabled OS Cloud Auto-Backup**: Configured with `android:allowBackup="false"` alongside strict `data_extraction_rules.xml` and `backup_rules.xml` excluding SQLite databases and shared preferences from unencrypted OS device-to-device transfers.
-- **RAM Zeroization**: Derived keys and decrypted VMK byte arrays are explicitly overwritten with `0x00` (`Arrays.fill(key, 0.toByte())`) immediately when the vault locks.
-
----
-
-## 📦 F-Droid Compliance & Submission Guide
-
-**VaultZero** is 100% compliant with the [F-Droid Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/) and [Submitting to F-Droid Quick Start Guide](https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/):
-
-- **100% FOSS Dependencies & Build Plugins**: Built exclusively with open-source Jetpack Compose, Room, Biometric, and Kotlin Coroutines libraries. All proprietary Google Play Services (`com.google.gms.google-services`) and Firebase plugins/SDKs are completely excluded, and `dependenciesInfo { includeInApk = false; includeInBundle = false }` disables Google's proprietary dependency signing block.
-- **Upstream Fastlane Metadata Included**:
-  - `fastlane/metadata/android/en-US/title.txt`
-  - `fastlane/metadata/android/en-US/short_description.txt` (`< 80` characters, no trailing period)
-  - `fastlane/metadata/android/en-US/full_description.txt`
-  - `fastlane/metadata/android/en-US/changelogs/1.txt` (`<= 500` bytes for `versionCode = 1`)
-  - `fastlane/metadata/android/en-US/images/icon.png` (`512x512` PNG)
-  - `fastlane/metadata/android/en-US/images/phoneScreenshots/` (`1.png`, `2.png`, `3.png`)
-- **Ready-to-Submit F-Droid Build Recipe**:
-  - Copy [`fdroid/com.aistudio.vaultzero.secvlt.yml`](fdroid/com.aistudio.vaultzero.secvlt.yml) to `metadata/com.aistudio.vaultzero.secvlt.yml` in your fork of [`fdroid/fdroiddata`](https://gitlab.com/fdroid/fdroiddata), ensure your repository has the `v1.1.0` Git tag pushed, and open a Merge Request titled `New App: com.aistudio.vaultzero.secvlt`.
-
----
-
-## 🛠️ Building from Source & Running Tests
-
-### Prerequisites
-- **Android Studio** Ladybug (2024.2.1) or newer (or command-line Android SDK tools)
-- **JDK 11+** (JDK 17/21 recommended for AGP 9.1.1)
-- **Android SDK** API 36
-
-### Build Debug or Release APK via Gradle
-```bash
-gradle :app:assembleDebug
-gradle :app:assembleRelease
-```
-
-### Run Unit & Robolectric Security Suite
-VaultZero includes a comprehensive JUnit 4 + Robolectric test suite (90 tests) verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and verified/duplicate-safe `.vzero` backup recovery (repeated imports, mixed repeat+new files, in-place updates, tamper rejection, partial-salvage imports, atomic fail-closed writes), recovery-phrase restore and phrase-only exports, master-password rotation (records and recovery kit preserved), audit-backed list filters, and the unsaved-editor guard:
+Prerequisites: **JDK 17**, Android SDK **36**, Gradle wrapper included.
 
 ```bash
-gradle :app:testDebugUnitTest
+git clone https://github.com/cipherwell/Vault-Zero.git
+cd Vault-Zero
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk   # or your JDK 17
+export ANDROID_HOME=$HOME/Android/Sdk
+./gradlew :app:assembleDebug                     # install with adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
+
+Debug builds normally enable `FLAG_SECURE`; for emulator UI automation only:
+`./gradlew :app:assembleDebug -PallowScreenshots=true -PdevDisableAutoLock=true`.
+
+Production/release builds require the keystore environment (`docs/RELEASING.md`). Full
+instructions: [docs/BUILDING.md](docs/BUILDING.md).
+
+## Testing
+
+```bash
+./gradlew :app:testDebugUnitTest       # 90 JVM/Robolectric tests
+./gradlew :app:lintDebug               # Android Lint
+```
+
+There are 12 instrumented device tests too (biometric key binding, KDF migration, offline posture,
+setup flow). Because `connectedAndroidTest` uninstalls the app, device tests are run manually —
+see [docs/TESTING.md](docs/TESTING.md) for commands and the QA checklist.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  UI["Compose UI<br/>screens · dialogs"] --> VM["VaultViewModel<br/>state · lifecycle"]
+  VM --> REPO["VaultRepository<br/>envelope · import/export"]
+  VM --> CRYPTO["VaultCrypto<br/>AES-GCM · PBKDF2 · TOTP"]
+  VM --> BIO["BiometricKeyManager<br/>Keystore · CryptoObject"]
+  REPO --> ROOM["Room database<br/>vault_items (redacted metadata)"]
+  REPO --> PREFS["SharedPreferences<br/>wrapped VMK · salts"]
+  UI -. no network code .-> X((Offline))
+```
+
+Single-activity Compose app; all secrets are decrypted only into memory while the vault is
+unlocked. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · crypto:
+[docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md).
+
+## Repository map
+
+```
+vault-zero-app/
+├── app/                       Android application module (Kotlin/Compose)
+│   └── src/main/java/com/example/
+│       ├── crypto/            AES-GCM, PBKDF2, TOTP, biometric keystore, audit engine
+│       ├── data/              Room database, repository, preferences, backup IO
+│       ├── model/             Vault records, payloads, audit models
+│       └── ui/                Compose screens, components, theme, backup picker
+├── docs/                      Documentation (start at docs/README.md)
+│   └── screenshots/           Curated screenshots (+ archive/)
+├── releases/                  Release notes & checksums (binaries on GitHub Releases)
+├── store/                     Play Store listing pack & data-safety answers
+├── fastlane/                  F-Droid/Play metadata (listing, changelog, images)
+├── fdroid/                    F-Droid build recipe
+├── .github/                   Issue/PR templates, release workflow, Dependabot
+├── SECURITY.md                Security policy, evidence and residual risks
+├── CHANGELOG.md               Version history
+├── CONTRIBUTING.md            Contribution guide
+└── LICENSE                    MIT
+```
+
+Full annotated tree: [docs/REPO-MAP.md](docs/REPO-MAP.md).
+
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| [docs/README.md](docs/README.md) | Documentation index & reading paths |
+| [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) | Install, first vault, recovery kit, biometrics, backups |
+| [docs/FEATURES.md](docs/FEATURES.md) | Complete user guide and search syntax |
+| [SECURITY.md](SECURITY.md) | Security controls, verification, limitations, disclosure |
+| [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) | Algorithms, key hierarchy, record/backup formats |
+| [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | Adversaries, assets, mitigations, residual risk |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, layers, data flow, database schema |
+| [docs/BACKUP-FORMAT.md](docs/BACKUP-FORMAT.md) | Envelope schema, import/export semantics |
+| [docs/BUILDING.md](docs/BUILDING.md) | Build, dev flags, device tests |
+| [docs/TESTING.md](docs/TESTING.md) | Test matrix, commands, manual QA |
+| [docs/RELEASING.md](docs/RELEASING.md) | Signing, versioning, Play/F-Droid/GitHub release |
+| [docs/DESIGN.md](docs/DESIGN.md) | One UI-inspired design tokens & screens |
+| [docs/PENTEST-2026-11-15.md](docs/PENTEST-2026-11-15.md) | Self-directed security assessment |
+| [docs/FAQ.md](docs/FAQ.md) | Frequently asked questions |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common problems & fixes |
+| [docs/PRIVACY.md](docs/PRIVACY.md) | Privacy policy |
+| [releases/](releases/README.md) | Release notes, checksums, verification |
+| [store/](store/README.md) | Play Store listing assets & answers |
+
+## Privacy
+
+VaultZero collects no data and has no network permission. The only thing that leaves the
+device is an encrypted backup you explicitly export. Full policy:
+[docs/PRIVACY.md](docs/PRIVACY.md) · [web version](docs/privacy.html).
+
+## Contributing
+
+Security tool: changes that weaken cryptography, add network access, log secrets or relax
+storage rules are rejected. Read [CONTRIBUTING.md](CONTRIBUTING.md) and
+[docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) before opening a PR. For vulnerabilities use
+GitHub's private advisory flow (see [SECURITY.md](SECURITY.md)); do not file a public issue.
+
+## License
+
+MIT — see [LICENSE](LICENSE). VaultZero is an independent, local-first tool. You are responsible
+for your device security, master password strength and backups; no software can recover a
+forgotten master password and recovery phrase.
+
+<div align="center"><sub>Built by Cipherwell · Not affiliated with Samsung, Google or Android.</sub></div>

@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest an improvement that fits VaultZero's offline, zero-knowledge model
+title: "[feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        VaultZero will not add network access, cloud sync, telemetry, ads or accounts.
+        Requests that weaken cryptography or export plaintext secrets will be declined.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to do, and why is it hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: security
+    attributes:
+      label: Does this affect security, crypto or backups?
+      options:
+        - "No"
+        - "Yes — UI/behaviour only"
+        - "Yes — crypto/format change (requires design review)"
+        - "Not sure"
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Model check
+      options:
+        - label: This does not require network access, cloud sync, telemetry or plaintext storage.
+          required: true

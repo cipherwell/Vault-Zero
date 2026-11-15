@@ -10,7 +10,7 @@ Assets in this folder / fastlane:
 ## App details
 - App name: **VaultZero** (≤30)
 - Category: Tools
-- Contact email: **[ADD CONTACT EMAIL]** (required by Play)
+- Contact email: **[add your contact email in Play Console / privacy page]** (required by Play)
 - Website: `https://cipherwell.github.io/Vault-Zero/`
 - Privacy policy URL: `https://cipherwell.github.io/Vault-Zero/privacy.html`
   (enable GitHub Pages for the `docs/` folder on `main`; the files are in `docs/`)
@@ -62,4 +62,4 @@ fresh first upload there.
 3. Upload `VaultZero-v1.1.0.aab` to the internal testing track first.
 4. Add store listing assets/text from this folder.
 5. Install from internal testing on a device and complete the checklist in
-   `RELEASING.md` before promoting to production.
+   `../docs/RELEASING.md` before promoting to production.

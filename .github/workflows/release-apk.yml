@@ -11,6 +11,9 @@ permissions:
 
 jobs:
   build-and-release:
+    # Tag pushes do not auto-publish until the repository has both the signing
+    # secrets and RELEASE_ON_TAG=true. Manual runs always work once secrets exist.
+    if: github.event_name == 'workflow_dispatch' || vars.RELEASE_ON_TAG == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
