@@ -47,6 +47,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -350,6 +351,18 @@ fun VaultListScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
+                        if (searchQuery.isNotEmpty() || selectedType != null || favoritesOnly) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.clearFilters()
+                                    viewModel.setSearchQuery("")
+                                },
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("Clear filters", fontSize = 13.sp)
+                            }
+                        }
                     }
                 }
             } else {
