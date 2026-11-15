@@ -98,8 +98,8 @@ intents and log leakage all held.
 ## Release verification
 
 ```bash
-sha256sum -c VaultZero-v1.3.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.3.0.apk
+sha256sum -c VaultZero-v1.3.1.apk.sha256
+apksigner verify --print-certs VaultZero-v1.3.1.apk
 # expected certificate SHA-256:
 # 6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7
 ```

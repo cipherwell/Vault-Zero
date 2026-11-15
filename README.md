@@ -31,7 +31,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.3.0** (`versionCode 4`). Self-tested and pentested; an
+> **Status:** production release **v1.3.1** (`versionCode 5`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -109,25 +109,25 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.3.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.3.1](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.3.0.apk` (sideload) | 1,861,359 B | `223d9df58cc061d5463e5c7550744beb1c09b8e828a23027a0726e1d4d73bd6d` |
-| `VaultZero-v1.3.0.aab` (store upload) | 4,049,538 B | `3b0cb65b619f614d34554f4cf9c9470866fa31425c671c92d3f0b76ccfe63591` |
+| `VaultZero-v1.3.1.apk` (sideload) | 1,861,355 B | `107fea47f006210b88f38b6a6813d4ed18af58cd08f488d5e9da14a817556a1c` |
+| `VaultZero-v1.3.1.aab` (store upload) | 4,049,490 B | `3039ee37d62ce144330c094925f1d104d22b2d6043a27822770dab15acd98bf7` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ```bash
-sha256sum -c VaultZero-v1.3.0.apk.sha256
-apksigner verify --print-certs VaultZero-v1.3.0.apk
+sha256sum -c VaultZero-v1.3.1.apk.sha256
+apksigner verify --print-certs VaultZero-v1.3.1.apk
 ```
 
 See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) for installation and first-run steps.
 
 > **Upgrading from v1.0.0 preview:** that build was debug-signed with a public key.
-> Uninstall it (export a backup first) before installing v1.3.0; Android will reject an
+> Uninstall it (export a backup first) before installing v1.3.1; Android will reject an
 > in-place update. Old backup files remain importable with their master password or recovery phrase.
 
 ### Requirements

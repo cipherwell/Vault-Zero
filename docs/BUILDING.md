@@ -83,9 +83,10 @@ Emulator notes:
 
 ## Release builds
 
-Release builds are minified/obfuscated by R8 and signed with the production upload key from
-environment variables (`KEYSTORE_PATH`, `STORE_PASSWORD`, `KEY_PASSWORD`). Build, verification and
-publishing steps are in [RELEASING.md](RELEASING.md). Never sign a release with `debug.keystore`.
+Release builds are minified/obfuscated by R8. With `KEYSTORE_PATH`, `STORE_PASSWORD` and
+`KEY_PASSWORD` set they are signed with the production upload key; **without them the release
+variant is deliberately unsigned** so F-Droid/distributors can sign it themselves. It never falls
+back to `debug.keystore`. Build, verification and publishing steps are in [RELEASING.md](RELEASING.md).
 
 ## Troubleshooting the build
 

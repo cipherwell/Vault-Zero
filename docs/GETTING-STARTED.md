@@ -1,12 +1,12 @@
 # Getting started with VaultZero
 
 This guide takes you from a new phone to a working, locked-down vault. It assumes the
-production release `1.3.0` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
+production release `1.3.1` from [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases/latest)
 (or a Play/F-Droid build once published).
 
 ## 1. Install
 
-- **Sideload:** download `VaultZero-v1.3.0.apk`, allow installation from your browser/file manager,
+- **Sideload:** download `VaultZero-v1.3.1.apk`, allow installation from your browser/file manager,
   open the APK and install. Verify the checksum/certificate if you can
   ([instructions](../releases/README.md)).
 - **Upgrading from the `v1.0.0` preview:** uninstall it first. The preview was debug-signed and

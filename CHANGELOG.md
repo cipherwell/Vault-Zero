@@ -4,6 +4,26 @@ All notable changes to VaultZero are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] — 2026-11-15 — F-Droid-compatible release build
+
+### Changed
+- Release builds are now **unsigned when no production signing environment is supplied** (e.g.
+  F-Droid's build server), so distributors can sign with their own key. Local/CI builds with
+  `KEYSTORE_PATH`/`STORE_PASSWORD`/`KEY_PASSWORD` remain production-signed; release never falls
+  back to the debug keystore.
+- `compileSdk` simplified from 36.1 to plain **36** for broader distro toolchain compatibility
+  (target SDK remains 36).
+
+### Fixed
+- AndroidX/F-Droid fastlane short description no longer has a trailing period (F-Droid metadata
+  requirement).
+- F-Droid recipe updated: current build tag `v1.3.1` / versionCode 5, no unnecessary `subdir` or
+  debug-keystore scan entry.
+
+### Upgrade notes
+- In-place from 1.3.0 (same signing key, versionCode 5). No app behavior change; this release
+  exists so F-Droid can reproduce the build without the private upload key.
+
 ## [1.3.0] — 2026-11-15 — hardened recovery phrases
 
 ### Security
@@ -116,7 +136,8 @@ All notable changes to VaultZero are documented here. Format based on
 Initial preview: encrypted vault, AES-256-GCM records, PBKDF2 100k, 12-word recovery phrase,
 TOTP, audit, generator, encrypted backups. Superseded by 1.1.0; do not use for updates.
 
-[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/cipherwell/Vault-Zero/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/cipherwell/Vault-Zero/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/cipherwell/Vault-Zero/compare/v1.0.0...v1.1.0

@@ -1,1 +1,1 @@
-Offline zero-knowledge vault with biometrics and encrypted backups.
+Offline zero-knowledge vault with biometrics and encrypted backups

@@ -41,7 +41,8 @@ Outputs:
 - `app/build/outputs/bundle/release/app-release.aab`
 
 The release signing config reads only `KEYSTORE_PATH`/`STORE_PASSWORD`/`KEY_PASSWORD`; it must never
-fall back to `debug.keystore`.
+fall back to `debug.keystore`. When those variables are absent, the release variant is **unsigned** —
+this is required for F-Droid's build server, which signs with its own key.
 
 ## 3. Verify
 
