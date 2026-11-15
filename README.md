@@ -60,8 +60,8 @@ Production builds (R8-shrunk, release-signed, no debug key) are published on [**
 
 | Channel | Version | Size | Minimum Android | Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Latest APK (GitHub Releases)** | `v1.1.0` | 1,800,311 B | Android 7.0+ (API 24+) | [**⬇️ Download `VaultZero-v1.1.0.apk`**](https://github.com/cipherwell/Vault-Zero/releases/latest/download/VaultZero-v1.1.0.apk) |
-| **AAB (store upload)** | `v1.1.0` | 3,959,508 B | API 24+ | [**`VaultZero-v1.1.0.aab`**](https://github.com/cipherwell/Vault-Zero/releases/latest) |
+| **Latest APK (GitHub Releases)** | `v1.1.0` | 1,844,971 B | Android 7.0+ (API 24+) | [**⬇️ Download `VaultZero-v1.1.0.apk`**](https://github.com/cipherwell/Vault-Zero/releases/latest/download/VaultZero-v1.1.0.apk) |
+| **AAB (store upload)** | `v1.1.0` | 4,004,032 B | API 24+ | [**`VaultZero-v1.1.0.aab`**](https://github.com/cipherwell/Vault-Zero/releases/latest) |
 | **Releases & verification center** | — | — | — | [`releases/README.md`](releases/README.md) |
 | **Release notes & security spec** | `v1.1.0` | — | — | [`releases/v1.1.0.md`](releases/v1.1.0.md) |
 | **Web download portal** | — | — | Browser | [`docs/index.html`](docs/index.html) |
@@ -82,8 +82,8 @@ Production builds (R8-shrunk, release-signed, no debug key) are published on [**
 **Official `v1.1.0` SHA-256 Digests:**
 
 ```text
-682a081cae0349b312d494137545e5c789752b9b7191bcef9c3dc7bedba131d6  VaultZero-v1.1.0.apk
-0b60dd18eb2545f8ba7ca695a253fdd06d406616095eeba0b77ad747ba3d6410  VaultZero-v1.1.0.aab
+407c23e56666764ff874c60ceb5afe57a20828c44b41bd79a55a48114b0d3d82  VaultZero-v1.1.0.apk
+bbfdad31fd459347a2100e3d1eae63d37a57abb86b0351687cb7317e83411bc3  VaultZero-v1.1.0.aab
 ```
 
 Production signing certificate SHA-256:
