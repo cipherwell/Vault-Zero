@@ -129,6 +129,7 @@ apksigner verify --print-certs VaultZero-v1.0.0.apk
   - High-entropy random **Password Generator** and **EFF Diceware Passphrase Generator** powered by `java.security.SecureRandom`.
 - **Self-Contained Encrypted `.vzero` Backups**:
   - Export and restore portable, tamper-evident `.vzero` encrypted vault containers using Android's zero-permission Storage Access Framework (SAF), with full Master Password or 12-Word Recovery Phrase cross-device restoration.
+  - Imports are **verified before anything is written**: the whole envelope is checked and every record is authenticated/decrypted first, then records are classified per-record — newly restored, updated in place (same record id, changed content), or skipped as duplicates (same id or same type + title + category + tags + secret payload). Merged files containing a mix of repeats and new data bring in exactly the new data, and the write is one atomic database transaction so a rejected or interrupted import never leaves partial data.
 - **Hardened Runtime Hygiene**:
   - `FLAG_SECURE` screenshot/screen-recording blocking, Android 13+ `ClipData.EXTRA_IS_SENSITIVE` clipboard masking with a 30-second auto-scrub timer, background auto-lock timeout, and Optional **Panic Wipe** after 5 consecutive failed unlock attempts.
 
@@ -186,7 +187,7 @@ gradle :app:assembleRelease
 ```
 
 ### Run Unit & Robolectric Security Suite
-VaultZero includes a comprehensive JUnit 4 + Robolectric test suite verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and portable `.vzero` backup recovery:
+VaultZero includes a comprehensive JUnit 4 + Robolectric test suite (70 tests) verifying AES-256-GCM tamper detection, PBKDF2 key derivation, SHA-256 recovery mnemonic checksum validation, SQLite metadata redaction, AAD row-swap rejection, optional 2FA audit accuracy, and verified/duplicate-safe `.vzero` backup recovery (repeated imports, mixed repeat+new files, in-place updates, tamper rejection, atomic fail-closed writes):
 
 ```bash
 gradle :app:testDebugUnitTest

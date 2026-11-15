@@ -21,6 +21,10 @@ interface VaultDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(entity: VaultItemEntity)
 
+    /** Single Room transaction: a verified import is written all-or-nothing. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateAll(entities: List<VaultItemEntity>)
+
     @Query("DELETE FROM vault_items WHERE id = :id")
     suspend fun deleteById(id: String)
 
