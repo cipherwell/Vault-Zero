@@ -15,7 +15,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -426,40 +425,6 @@ class VaultRepositorySecurityTest {
             }
         }
         assertEquals("rejected phrase must not write", 0, db.vaultDao().getAllList().size)
-    }
-
-    // ---- fingerprint-backed backup restore support ----
-
-    @Test
-    fun `unwrapBackupVmk resolves the phrase and the fingerprint identifies the source`() = runTest {
-        repository.saveItem(login("row-aa", "Mem", "secret-mem"))
-        val backup = repository.exportEncryptedBackup(BackupProtection.RECOVERY_PHRASE_ONLY)
-
-        assertEquals(prefs.keyFingerprint, repository.backupFingerprint(backup))
-        val vmkByName = repository.unwrapBackupVmk(backup, recoveryPhrase)
-        assertEquals("phrase must resolve the backup VMK", 64, vmkByName?.length)
-        assertNull("password must not resolve a phrase-only file", repository.unwrapBackupVmk(backup, password))
-        assertNull("wrong phrase must not resolve", repository.unwrapBackupVmk(backup, "not a phrase"))
-    }
-
-    @Test
-    fun `a pre-unwrapped backup key imports the file without any secret`() = runTest {
-        repository.saveItem(login("row-ab", "Nun", "secret-nun"))
-        val phraseOnly = repository.exportEncryptedBackup(BackupProtection.RECOVERY_PHRASE_ONLY)
-        val fingerprint = repository.backupFingerprint(phraseOnly)
-        assertEquals(prefs.keyFingerprint, fingerprint)
-
-        // Model the biometric path: the Keystore entry yields the hex key after a
-        // prompt, and the import never sees the phrase.
-        val foreignKeyHex = repository.unwrapBackupVmk(phraseOnly, recoveryPhrase)!!
-
-        repository.clearVault()
-        repository.setupMasterPassword("VaultD_Password#1")
-        assertEquals(0, db.vaultDao().getAllList().size)
-
-        val report = repository.importEncryptedBackup(phraseOnly, foreignVmkHex = foreignKeyHex)
-        assertEquals(1, report.imported)
-        assertEquals(1, db.vaultDao().getAllList().size)
     }
 
     // ---- master password rotation ----

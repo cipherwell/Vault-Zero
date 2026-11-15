@@ -94,8 +94,6 @@ fun SettingsScreen(
     var exportPhraseOnly by remember { mutableStateOf(false) }
     var pendingExportPhraseOnly by remember { mutableStateOf(false) }
     val importPrompt by viewModel.importVerificationPrompt.collectAsState()
-    val backupEnrollOffer by viewModel.backupEnrollOffer.collectAsState()
-    val biometricBackupCount by viewModel.biometricBackupCount.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
     val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
     val clipboardSeconds by viewModel.clipboardTimeoutSeconds.collectAsState()
@@ -484,32 +482,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Restore / Import Encrypted Backup", fontWeight = FontWeight.SemiBold)
-                        Text("Password, 12-word phrase, or a saved fingerprint", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-
-                if (biometricBackupCount > 0) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { viewModel.clearBiometricBackupEntries() }
-                            .padding(vertical = 10.dp)
-                            .testTag("forget_fingerprint_backups_row"),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(imageVector = Icons.Default.Fingerprint, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(22.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Fingerprint-Restorable Backups", fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "$biometricBackupCount saved · tap to remove them from this device",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Text("Remove", style = MaterialTheme.typography.labelMedium, color = DangerRed)
+                        Text("Import records from a VaultZero encrypted JSON backup", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -667,7 +640,7 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "${pendingImportName ?: "Backup file"} is ready to import. Enter the source vault's Master Password or its 12-word Recovery Phrase when the file was created by a different vault; leave it blank for a backup of this vault. If this source vault was saved for fingerprint restore, leaving the field blank asks for your fingerprint instead.",
+                        text = "${pendingImportName ?: "Backup file"} is ready to import. Enter the source vault's Master Password or its 12-word Recovery Phrase when the file was created by a different vault; leave it blank for a backup of this vault (unlock with biometrics first to avoid typing). Phrase-only backups always require their recovery phrase.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -686,12 +659,7 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         pendingImportJson?.let { json ->
-                            val secret = backupPassword.ifBlank { null }
-                            if (secret == null && viewModel.canRestoreBackupWithFingerprint(json)) {
-                                viewModel.importBackupWithFingerprint(json)
-                            } else {
-                                viewModel.importBackupJson(json, secret)
-                            }
+                            viewModel.importBackupJson(json, backupPassword.ifBlank { null })
                         }
                         showImportDialog = false
                         pendingImportJson = null
@@ -705,33 +673,6 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showImportDialog = false }) { Text("Cancel") }
-            }
-        )
-    }
-
-    backupEnrollOffer?.let { _ ->
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissBackupEnrollOffer() },
-            title = { Text("Use fingerprint for this backup?") },
-            text = {
-                Text(
-                    "Next time you import a backup from this vault you can leave the password/phrase field blank and verify your fingerprint instead. " +
-                        "The 12-word phrase is never stored: only the backup's vault key, wrapped by a hardware key that requires a fresh fingerprint " +
-                        "and is invalidated when your fingerprints change.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.confirmBackupEnroll() },
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
-                ) {
-                    Text("Enable fingerprint restore")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissBackupEnrollOffer() }) { Text("Not now") }
             }
         )
     }

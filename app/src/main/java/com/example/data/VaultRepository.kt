@@ -597,7 +597,6 @@ class VaultRepository(
         jsonString: String,
         backupPassword: String? = null,
         skipInvalidRecords: Boolean = false,
-        foreignVmkHex: String? = null,
     ): BackupImportReport = withContext(Dispatchers.Default) {
         val activeKey = activeSecretKey ?: throw IllegalStateException("Vault is locked")
         val backupJson = try {
@@ -621,12 +620,58 @@ class VaultRepository(
         // recovery-phrase key, so the phrase alone is a complete restore credential.
         val protection = BackupProtection.fromStorage(backupJson.optString("protection", null))
         val secretText = backupPassword?.trim().orEmpty()
-        // A key already unwrapped by the caller (e.g. decrypted with BiometricPrompt)
-        // skips credential parsing entirely.
-        val foreignBackupKey: SecretKey? = when {
-            !foreignVmkHex.isNullOrBlank() ->
-                SecretKeySpec(VaultCrypto.hexToBytes(foreignVmkHex), "AES")
-            else -> resolveBackupKey(backupJson, protection, secretText)
+        if (protection == BackupProtection.RECOVERY_PHRASE_ONLY && secretText.isEmpty()) {
+            throw IllegalArgumentException(
+                "this backup is protected by its 12-word recovery phrase; enter that phrase to import it"
+            )
+        }
+        var foreignBackupKey: SecretKey? = null
+        if (secretText.isNotEmpty()) {
+            val iterations = backupJson.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
+            val phraseCandidate = VaultCrypto.normalizeRecoveryPhrase(secretText)
+            val looksLikePhrase = VaultCrypto.validateRecoveryPhrase(
+                phraseCandidate,
+                enforceChecksum = false,
+            )
+            foreignBackupKey = if (looksLikePhrase) {
+                if (!VaultCrypto.verifyRecoveryPhraseChecksum(phraseCandidate)) {
+                    throw IllegalArgumentException(
+                        "recovery phrase checksum does not match — check for a mistyped or reordered word"
+                    )
+                }
+                val recoverySaltB64 = backupJson.optString("recoverySalt", "")
+                val recoveryEncVmk = backupJson.optString("encryptedVmkByRecovery", "")
+                if (recoverySaltB64.isEmpty() || recoveryEncVmk.isEmpty()) {
+                    throw IllegalArgumentException("this backup has no recovery-phrase key material")
+                }
+                try {
+                    val salt = Base64.decode(recoverySaltB64, Base64.NO_WRAP)
+                    val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phraseCandidate, salt, iterations)
+                    val vmkHex = VaultCrypto.decrypt(recoveryEncVmk, recoveryKey)
+                    SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
+                } catch (e: Exception) {
+                    throw IllegalArgumentException("the recovery phrase does not match this backup")
+                }
+            } else {
+                if (protection == BackupProtection.RECOVERY_PHRASE_ONLY) {
+                    throw IllegalArgumentException(
+                        "this backup can only be opened with its 12-word recovery phrase, not a password"
+                    )
+                }
+                val backupSaltB64 = backupJson.optString("salt", "")
+                val backupEncVmk = backupJson.optString("encryptedVmkByPassword", "")
+                if (backupSaltB64.isEmpty() || backupEncVmk.isEmpty()) {
+                    throw IllegalArgumentException("backup has no password envelope to unlock")
+                }
+                try {
+                    val salt = Base64.decode(backupSaltB64, Base64.NO_WRAP)
+                    val passKey = VaultCrypto.deriveKey(secretText, salt, iterations)
+                    val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
+                    SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
+                } catch (e: Exception) {
+                    throw IllegalArgumentException("backup password is wrong")
+                }
+            }
         }
 
         // ---- phase 1: parse + decrypt + validate every record (no writes) ----
@@ -767,89 +812,6 @@ class VaultRepository(
      * same content (local favourite is preserved), while any real field change is
      * recognised as an update rather than a duplicate.
      */
-    /**
-     * Resolve the backup's VMK from the supplied secret (source master password or
-     * 12-word recovery phrase). Returns null when no secret was supplied; throws
-     * IllegalArgumentException with a user-facing reason when the credential or file
-     * shape is wrong. Shared by import and by biometric enrolment.
-     */
-    private fun resolveBackupKey(
-        backupJson: JSONObject,
-        protection: BackupProtection,
-        secretText: String,
-    ): SecretKey? {
-        if (protection == BackupProtection.RECOVERY_PHRASE_ONLY && secretText.isEmpty()) {
-            throw IllegalArgumentException(
-                "this backup is protected by its 12-word recovery phrase; enter that phrase to import it"
-            )
-        }
-        if (secretText.isEmpty()) return null
-
-        val iterations = backupJson.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
-        val phraseCandidate = VaultCrypto.normalizeRecoveryPhrase(secretText)
-        val looksLikePhrase = VaultCrypto.validateRecoveryPhrase(phraseCandidate, enforceChecksum = false)
-        return if (looksLikePhrase) {
-            if (!VaultCrypto.verifyRecoveryPhraseChecksum(phraseCandidate)) {
-                throw IllegalArgumentException(
-                    "recovery phrase checksum does not match — check for a mistyped or reordered word"
-                )
-            }
-            val recoverySaltB64 = backupJson.optString("recoverySalt", "")
-            val recoveryEncVmk = backupJson.optString("encryptedVmkByRecovery", "")
-            if (recoverySaltB64.isEmpty() || recoveryEncVmk.isEmpty()) {
-                throw IllegalArgumentException("this backup has no recovery-phrase key material")
-            }
-            try {
-                val salt = Base64.decode(recoverySaltB64, Base64.NO_WRAP)
-                val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phraseCandidate, salt, iterations)
-                val vmkHex = VaultCrypto.decrypt(recoveryEncVmk, recoveryKey)
-                SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
-            } catch (e: Exception) {
-                throw IllegalArgumentException("the recovery phrase does not match this backup")
-            }
-        } else {
-            if (protection == BackupProtection.RECOVERY_PHRASE_ONLY) {
-                throw IllegalArgumentException(
-                    "this backup can only be opened with its 12-word recovery phrase, not a password"
-                )
-            }
-            val backupSaltB64 = backupJson.optString("salt", "")
-            val backupEncVmk = backupJson.optString("encryptedVmkByPassword", "")
-            if (backupSaltB64.isEmpty() || backupEncVmk.isEmpty()) {
-                throw IllegalArgumentException("backup has no password envelope to unlock")
-            }
-            try {
-                val salt = Base64.decode(backupSaltB64, Base64.NO_WRAP)
-                val passKey = VaultCrypto.deriveKey(secretText, salt, iterations)
-                val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
-                SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
-            } catch (e: Exception) {
-                throw IllegalArgumentException("backup password is wrong")
-            }
-        }
-    }
-
-    /** Source vault fingerprint carried by an export (keys the biometric restore entry). */
-    fun backupFingerprint(jsonString: String): String? = runCatching {
-        JSONObject(jsonString).optString("fingerprint", "").takeIf { it.isNotBlank() }
-    }.getOrNull()
-
-    /**
-     * Validate a recovery credential against the file and return the backup VMK hex,
-     * for enrolment under the biometric backup key. Returns null when the credential
-     * does not resolve.
-     */
-    suspend fun unwrapBackupVmk(jsonString: String, secret: String): String? =
-        withContext(Dispatchers.Default) {
-            val backupJson = runCatching { JSONObject(jsonString) }.getOrNull()
-                ?: return@withContext null
-            if (backupJson.optString("format", "") != BACKUP_FORMAT) return@withContext null
-            val protection = BackupProtection.fromStorage(backupJson.optString("protection", null))
-            val key = runCatching { resolveBackupKey(backupJson, protection, secret.trim()) }
-                .getOrNull() ?: return@withContext null
-            VaultCrypto.bytesToHex(key.encoded)
-        }
-
     private fun contentFingerprint(item: VaultItem): String {
         val payloadJson = item.payload.toJson()
         val canonicalPayload = payloadJson.keys().asSequence().sorted()
