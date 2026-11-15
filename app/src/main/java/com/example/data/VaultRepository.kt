@@ -38,6 +38,7 @@ class VaultRepository(
 
     companion object {
         const val MAX_FAILED_ATTEMPTS_BEFORE_COOLDOWN = 5
+        private const val BACKUP_FORMAT = "VaultZero_Encrypted_Envelope"
         const val COOLDOWN_DURATION_MS = 30_000L
         const val REDACTED_TITLE = "[ENCRYPTED]"
         const val REDACTED_CATEGORY = "Encrypted"
@@ -554,48 +555,82 @@ class VaultRepository(
      * AAD-bound metadata envelopes and v1 legacy envelopes), and re-encrypts it under the active
      * vault's VMK with full metadata redaction.
      */
+    /**
+     * Verified, duplicate-safe backup import.
+     *
+     * Verification happens entirely before any write:
+     *  1. the envelope is JSON, has the expected format marker and a non-empty
+     *     items array
+     *  2. every record parses, has a usable id/type/payload and decrypts with an
+     *     authenticated key (active vault key, or the supplied backup password);
+     *     one bad record fails the whole import instead of writing a partial vault
+     *  3. duplicates are detected against both the vault contents (record id, and
+     *     a SHA-256 content fingerprint of type + normalised title + payload) and
+     *     earlier records in the same file
+     *
+     * Only then are the surviving records re-encrypted under the active vault key
+     * and written in a single Room transaction, so an interrupted import can never
+     * leave half a backup behind.
+     */
     suspend fun importEncryptedBackup(
         jsonString: String,
         backupPassword: String? = null
-    ): Int = withContext(Dispatchers.Default) {
+    ): BackupImportReport = withContext(Dispatchers.Default) {
         val activeKey = activeSecretKey ?: throw IllegalStateException("Vault is locked")
-        val backupJson = JSONObject(jsonString)
-        val itemsArray = backupJson.optJSONArray("items") ?: return@withContext 0
+        val backupJson = try {
+            JSONObject(jsonString)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("file is not valid JSON")
+        }
+        val format = backupJson.optString("format", "")
+        if (format != BACKUP_FORMAT) {
+            throw IllegalArgumentException("not a VaultZero encrypted backup envelope")
+        }
+        val itemsArray = backupJson.optJSONArray("items")
+            ?: throw IllegalArgumentException("backup has no items array")
+        if (itemsArray.length() == 0) {
+            throw IllegalArgumentException("backup contains no entries")
+        }
 
-        // Optional foreign backup key unwrap if backupPassword is provided
+        // ---- key needed to authenticate the records ----
         var foreignBackupKey: SecretKey? = null
         if (!backupPassword.isNullOrBlank()) {
             val backupSaltB64 = backupJson.optString("salt", "")
             val backupEncVmk = backupJson.optString("encryptedVmkByPassword", "")
             val backupIterations = backupJson.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
-            if (backupSaltB64.isNotEmpty() && backupEncVmk.isNotEmpty()) {
-                try {
-                    val salt = Base64.decode(backupSaltB64, Base64.NO_WRAP)
-                    val passKey = VaultCrypto.deriveKey(backupPassword.trim(), salt, backupIterations)
-                    val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
-                    foreignBackupKey = SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
-                } catch (e: Exception) {
-                    foreignBackupKey = null
-                }
+            if (backupSaltB64.isEmpty() || backupEncVmk.isEmpty()) {
+                throw IllegalArgumentException("backup has no password envelope to unlock")
+            }
+            foreignBackupKey = try {
+                val salt = Base64.decode(backupSaltB64, Base64.NO_WRAP)
+                val passKey = VaultCrypto.deriveKey(backupPassword.trim(), salt, backupIterations)
+                val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
+                SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
+            } catch (e: Exception) {
+                throw IllegalArgumentException("backup password is wrong")
             }
         }
 
-        var importedCount = 0
+        // ---- phase 1: parse + decrypt + validate every record (no writes) ----
+        val candidates = ArrayList<VaultItem>(itemsArray.length())
         for (i in 0 until itemsArray.length()) {
-            val itemObj = itemsArray.optJSONObject(i) ?: continue
-            val id = itemObj.optString("id", "").ifEmpty { UUID.randomUUID().toString() }
-            val title = itemObj.optString("title", REDACTED_TITLE)
+            val itemObj = itemsArray.optJSONObject(i)
+                ?: throw IllegalArgumentException("entry ${i + 1} is not an object")
+            val id = itemObj.optString("id", "")
+            if (id.isBlank()) throw IllegalArgumentException("entry ${i + 1} has no record id")
             val typeStr = itemObj.optString("type", "")
-            val category = itemObj.optString("category", REDACTED_CATEGORY)
+            val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull()
+                ?: throw IllegalArgumentException("entry ${i + 1} has an unknown item type")
             val encPayload = itemObj.optString("encryptedPayload", "")
-            if (typeStr.isEmpty() || encPayload.isEmpty()) continue
-            val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull() ?: continue
+            if (encPayload.isEmpty()) {
+                throw IllegalArgumentException("entry ${i + 1} has no encrypted payload")
+            }
 
             val tempEntity = VaultItemEntity(
                 id = id,
-                title = title,
+                title = itemObj.optString("title", REDACTED_TITLE),
                 type = validType.name,
-                category = category,
+                category = itemObj.optString("category", REDACTED_CATEGORY),
                 encryptedPayload = encPayload,
                 isFavorite = itemObj.optBoolean("isFavorite", false),
                 createdAt = itemObj.optLong("createdAt", System.currentTimeMillis()),
@@ -603,36 +638,116 @@ class VaultRepository(
                 tagsJson = itemObj.optString("tagsJson", REDACTED_TAGS_JSON)
             )
 
-            try {
-                // First try decrypting with the active vault key, then foreignBackupKey if provided
-                val decryptedItem = try {
-                    decryptRecordEntity(tempEntity, activeKey)
-                } catch (e: Exception) {
-                    val altKey = foreignBackupKey ?: throw e
+            val decrypted = try {
+                decryptRecordEntity(tempEntity, activeKey)
+            } catch (activeFailure: Exception) {
+                val altKey = foreignBackupKey
+                    ?: throw IllegalArgumentException(
+                        "entry ${i + 1} failed authentication with this vault's key " +
+                            "(is this a backup of a different vault? provide its password)"
+                    )
+                try {
                     decryptRecordEntity(tempEntity, altKey)
+                } catch (foreignFailure: Exception) {
+                    throw IllegalArgumentException(
+                        "entry ${i + 1} failed authentication (wrong backup password or corrupted file)"
+                    )
                 }
+            }
+            candidates.add(decrypted)
+        }
 
-                // Re-encrypt under activeKey using v2 AAD-bound metadata envelope
-                val reEncryptedEnvelope = encryptRecordEnvelope(decryptedItem, id, activeKey)
-                val entityToSave = VaultItemEntity(
-                    id = id,
+        // ---- phase 2: per-record classification (still no writes) ----
+        val existingEntities = dao.getAllList()
+        val existingById = HashMap<String, VaultItem?>(existingEntities.size)
+        val existingFingerprints = HashSet<String>(existingEntities.size)
+        for (entity in existingEntities) {
+            val decrypted = runCatching { decryptRecordEntity(entity, activeKey) }.getOrNull()
+            existingById[entity.id] = decrypted
+            if (decrypted != null) existingFingerprints.add(contentFingerprint(decrypted))
+        }
+
+        val batchIds = HashSet<String>()
+        val batchFingerprints = HashSet<String>()
+        var imported = 0
+        var updated = 0
+        var duplicates = 0
+        val entitiesToWrite = ArrayList<VaultItemEntity>(candidates.size)
+        for (item in candidates) {
+            val fingerprint = contentFingerprint(item)
+            val existingForId = existingById[item.id]
+            val sameId = item.id in existingById
+            val sameContent = when {
+                item.id in batchIds -> true // repeated record inside the file
+                sameId -> existingForId?.let { contentFingerprint(it) == fingerprint } ?: true
+                fingerprint in existingFingerprints -> true // same content, different id
+                fingerprint in batchFingerprints -> true
+                else -> false
+            }
+
+            if (sameContent) {
+                duplicates++
+                continue
+            }
+            if (sameId) {
+                // Same record id but the backup's content differs: accept the
+                // backup as an update of that record instead of a duplicate.
+                updated++
+            } else {
+                imported++
+            }
+            batchIds.add(item.id)
+            batchFingerprints.add(fingerprint)
+            val envelope = encryptRecordEnvelope(item, item.id, activeKey)
+            entitiesToWrite.add(
+                VaultItemEntity(
+                    id = item.id,
                     title = REDACTED_TITLE,
-                    type = validType.name,
+                    type = item.type.name,
                     category = REDACTED_CATEGORY,
-                    encryptedPayload = reEncryptedEnvelope,
-                    isFavorite = decryptedItem.isFavorite,
-                    createdAt = decryptedItem.createdAt,
-                    updatedAt = decryptedItem.updatedAt,
+                    encryptedPayload = envelope,
+                    isFavorite = item.isFavorite,
+                    createdAt = item.createdAt,
+                    updatedAt = item.updatedAt,
                     tagsJson = REDACTED_TAGS_JSON
                 )
-                dao.insertOrUpdate(entityToSave)
-                importedCount++
-            } catch (e: Exception) {
-                // Skip records whose authentication tag fails under both active and backup keys
-            }
+            )
         }
-        importedCount
+
+        // ---- phase 3: one atomic write ----
+        if (entitiesToWrite.isNotEmpty()) {
+            dao.insertOrUpdateAll(entitiesToWrite)
+        }
+        BackupImportReport(
+            imported = imported,
+            updated = updated,
+            duplicatesSkipped = duplicates,
+        )
     }
+
+    /**
+     * Stable content identity used to stop re-imports from duplicating records.
+     * Type + normalised title + category + sorted tags + the whole secret payload:
+     * a record differing only in its favourite flag or timestamps counts as the
+     * same content (local favourite is preserved), while any real field change is
+     * recognised as an update rather than a duplicate.
+     */
+    private fun contentFingerprint(item: VaultItem): String {
+        val payloadJson = item.payload.toJson()
+        val canonicalPayload = payloadJson.keys().asSequence().sorted()
+            .joinToString("|") { key -> "$key=${payloadJson.opt(key).toString()}" }
+        val canonicalTags = item.tags.sorted().joinToString(",")
+        return VaultCrypto.sha256(
+            listOf(
+                item.type.name,
+                item.title.trim().lowercase(),
+                item.category.trim(),
+                canonicalTags,
+                canonicalPayload,
+            ).joinToString("\u0000")
+        )
+    }
+
 
     /**
      * Re-wrap both key envelopes with the current [VaultCrypto.DEFAULT_ITERATIONS]

@@ -493,6 +493,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _editingItem.value = null
         _newRecoveryPhrase.value = null
         autoLockJob?.cancel()
+        // Both clipboard modes clear on lock: timed mode also cancels its pending
+        // timeout job, Off mode relies on this ownership-checked wipe.
+        clipboardJob?.cancel()
         clearSensitiveClipboardIfOwned()
         if (autoLocked) {
             postStatusMessage("Vault auto-locked due to inactivity")
@@ -713,16 +716,35 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun importBackupJson(json: String, backupPassword: String? = null) {
         viewModelScope.launch {
             try {
-                val count = repository.importEncryptedBackup(json, backupPassword)
-                val msg = if (count > 0) {
-                    "Restored $count encrypted ${if (count == 1) "entry" else "entries"}"
-                } else {
-                    "No compatible records found (verify backup password or format)"
+                val report = repository.importEncryptedBackup(json, backupPassword)
+                val parts = mutableListOf<String>()
+                if (report.imported > 0) {
+                    parts.add(
+                        "Restored ${report.imported} ${if (report.imported == 1) "entry" else "entries"}"
+                    )
+                }
+                if (report.updated > 0) {
+                    parts.add(
+                        "updated ${report.updated} ${if (report.updated == 1) "entry" else "entries"}"
+                    )
+                }
+                if (report.duplicatesSkipped > 0) {
+                    parts.add(
+                        "${report.duplicatesSkipped} duplicate" +
+                            "${if (report.duplicatesSkipped == 1) "" else "s"} skipped"
+                    )
+                }
+                val msg = when {
+                    parts.isEmpty() -> "Backup verified · nothing new to import"
+                    report.totalNew == 0 -> "Backup verified · " + parts.joinToString(" · ") + ", nothing new"
+                    else -> parts.joinToString(" · ")
                 }
                 postStatusMessage(msg)
                 onUserInteraction()
+            } catch (e: IllegalArgumentException) {
+                postStatusMessage("Import rejected — nothing was written: ${e.message}")
             } catch (e: Exception) {
-                postStatusMessage("Import failed: invalid backup JSON format")
+                postStatusMessage("Import failed — nothing was written: ${e.message ?: "invalid backup"}")
             }
         }
     }
@@ -747,10 +769,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         clipboardManager.setPrimaryClip(clip)
 
         val timeout = repository.clipboardTimeoutSeconds
-        val statusMsg = if (isSensitive && timeout > 0) {
-            "$label copied • Auto-clears in ${timeout}s"
-        } else {
-            "$label copied to clipboard"
+        val statusMsg = when {
+            !isSensitive -> "$label copied to clipboard"
+            timeout > 0 -> "$label copied • Auto-clears in ${timeout}s"
+            else -> "$label copied • Clears when the vault locks"
         }
         postStatusMessage(statusMsg)
         onUserInteraction()

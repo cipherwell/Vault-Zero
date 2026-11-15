@@ -150,7 +150,7 @@ class VaultRepositorySecurityTest {
     // ---- authenticated backups ----
 
     @Test
-    fun `tampered backup does not import`() = runTest {
+    fun `tampered backup is rejected before anything is written`() = runTest {
         repository.saveItem(login("row-d", "Delta", "secret-delta"))
         val backup = JSONObject(repository.exportEncryptedBackup())
         val items = backup.getJSONArray("items")
@@ -160,11 +160,15 @@ class VaultRepositorySecurityTest {
         val tampered = payload.dropLast(2) + if (payload.takeLast(2) == "A=") "B=" else "A="
         item.put("encryptedPayload", tampered)
 
-        // The backup is still decryptable with the active key for untampered rows;
-        // the tampered row must be skipped instead of imported with bad data.
-        val imported = repository.importEncryptedBackup(backup.toString())
-        assertEquals("tampered record must be skipped", 0, imported)
-        assertEquals("original record is untouched", 1, db.vaultDao().getAllList().size)
+        var rejected = false
+        try {
+            repository.importEncryptedBackup(backup.toString())
+        } catch (e: IllegalArgumentException) {
+            rejected = true
+        }
+        assertTrue("tampered backup must fail verification", rejected)
+        assertEquals("verification failure must not write anything", 1, db.vaultDao().getAllList().size)
+        assertEquals("original record stays decryptable", "Delta", repository.getVaultItemsFlow().first().single().title)
     }
 
     @Test
@@ -174,7 +178,127 @@ class VaultRepositorySecurityTest {
         repository.deleteItem("row-e")
         assertEquals(0, db.vaultDao().getAllList().size)
 
-        assertEquals("authentic backup row imports", 1, repository.importEncryptedBackup(backup))
+        val report = repository.importEncryptedBackup(backup)
+        assertEquals("authentic backup row imports", 1, report.imported)
+        assertEquals("no duplicates in a fresh import", 0, report.duplicatesSkipped)
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `importing the same backup twice writes no duplicates`() = runTest {
+        repository.saveItem(login("row-g", "Eta", "secret-eta"))
+        val backup = repository.exportEncryptedBackup()
+        // Simulate "this record is not in the vault yet" before re-importing it.
+        repository.deleteItem("row-g")
+
+        val first = repository.importEncryptedBackup(backup)
+        assertEquals("first import restores the record", 1, first.imported)
+        assertEquals(0, first.duplicatesSkipped)
+
+        val second = repository.importEncryptedBackup(backup)
+        assertEquals("second import must not write", 0, second.imported)
+        assertEquals("second import is a duplicate", 1, second.duplicatesSkipped)
+        assertEquals("vault still holds exactly one record", 1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `same content under a different record id is treated as a duplicate`() = runTest {
+        repository.saveItem(login("row-h", "Theta", "secret-theta"))
+        val backup = repository.exportEncryptedBackup()
+        repository.deleteItem("row-h")
+
+        // Same title/type/secret re-created locally with a fresh record id: importing
+        // the old backup must recognise it by content, not only by id.
+        repository.saveItem(login("row-h-recreated", "Theta", "secret-theta"))
+        val report = repository.importEncryptedBackup(backup)
+        assertEquals("content duplicate must not be written", 0, report.imported)
+        assertEquals(1, report.duplicatesSkipped)
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `backup with repeated and new records imports only the new ones`() = runTest {
+        repository.saveItem(login("row-l", "Mu", "secret-mu"))
+        repository.saveItem(login("row-m", "Nu", "secret-nu"))
+        val backup = repository.exportEncryptedBackup()
+
+        // Nu is still present locally (a repeat); Mu was removed (new to the vault).
+        repository.deleteItem("row-l")
+        val report = repository.importEncryptedBackup(backup)
+        assertEquals("only the missing record is new", 1, report.imported)
+        assertEquals("unchanged existing record is a duplicate", 1, report.duplicatesSkipped)
+        assertEquals(0, report.updated)
+        assertEquals(2, db.vaultDao().getAllList().size)
+        assertEquals(
+            "both records are present exactly once",
+            setOf("Mu", "Nu"),
+            repository.getVaultItemsFlow().first().map { it.title }.toSet(),
+        )
+    }
+
+    @Test
+    fun `repeated record inside one backup file is imported once`() = runTest {
+        repository.saveItem(login("row-n", "Xi", "secret-xi"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        val items = backup.getJSONArray("items")
+        items.put(items.getJSONObject(0))
+        repository.deleteItem("row-n")
+
+        val report = repository.importEncryptedBackup(backup.toString())
+        assertEquals(1, report.imported)
+        assertEquals("the twin entry in the same file is skipped", 1, report.duplicatesSkipped)
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `same record id with changed content is updated instead of duplicated`() = runTest {
+        repository.saveItem(login("row-o", "Omicron", "secret-old"))
+        val backup = repository.exportEncryptedBackup()
+        repository.saveItem(login("row-o", "Omicron", "secret-new"))
+
+        val report = repository.importEncryptedBackup(backup)
+        assertEquals("changed record is not new", 0, report.imported)
+        assertEquals("changed record is updated in place", 1, report.updated)
+        assertEquals(0, report.duplicatesSkipped)
+        assertEquals("no second copy is created", 1, db.vaultDao().getAllList().size)
+
+        val restored = repository.getVaultItemsFlow().first().single().payload as LoginPayload
+        assertEquals("backup content replaces local content for that record", "secret-old", restored.password)
+    }
+
+    @Test
+    fun `one bad record rejects the whole backup with no partial import`() = runTest {
+        repository.saveItem(login("row-i", "Iota", "secret-iota"))
+        repository.saveItem(login("row-j", "Kappa", "secret-kappa"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        val items = backup.getJSONArray("items")
+        // Corrupt the second record's authentication tag.
+        val second = items.getJSONObject(1)
+        val payload = second.getString("encryptedPayload")
+        second.put("encryptedPayload", payload.dropLast(2) + if (payload.takeLast(2) == "A=") "B=" else "A=")
+
+        var rejected = false
+        try {
+            repository.importEncryptedBackup(backup.toString())
+        } catch (e: IllegalArgumentException) {
+            rejected = true
+        }
+        assertTrue("a partially invalid backup must be rejected", rejected)
+        assertEquals("no partial import may be written", 2, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `unknown envelope format is rejected without writing`() = runTest {
+        repository.saveItem(login("row-k", "Lambda", "secret-lambda"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        backup.put("format", "NotVaultZero")
+        var rejected = false
+        try {
+            repository.importEncryptedBackup(backup.toString())
+        } catch (e: IllegalArgumentException) {
+            rejected = true
+        }
+        assertTrue(rejected)
         assertEquals(1, db.vaultDao().getAllList().size)
     }
 

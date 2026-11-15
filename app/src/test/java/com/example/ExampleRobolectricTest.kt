@@ -363,11 +363,38 @@ class ExampleRobolectricTest {
         assertTrue(repository.getVaultItemsFlow().first().isEmpty())
 
         // Importing Vault A's backup into Vault B using Vault A's password unwraps and re-encrypts all records
-        val importedCount = repository.importEncryptedBackup(backupJson, backupPassword = passA)
-        assertEquals(2, importedCount)
+        val imported = repository.importEncryptedBackup(backupJson, backupPassword = passA)
+        assertEquals(2, imported.imported)
+        assertEquals(0, imported.duplicatesSkipped)
         val restoredItems = repository.getVaultItemsFlow().first()
         assertEquals(2, restoredItems.size)
         assertTrue(restoredItems.any { it.title == "Personal Production Server" && it.category == "Work" })
+    }
+
+    @Test
+    fun `clipboard off skips the timer but still wipes the owned secret on vault lock`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val vm = VaultViewModel(app)
+        val clipboard = app.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("prior", "prior"))
+
+        vm.updateClipboardTimeout(0)
+        vm.copySecurely("Password", "NoTimerSecret!", isSensitive = true)
+        assertEquals("NoTimerSecret!", clipboard.primaryClip?.getItemAt(0)?.text?.toString())
+        assertEquals(
+            "Off mode must announce that the vault lock is the wipe trigger",
+            "Password copied • Clears when the vault locks",
+            vm.clipboardStatus.value,
+        )
+
+        vm.lockVault()
+
+        val afterLock = clipboard.primaryClip?.getItemAt(0)?.text?.toString().orEmpty()
+        assertTrue("vault lock must clear the owned clipboard secret even with the timer off", afterLock.isEmpty())
+
+        // Back to the protected default for any later test in this class.
+        vm.updateClipboardTimeout(30)
+        clipboard.setPrimaryClip(ClipData.newPlainText("reset", ""))
     }
 
     @Test
