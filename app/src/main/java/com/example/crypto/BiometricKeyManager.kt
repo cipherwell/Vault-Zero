@@ -1,6 +1,7 @@
 package com.example.crypto
 
 import android.content.Context
+import androidx.core.content.edit
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -82,7 +83,7 @@ object BiometricKeyManager {
 
             val encoded = Base64.encodeToString(buffer.array(), Base64.NO_WRAP)
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().putString(PREF_KEY_ENCRYPTED_VMK, encoded).commit()
+            prefs.edit(commit = true) { putString(PREF_KEY_ENCRYPTED_VMK, encoded) }
             true
         } catch (e: Exception) {
             false
@@ -181,7 +182,7 @@ object BiometricKeyManager {
     fun clearBiometricKey(context: Context) {
         try {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().remove(PREF_KEY_ENCRYPTED_VMK).commit()
+            prefs.edit(commit = true) { remove(PREF_KEY_ENCRYPTED_VMK) }
 
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
             keyStore.load(null)
