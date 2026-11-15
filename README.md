@@ -31,7 +31,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.4.0** (`versionCode 6`), maintained under the **Cipherwell** identity.. Self-tested and pentested; an
+> **Status:** production release **v1.4.0** (`versionCode 6`), maintained under the **Cipherwell** identity. Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
