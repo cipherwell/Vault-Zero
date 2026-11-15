@@ -147,6 +147,17 @@ class VaultRepositorySecurityTest {
         assertEquals(1, db.vaultDao().getAllList().size)
     }
 
+    @Test
+    fun `exported backup envelope leaks no plaintext secrets or metadata`() = runTest {
+        repository.saveItem(login("row-f", "Zeta Bank", "super-secret-value-42"))
+        val backup = repository.exportEncryptedBackup()
+
+        assertFalse("secret payload must never appear in the clear", backup.contains("super-secret-value-42"))
+        assertFalse("record titles are redacted", backup.contains("Zeta Bank"))
+        assertTrue("envelope format field", backup.contains("VaultZero_Encrypted_Envelope"))
+        assertTrue("kdf metadata travels with the envelope", backup.contains("\"kdfIterations\": 600000"))
+    }
+
     // ---- recovery ----
 
     @Test

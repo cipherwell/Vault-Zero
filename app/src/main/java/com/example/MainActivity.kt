@@ -1,5 +1,8 @@
 package com.example
 
+import android.app.Activity
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
@@ -58,6 +61,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.ui.backup.BackupPickerChannel
 import com.example.ui.VaultLockState
 import com.example.ui.VaultNavTab
 import com.example.ui.VaultViewModel
@@ -89,6 +93,47 @@ class MainActivity : FragmentActivity() {
                 WindowManager.LayoutParams.FLAG_SECURE,
             )
         }
+        // SAF pickers for encrypted backup export/import. Driven with explicit
+        // small request codes because the pinned fragment version rejects the
+        // ActivityResultRegistry's wider codes (see BackupPickerChannel).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                BackupPickerChannel.requests.collect { request ->
+                    val intent = when (request.kind) {
+                        BackupPickerChannel.Kind.EXPORT -> Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/json"
+                            putExtra(
+                                Intent.EXTRA_TITLE,
+                                request.suggestedName ?: "vaultzero-backup.json",
+                            )
+                        }
+                        BackupPickerChannel.Kind.IMPORT -> Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/json"
+                            putExtra(
+                                Intent.EXTRA_MIME_TYPES,
+                                arrayOf("application/json", "text/plain", "application/octet-stream"),
+                            )
+                        }
+                    }
+                    @Suppress("DEPRECATION")
+                    startActivityForResult(
+                        intent,
+                        if (request.kind == BackupPickerChannel.Kind.EXPORT) REQUEST_EXPORT else REQUEST_IMPORT,
+                    )
+                }
+            }
+        }
+
+        // Tapjacking / overlay protection: touches that pass through another
+        // app's unobscured view on top of ours are ignored.
+        window.decorView.filterTouchesWhenObscured = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Belt and braces on top of FLAG_SECURE: keep the app out of the
+            // Recent Apps thumbnail pipeline entirely.
+            setRecentsScreenshotEnabled(false)
+        }
         enableEdgeToEdge()
 
         // Listen for Biometric Prompt trigger events from ViewModel
@@ -105,6 +150,24 @@ class MainActivity : FragmentActivity() {
                 VaultZeroApp(viewModel = viewModel)
             }
         }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode) {
+            REQUEST_EXPORT -> BackupPickerChannel.deliver(
+                BackupPickerChannel.Result(BackupPickerChannel.Kind.EXPORT, data?.data),
+            )
+            REQUEST_IMPORT -> BackupPickerChannel.deliver(
+                BackupPickerChannel.Result(BackupPickerChannel.Kind.IMPORT, data?.data),
+            )
+            else -> super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    private companion object {
+        const val REQUEST_EXPORT = 5101
+        const val REQUEST_IMPORT = 5102
     }
 
     override fun onResume() {

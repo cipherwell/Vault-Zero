@@ -41,6 +41,10 @@ object BiometricKeyManager {
                         .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                         .setKeySize(256)
                         .setIsStrongBoxBacked(true)
+                        .apply {
+                            // The wrapped VMK must not be usable while the device is locked.
+                            setUnlockedDeviceRequired(true)
+                        }
                         .build()
                     keyGenerator.init(strongBoxSpec)
                     return keyGenerator.generateKey()
@@ -56,6 +60,12 @@ object BiometricKeyManager {
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setKeySize(256)
+                .apply {
+                    // API 28+: key material is unusable until the user unlocks once.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        setUnlockedDeviceRequired(true)
+                    }
+                }
                 .build()
 
             keyGenerator.init(spec)

@@ -1,6 +1,11 @@
 package com.example.ui.screens
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import com.example.BuildConfig
+import com.example.ui.backup.BackupPickerChannel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -72,8 +77,46 @@ fun SettingsScreen(
     var showResetDialog by remember { mutableStateOf(false) }
     var showRecoveryDialog by remember { mutableStateOf(false) }
     var showSpecsDialog by remember { mutableStateOf(false) }
-    var exportedBackupJson by remember { mutableStateOf<String?>(null) }
+    var backupStatus by remember { mutableStateOf<String?>(null) }
+    var pendingImportJson by remember { mutableStateOf<String?>(null) }
+    var pendingImportName by remember { mutableStateOf<String?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Export/import go through MainActivity's SAF intents (see BackupPickerChannel):
+    // the user picks the document, we read/write exactly that URI once, no
+    // persistable grant, no clipboard, no share sheet.
+    LaunchedEffect(Unit) {
+        BackupPickerChannel.results.collect { result ->
+            when (result.kind) {
+                BackupPickerChannel.Kind.EXPORT -> result.uri?.let { uri ->
+                    viewModel.exportBackupJson { json ->
+                        scope.launch {
+                            val ok = BackupFileIo.writeText(context, uri, json)
+                            backupStatus = if (ok) {
+                                "Encrypted backup saved to ${BackupFileIo.displayName(context, uri)}. The file contains no plaintext secrets."
+                            } else {
+                                "Could not write the backup to that location."
+                            }
+                        }
+                    }
+                }
+                BackupPickerChannel.Kind.IMPORT -> result.uri?.let { uri ->
+                    scope.launch {
+                        val text = BackupFileIo.readText(context, uri)
+                        if (text == null) {
+                            backupStatus = "That document is not a readable VaultZero backup envelope."
+                        } else {
+                            pendingImportJson = text
+                            pendingImportName = BackupFileIo.displayName(context, uri)
+                            showImportDialog = true
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -310,9 +353,9 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .clickable {
-                            viewModel.exportBackupJson { json ->
-                                exportedBackupJson = json
-                            }
+                            BackupPickerChannel.requestExport(
+                                "vaultzero-backup-${System.currentTimeMillis()}.json"
+                            )
                         }
                         .padding(vertical = 10.dp)
                         .testTag("export_backup_row"),
@@ -333,7 +376,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable { showImportDialog = true }
+                        .clickable {
+                            BackupPickerChannel.requestImport()
+                        }
                         .padding(vertical = 10.dp)
                         .testTag("import_backup_row"),
                     verticalAlignment = Alignment.CenterVertically
@@ -475,46 +520,24 @@ fun SettingsScreen(
         )
     }
 
-    exportedBackupJson?.let { json ->
+    backupStatus?.let { status ->
         AlertDialog(
-            onDismissRequest = { exportedBackupJson = null },
-            title = { Text("Encrypted Backup Envelope") },
+            onDismissRequest = { backupStatus = null },
+            title = { Text("Backup") },
             text = {
-                Column {
-                    Text(
-                        text = "All item payloads and keys in this JSON envelope are encrypted with AES-256-GCM.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(
-                        value = json,
-                        onValueChange = {},
-                        readOnly = true,
-                        modifier = Modifier.fillMaxWidth().height(180.dp),
-                        maxLines = 8
-                    )
-                }
+                Text(
+                    text = status,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.copySecurely("Encrypted Backup", json, isSensitive = false)
-                        exportedBackupJson = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
-                ) {
-                    Text("Copy Backup JSON")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { exportedBackupJson = null }) { Text("Close") }
+                TextButton(onClick = { backupStatus = null }) { Text("OK") }
             }
         )
     }
 
     if (showImportDialog) {
-        var importJsonText by remember { mutableStateOf("") }
         var backupPassword by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showImportDialog = false },
@@ -522,19 +545,11 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "Paste your VaultZero encrypted JSON backup below. If the backup came from a different vault key, enter its Master Password.",
+                        text = "${pendingImportName ?: "Backup file"} is ready to import. If it was created by a different vault key, enter that vault's Master Password; otherwise leave it blank.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(
-                        value = importJsonText,
-                        onValueChange = { importJsonText = it },
-                        label = { Text("Encrypted Backup JSON") },
-                        modifier = Modifier.fillMaxWidth().height(130.dp),
-                        maxLines = 5
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = backupPassword,
                         onValueChange = { backupPassword = it },
@@ -548,10 +563,14 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.importBackupJson(importJsonText, backupPassword.ifBlank { null })
+                        pendingImportJson?.let { json ->
+                            viewModel.importBackupJson(json, backupPassword.ifBlank { null })
+                        }
                         showImportDialog = false
+                        pendingImportJson = null
+                        pendingImportName = null
                     },
-                    enabled = importJsonText.isNotBlank(),
+                    enabled = pendingImportJson != null,
                     colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
                 ) {
                     Text("Decrypt & Import")
@@ -572,8 +591,8 @@ fun SettingsScreen(
                     Text(
                         text = "• Cipher: AES-256-GCM authenticated encryption (128-bit authentication tag, unique 12-byte IV per record, per-record GCM AAD binding).\n\n" +
                                 "• Zero Metadata Leakage: Record titles, categories, tags, and payloads are encrypted together inside AES-256-GCM; SQLite columns store redacted placeholders.\n\n" +
-                                "• Key Derivation & Recovery: PBKDF2WithHmacSHA256 (100,000 rounds), 128-bit CSPRNG salt, HMAC-SHA256 verifiers, and SHA-256 checksummed 12-word recovery mnemonic.\n\n" +
-                                "• Client-Side Zero-Knowledge: Zero network permissions, zero remote servers, StrongBox/TEE Keystore, and FLAG_SECURE window protection.",
+                                "• Key Derivation & Recovery: PBKDF2WithHmacSHA256 (600,000 rounds), 128-bit CSPRNG salt, HMAC-SHA256 verifiers, and SHA-256 checksummed 12-word recovery mnemonic.\n\n" +
+                                "• Client-Side Zero-Knowledge: Zero network permissions, zero remote servers, StrongBox/TEE Keystore, FLAG_SECURE + recents-screenshot suppression, and backups that leave only through a Storage Access Framework document you pick.",
                         style = MaterialTheme.typography.bodySmall,
                         lineHeight = 20.sp
                     )

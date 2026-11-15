@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  VaultZero is offline by construction: the app declares no INTERNET or
+  ACCESS_NETWORK_STATE permission, so no socket can be opened to anything.
+  This policy file is belt-and-braces: if a dependency ever tries to add a
+  network permission through manifest merging, cleartext traffic is still
+  refused at the platform level.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
