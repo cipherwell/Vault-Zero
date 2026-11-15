@@ -18,6 +18,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -46,6 +51,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.core.ThemeMode
+import androidx.core.view.WindowCompat
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -146,7 +155,24 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            VaultZeroTheme(darkTheme = true) {
+            val themeMode by viewModel.themeMode.collectAsState()
+            val systemDark = isSystemInDarkTheme()
+            val dark = when (themeMode) {
+                ThemeMode.SYSTEM -> systemDark
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            // One UI keeps the system bar icons in sync with the app's appearance.
+            LaunchedEffect(dark) {
+                WindowCompat.getInsetsController(
+                    this@MainActivity.window,
+                    this@MainActivity.window.decorView,
+                ).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
+            VaultZeroTheme(darkTheme = dark) {
                 VaultZeroApp(viewModel = viewModel)
             }
         }
@@ -256,10 +282,14 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
             label = "lockStateTransition"
         ) { state ->
             if (state != VaultLockState.UNLOCKED) {
-                LockScreen(
-                    viewModel = viewModel,
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
-                )
+                // Surface sets LocalContentColor to onBackground; without it the
+                // lock screen inherited the root default (black) text colour.
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    LockScreen(
+                        viewModel = viewModel,
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                    )
+                }
             } else {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -343,94 +373,75 @@ fun VaultBottomNavigationBar(
     currentTab: VaultNavTab,
     onTabSelected: (VaultNavTab) -> Unit
 ) {
-    NavigationBar(
-        modifier = Modifier.testTag("vault_bottom_navigation"),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = 0.dp,
-        windowInsets = WindowInsets.navigationBars
+    // One UI 7/8: the bottom bar floats as a rounded container instead of sitting
+    // edge-to-edge on the screen bottom.
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        NavigationBarItem(
-            selected = currentTab == VaultNavTab.VAULT,
-            onClick = { onTabSelected(VaultNavTab.VAULT) },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.VpnKey,
-                    contentDescription = "Vault",
-                    modifier = Modifier.size(22.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(30.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .border(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                    RoundedCornerShape(30.dp)
                 )
-            },
-            label = { Text("Vault", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = CyberEmerald,
-                selectedTextColor = CyberEmerald,
-                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.testTag("nav_vault")
-        )
+                .padding(horizontal = 6.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OneUiNavItem("Vault", Icons.Default.VpnKey, currentTab == VaultNavTab.VAULT, Modifier.weight(1f)) {
+                onTabSelected(VaultNavTab.VAULT)
+            }
+            OneUiNavItem("Generator", Icons.Default.AutoAwesome, currentTab == VaultNavTab.GENERATOR, Modifier.weight(1f)) {
+                onTabSelected(VaultNavTab.GENERATOR)
+            }
+            OneUiNavItem("Audit", Icons.Default.Shield, currentTab == VaultNavTab.AUDIT, Modifier.weight(1f)) {
+                onTabSelected(VaultNavTab.AUDIT)
+            }
+            OneUiNavItem("Settings", Icons.Default.Settings, currentTab == VaultNavTab.SETTINGS, Modifier.weight(1f)) {
+                onTabSelected(VaultNavTab.SETTINGS)
+            }
+        }
+    }
+}
 
-        NavigationBarItem(
-            selected = currentTab == VaultNavTab.GENERATOR,
-            onClick = { onTabSelected(VaultNavTab.GENERATOR) },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = "Generator",
-                    modifier = Modifier.size(22.dp)
-                )
-            },
-            label = { Text("Generator", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = CyberEmerald,
-                selectedTextColor = CyberEmerald,
-                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.testTag("nav_generator")
+@Composable
+private fun OneUiNavItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                else androidx.compose.ui.graphics.Color.Transparent
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp)
         )
-
-        NavigationBarItem(
-            selected = currentTab == VaultNavTab.AUDIT,
-            onClick = { onTabSelected(VaultNavTab.AUDIT) },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Shield,
-                    contentDescription = "Audit",
-                    modifier = Modifier.size(22.dp)
-                )
-            },
-            label = { Text("Audit", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = CyberEmerald,
-                selectedTextColor = CyberEmerald,
-                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.testTag("nav_audit")
-        )
-
-        NavigationBarItem(
-            selected = currentTab == VaultNavTab.SETTINGS,
-            onClick = { onTabSelected(VaultNavTab.SETTINGS) },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    modifier = Modifier.size(22.dp)
-                )
-            },
-            label = { Text("Settings", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = CyberEmerald,
-                selectedTextColor = CyberEmerald,
-                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.testTag("nav_settings")
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

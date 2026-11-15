@@ -34,6 +34,15 @@ Tokens combine, e.g. `type:login netflix` or `is:fav type:card`. Unknown
 - Audit findings link straight into the editor with the offending field focused
   (password for weak/reused/stale, 2FA secret for malformed TOTP).
 
+### Design language — One UI inspired
+
+The interface follows Samsung One UI (7–8.5 era): two grounds only (#000000 dark,
+#FAFAFA light), a single blue accent, generously rounded (12–30dp) containers,
+grouped list cards with hairline dividers, thumb-reach controls (floating pill
+navigation, header actions) and a system-font type scale. Settings has a
+System / Light / Dark appearance selector. Full token reference and the sources
+studied: [`docs/DESIGN-one-ui.md`](docs/DESIGN-one-ui.md).
+
 > **Interface verification:** every screen and interactive flow was driven on the
 > live emulator (unlock, search, filters, favorites, item detail/edit/create/delete,
 > generator + save-to-vault, audit, recovery kit, settings, lock). Logic that can be

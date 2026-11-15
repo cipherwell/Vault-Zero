@@ -104,6 +104,12 @@ class VaultRepository(
         prefs.clipboardTimeoutSeconds = seconds
     }
 
+    fun themeMode(): String = prefs.themeMode
+
+    fun setThemeMode(value: String) {
+        prefs.themeMode = value
+    }
+
     fun isDarkTheme(): Boolean = prefs.isDarkTheme
 
     fun setDarkTheme(enabled: Boolean) {

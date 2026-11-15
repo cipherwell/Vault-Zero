@@ -5,6 +5,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import com.example.BuildConfig
+import com.example.core.ThemeMode
 import com.example.ui.backup.BackupPickerChannel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -81,6 +84,8 @@ fun SettingsScreen(
     var pendingImportJson by remember { mutableStateOf<String?>(null) }
     var pendingImportName by remember { mutableStateOf<String?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
+    val themeMode by viewModel.themeMode.collectAsState()
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -182,7 +187,38 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // One UI appearance selector
+        Text(
+            text = "APPEARANCE",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ThemeMode.entries.forEach { mode ->
+                FilterChip(
+                    selected = themeMode == mode,
+                    onClick = { viewModel.setThemeMode(mode) },
+                    label = { Text(mode.label, fontSize = 13.sp) },
+                    shape = CircleShape,
+                    border = null,
+                    modifier = Modifier.weight(1f),
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        selectedLabelColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Security Options Section
         Text(
@@ -269,6 +305,8 @@ fun SettingsScreen(
                             selected = viewModel.clipboardTimeoutSeconds == sec,
                             onClick = { viewModel.updateClipboardTimeout(sec) },
                             label = { Text(label, fontSize = 11.sp) },
+                            shape = CircleShape,
+                            border = null,
                             colors = FilterChipDefaults.filterChipColors(
                                 containerColor = MaterialTheme.colorScheme.surface,
                                 labelColor = MaterialTheme.colorScheme.onSurfaceVariant,

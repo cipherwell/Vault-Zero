@@ -2,6 +2,8 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -81,23 +83,37 @@ fun ItemDetailDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-            ),
+        androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .padding(vertical = 24.dp)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.45f)),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+        Card(
+            shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            border = null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f)
                 .testTag("item_detail_dialog")
         ) {
             Column(
                 modifier = Modifier
-                    .padding(22.dp)
+                    .padding(horizontal = 20.dp, vertical = 14.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                // One UI sheet grab handle
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f))
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
                 // Top Header Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -492,7 +508,7 @@ fun ItemDetailDialog(
                     OutlinedButton(
                         onClick = { showDeleteConfirm = true },
                         modifier = Modifier.weight(1f).testTag("delete_item_button"),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(999.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed)
                     ) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -503,7 +519,7 @@ fun ItemDetailDialog(
                     Button(
                         onClick = onEdit,
                         modifier = Modifier.weight(1f).testTag("edit_item_button"),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(999.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color.Black)
                     ) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -512,6 +528,7 @@ fun ItemDetailDialog(
                     }
                 }
             }
+        }
         }
     }
 
