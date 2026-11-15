@@ -25,6 +25,15 @@ android {
       "ALLOW_SCREENSHOTS",
       (project.findProperty("allowScreenshots") as String? ?: "false"),
     )
+
+    // Dev-only convenience: keeps the vault unlocked on a test device.
+    //   ./gradlew assembleDebug -PdevDisableAutoLock=true
+    // Default false; release builds never pass the flag.
+    buildConfigField(
+      "boolean",
+      "DEV_DISABLE_AUTO_LOCK",
+      (project.findProperty("devDisableAutoLock") as String? ?: "false"),
+    )
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
