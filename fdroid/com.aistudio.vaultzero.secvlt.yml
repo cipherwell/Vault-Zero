@@ -6,8 +6,7 @@ AuthorName: Cipherwell
 WebSite: https://cipherwell.github.io/Vault-Zero/
 SourceCode: https://github.com/cipherwell/Vault-Zero
 IssueTracker: https://github.com/cipherwell/Vault-Zero/issues
-Changelog: 
-  https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.3.1.md
+Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.3.1.md
 
 AutoName: VaultZero
 
