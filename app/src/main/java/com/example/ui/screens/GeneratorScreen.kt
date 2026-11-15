@@ -193,6 +193,8 @@ fun GeneratorScreen(
                 selected = !config.isPassphraseMode,
                 onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = false)) },
                 label = { Text("Password", fontSize = 13.sp) },
+                shape = CircleShape,
+                border = null,
                 modifier = Modifier.weight(1f),
                 colors = FilterChipDefaults.filterChipColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -206,6 +208,8 @@ fun GeneratorScreen(
                 selected = config.isPassphraseMode,
                 onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = true)) },
                 label = { Text("Passphrase", fontSize = 13.sp) },
+                shape = CircleShape,
+                border = null,
                 modifier = Modifier.weight(1f),
                 colors = FilterChipDefaults.filterChipColors(
                     containerColor = MaterialTheme.colorScheme.surface,

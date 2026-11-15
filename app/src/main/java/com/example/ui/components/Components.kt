@@ -73,30 +73,28 @@ import com.example.ui.theme.WarningAmber
 
 @Composable
 fun VaultTypeIcon(type: VaultType, modifier: Modifier = Modifier) {
-    // One neutral tile for every type: the glyph carries the meaning, not a
-    // rainbow of accent colors. Tints stay muted so the single emerald accent
-    // still belongs to primary actions.
-    val (icon, tint) = when (type) {
-        VaultType.LOGIN -> Icons.Default.VpnKey to CyberEmeraldMuted
-        VaultType.CARD -> Icons.Default.CreditCard to CyberCyan
-        VaultType.API_SECRET -> Icons.Default.Code to RoyalPurple
-        VaultType.CRYPTO_WALLET -> Icons.Default.CurrencyBitcoin to WarningAmber
-        VaultType.NOTE -> Icons.Default.Description to ElectricBlue
-        VaultType.IDENTITY -> Icons.Default.Badge to MaterialTheme.colorScheme.onSurfaceVariant
+    // One UI list icon: a squircle tile with the single accent colour; the glyph
+    // carries the role, not a rainbow of hues.
+    val icon = when (type) {
+        VaultType.LOGIN -> Icons.Default.VpnKey
+        VaultType.CARD -> Icons.Default.CreditCard
+        VaultType.API_SECRET -> Icons.Default.Code
+        VaultType.CRYPTO_WALLET -> Icons.Default.CurrencyBitcoin
+        VaultType.NOTE -> Icons.Default.Description
+        VaultType.IDENTITY -> Icons.Default.Badge
     }
 
     Box(
         modifier = modifier
             .size(40.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(10.dp)),
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = type.displayName,
-            tint = tint,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp)
         )
     }

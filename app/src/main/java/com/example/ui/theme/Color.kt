@@ -2,41 +2,47 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// VaultZero brand palette — obsidian surfaces, one emerald accent.
-// Deliberately restrained: no neon fills, no rainbow type colors. Accent is for
-// primary actions, selection and live secrets only; everything else is neutral.
+// ── One UI palette ────────────────────────────────────────────────────────────
+// Samsung One UI: two grounds only (#000000 dark / #FAFAFA light), a single blue
+// accent, neutral grays for elevated surfaces, semantic red/green reserved for
+// destructive and success states. No other hues in the chrome.
+//
+// The historical token names are kept so existing screens compile; the values are
+// now the One UI tokens.
 
-val ObsidianBg = Color(0xFF0A0C10)
-val ObsidianSurface = Color(0xFF10141A)
-val ObsidianSurfaceVariant = Color(0xFF171C24)
-val ObsidianCardBorder = Color(0xFF262E3A)
+// Dark ground + elevated surfaces (true black for OLED)
+val ObsidianBg = Color(0xFF000000)
+val ObsidianSurface = Color(0xFF121214)
+val ObsidianSurfaceVariant = Color(0xFF1C1C1E)
+val ObsidianCardBorder = Color(0xFF2C2C2E)
 
-val CyberEmerald = Color(0xFF16C098)
-val CyberEmeraldDark = Color(0xFF0E8A6B)
+// Accent: One UI blue (dark-theme variant is lighter for contrast on black)
+val CyberEmerald = Color(0xFF4DA6FF)      // accent (dark)
+val CyberEmeraldDark = Color(0xFF1976D2)  // accent (light)
+val CyberEmeraldMuted = Color(0xFF9BCBFF) // disabled / secondary accent content
 
-/** Legible mint for disabled emerald controls (WCAG-friendly on the dark canvas). */
-val CyberEmeraldMuted = Color(0xFF7FD9BC)
+// Secondary hues are used only as muted iconography, never as chrome
+val CyberCyan = Color(0xFF64B5F6)
+val CyberCyanDark = Color(0xFF1565C0)
+val RoyalPurple = Color(0xFFB39DDB)
+val ElectricBlue = Color(0xFF90CAF9)
 
-val CyberCyan = Color(0xFF5E9FC4)
-val CyberCyanDark = Color(0xFF2F7099)
-val RoyalPurple = Color(0xFF8A79D6)
-val ElectricBlue = Color(0xFF5A8FD6)
+val DangerRed = Color(0xFFFF453A)
+val DangerRedDark = Color(0xFFB3261E)
+val WarningAmber = Color(0xFFFFB74D)
+val SuccessGreen = Color(0xFF4CAF50)
 
-val DangerRed = Color(0xFFE5484D)
-val DangerRedDark = Color(0xFF8F2B30)
-val WarningAmber = Color(0xFFD9A73F)
-val SuccessGreen = Color(0xFF23B575)
+// Text on dark
+val TextPrimaryDark = Color(0xFFFFFFFF)
+val TextSecondaryDark = Color(0xFFA1A1A6)
+val TextTertiaryDark = Color(0xFF6E6E73)
 
-val TextPrimaryDark = Color(0xFFE8EDF5)
-val TextSecondaryDark = Color(0xFF9AA6B8)
-val TextTertiaryDark = Color(0xFF67738A)
-
-// Light Palette (kept for completeness; the vault ships dark-only)
-val CleanWhiteBg = Color(0xFFF8FAFC)
+// Light ground + surfaces
+val CleanWhiteBg = Color(0xFFFAFAFA)
 val CleanWhiteSurface = Color(0xFFFFFFFF)
-val CleanWhiteSurfaceVariant = Color(0xFFF1F5F9)
-val CleanWhiteBorder = Color(0xFFE2E8F0)
+val CleanWhiteSurfaceVariant = Color(0xFFF2F2F7)
+val CleanWhiteBorder = Color(0xFFE5E5EA)
 
-val TextPrimaryLight = Color(0xFF0F172A)
-val TextSecondaryLight = Color(0xFF475569)
-val TextTertiaryLight = Color(0xFF94A3B8)
+val TextPrimaryLight = Color(0xFF000000)
+val TextSecondaryLight = Color(0xFF6B6B70)
+val TextTertiaryLight = Color(0xFF8E8E93)

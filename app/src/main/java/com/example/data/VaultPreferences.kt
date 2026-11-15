@@ -97,6 +97,11 @@ class VaultPreferences(
         get() = prefs.getBoolean("is_biometric_enabled", false)
         set(value) = prefs.edit(commit = true) { putBoolean("is_biometric_enabled", value) }
 
+    /** One UI appearance: "system" (default), "light" or "dark". */
+    var themeMode: String
+        get() = prefs.getString("theme_mode", "system") ?: "system"
+        set(value) = prefs.edit(commit = true) { putString("theme_mode", value) }
+
     var isDarkTheme: Boolean
         get() = prefs.getBoolean("is_dark_theme", true)
         set(value) = prefs.edit(commit = true) { putBoolean("is_dark_theme", value) }

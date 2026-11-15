@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.crypto.BiometricKeyManager
 import com.example.core.GeneratedCredential
+import com.example.core.ThemeMode
 import com.example.core.GeneratorHistory
 import com.example.core.SearchQuery
 import kotlinx.coroutines.FlowPreview
@@ -109,6 +110,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _editFocus = MutableStateFlow<EditFocus?>(null)
     val editFocus: StateFlow<EditFocus?> = _editFocus.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
     private val generatorHistoryStore = GeneratorHistory()
     private val _generatorHistory = MutableStateFlow<List<GeneratedCredential>>(emptyList())
     val generatorHistory: StateFlow<List<GeneratedCredential>> = _generatorHistory.asStateFlow()
@@ -184,6 +188,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             _lockState.value = VaultLockState.LOCKED
         }
 
+        _themeMode.value = ThemeMode.fromStorage(repository.themeMode())
         regeneratePassword()
         startClockTicker()
     }
@@ -844,6 +849,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     // -------------------------------------------------------------------------
     // Settings
     // -------------------------------------------------------------------------
+
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        repository.setThemeMode(mode.storage)
+        onUserInteraction()
+    }
 
     fun clearGeneratorHistory() {
         generatorHistoryStore.clear()

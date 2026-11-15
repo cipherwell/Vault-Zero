@@ -210,7 +210,7 @@ private fun SetupMasterKeyScreen(
         Spacer(modifier = Modifier.height(28.dp))
 
         Card(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ),
@@ -325,9 +325,9 @@ private fun SetupMasterKeyScreen(
                     enabled = !isAuthenticating && password.isNotEmpty() && confirmPassword.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .height(54.dp)
                         .testTag("create_vault_button"),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(999.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = CyberEmerald,
                         contentColor = Color.Black,
@@ -557,7 +557,7 @@ private fun UnlockVaultScreen(
 
         // Fingerprint chip
         Surface(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(26.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
@@ -588,7 +588,7 @@ private fun UnlockVaultScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Card(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ),
