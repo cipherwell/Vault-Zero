@@ -53,6 +53,9 @@ enum class VaultLockState {
     RECOVERING
 }
 
+/** What a biometric prompt is being shown for. */
+enum class BiometricPurpose { UNLOCK, ENROLL }
+
 /** Which editor field an external action (e.g. the audit "Fix" button) should focus. */
 enum class EditFocus { PASSWORD, TOTP, CARD_NUMBER, NOTE_CONTENT, SEED_PHRASE, API_KEY, ID_NUMBER }
 
@@ -138,8 +141,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _isAuthenticating = MutableStateFlow(false)
     val isAuthenticating: StateFlow<Boolean> = _isAuthenticating.asStateFlow()
 
-    private val _biometricPromptEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val biometricPromptEvent: SharedFlow<Unit> = _biometricPromptEvent
+    private val _biometricPromptEvent = MutableSharedFlow<BiometricPurpose>(extraBufferCapacity = 1)
+    val biometricPromptEvent: SharedFlow<BiometricPurpose> = _biometricPromptEvent
+
+    private val _biometricEnabled = MutableStateFlow(false)
+    val biometricEnabled: StateFlow<Boolean> = _biometricEnabled.asStateFlow()
 
     private val _generatorConfig = MutableStateFlow(GeneratorConfig())
     val generatorConfig: StateFlow<GeneratorConfig> = _generatorConfig.asStateFlow()
@@ -189,6 +195,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _themeMode.value = ThemeMode.fromStorage(repository.themeMode())
+        // A legacy (non-auth-gated) wrap or a key invalidated by re-enrolment
+        // cannot be used: require the user to enable biometric unlock again.
+        if (repository.isBiometricEnabled() && !BiometricKeyManager.hasCurrentEnrollment(application)) {
+            repository.setBiometricEnabled(false)
+        }
+        _biometricEnabled.value = repository.isBiometricEnabled()
         regeneratePassword()
         startClockTicker()
     }
@@ -324,9 +336,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             _isAuthenticating.value = true
             try {
                 val (phrase, vmkHex) = repository.setupMasterPassword(cleanPassword)
-                if (repository.isBiometricEnabled()) {
-                    BiometricKeyManager.storeVmk(getApplication(), vmkHex)
-                }
+
                 _newRecoveryPhrase.value = phrase
                 _authError.value = null
             } catch (e: Exception) {
@@ -360,12 +370,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val success = repository.unlock(password)
                 if (success) {
-                    if (repository.isBiometricEnabled()) {
-                        val vmkHex = repository.getActiveVmkHex()
-                        if (vmkHex != null) {
-                            BiometricKeyManager.storeVmk(getApplication(), vmkHex)
-                        }
-                    }
+
                     _lockState.value = VaultLockState.UNLOCKED
                     _authError.value = null
                     resetAutoLockTimer()
@@ -386,22 +391,26 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun requestBiometricUnlock() {
-        if (!repository.isBiometricEnabled()) {
+        if (!repository.isBiometricEnabled() || !_biometricEnabled.value) {
             _authError.value = "Biometric unlock is disabled in Settings. Unlock with Master Password first."
             return
         }
-        if (!BiometricKeyManager.hasBiometricKey(getApplication())) {
-            _authError.value = "Biometric credentials need to be configured. Unlock with Master Password first."
+        if (!BiometricKeyManager.hasCurrentEnrollment(getApplication())) {
+            _authError.value = "Biometric enrolment is missing or was invalidated. Unlock with Master Password and re-enable it in Settings."
             return
         }
         _authError.value = null
-        _biometricPromptEvent.tryEmit(Unit)
+        _biometricPromptEvent.tryEmit(BiometricPurpose.UNLOCK)
     }
 
     fun onBiometricVerified(authenticatedCipher: javax.crypto.Cipher? = null) {
         viewModelScope.launch {
             _isAuthenticating.value = true
             try {
+                if (authenticatedCipher == null) {
+                    _authError.value = "Biometric authentication did not authorise the vault key. Please try again."
+                    return@launch
+                }
                 val vmkHex = BiometricKeyManager.decryptVmkWithCipher(getApplication(), authenticatedCipher)
                 if (vmkHex != null) {
                     val success = repository.unlockWithVmkHex(vmkHex)
@@ -451,12 +460,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val success = repository.recoverWithPhrase(cleanPhrase, cleanNewPass)
                 if (success) {
-                    if (repository.isBiometricEnabled()) {
-                        val vmkHex = repository.getActiveVmkHex()
-                        if (vmkHex != null) {
-                            BiometricKeyManager.storeVmk(getApplication(), vmkHex)
-                        }
-                    }
+
                     _lockState.value = VaultLockState.UNLOCKED
                     _authError.value = null
                     resetAutoLockTimer()
@@ -873,21 +877,48 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         postStatusMessage("Clipboard timeout updated")
     }
 
+    /**
+     * Settings switch. Enabling always requires an authenticated biometric prompt:
+     * the VMK is wrapped by a Keystore key that only works for a cipher a prompt has
+     * authorised, so there is no silent path to create the wrap.
+     */
     fun toggleBiometric(enabled: Boolean) {
         if (enabled) {
-            val vmkHex = repository.getActiveVmkHex()
-            if (vmkHex != null) {
-                BiometricKeyManager.storeVmk(getApplication(), vmkHex)
-                repository.setBiometricEnabled(true)
-                postStatusMessage("Biometric unlock enabled")
-            } else {
-                postStatusMessage("Please unlock vault with Master Password first")
-            }
+            requestBiometricEnrollment()
         } else {
             BiometricKeyManager.clearBiometricKey(getApplication())
             repository.setBiometricEnabled(false)
+            _biometricEnabled.value = false
             postStatusMessage("Biometric unlock disabled")
         }
+    }
+
+    fun requestBiometricEnrollment() {
+        if (repository.getActiveVmkHex() == null) {
+            postStatusMessage("Unlock the vault with your master password before enabling biometrics")
+            return
+        }
+        if (!BiometricKeyManager.hasCurrentEnrollment(getApplication())) {
+            // Fresh enrolment: make sure no stale key material survives.
+            BiometricKeyManager.clearBiometricKey(getApplication())
+        }
+        _biometricPromptEvent.tryEmit(BiometricPurpose.ENROLL)
+    }
+
+    /** Called with the authenticated ENCRYPT_MODE cipher after a successful prompt. */
+    fun onBiometricEnrollmentVerified(authenticatedCipher: javax.crypto.Cipher?) {
+        val vmkHex = repository.getActiveVmkHex()
+        if (vmkHex == null || authenticatedCipher == null) {
+            _biometricEnabled.value = repository.isBiometricEnabled()
+            postStatusMessage("Biometric setup was not completed")
+            return
+        }
+        val stored = BiometricKeyManager.storeVmkWithCipher(getApplication(), vmkHex, authenticatedCipher)
+        repository.setBiometricEnabled(stored)
+        _biometricEnabled.value = stored
+        postStatusMessage(
+            if (stored) "Biometric unlock enabled" else "Could not store the biometric key"
+        )
     }
 
     fun toggleTheme(isDark: Boolean) {
