@@ -116,7 +116,6 @@ Latest production release: **[GitHub Releases → v1.5.0](https://github.com/cip
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
 | `VaultZero-v1.5.0.apk` (sideload) | 1,861,347 B | `bbd41378c8404558db1810a16b668dfdfa49bd2a7cabe7a0e28dfdbc75cd753c` |
-| `VaultZero-v1.5.0.aab` (store upload) | 4,049,447 B | `12e902c04f0e8fdcea4b11e8a54655a80bac99185e94e768f7aa33b833e1cecf` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
