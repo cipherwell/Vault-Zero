@@ -83,6 +83,9 @@ The old wordlist itself was duplicate-free, so the repeats were not a wordlist b
 1. **PBKDF2 is not memory-hard.** 600k iterations is OWASP's PBKDF2 fallback, but Argon2id would
    raise GPU/ASIC resistance. A KDF-versioned vault format (v4) and a vetted Android Argon2id
    library would be required; deferred rather than rushed.
+   **Closed in 1.6.0 (2026-11-21):** new envelopes use Argon2id (64 MiB, t=3, p=1) via Bouncy
+   Castle's RFC 9106 implementation, each envelope stores its own KDF descriptor, and PBKDF2 vaults
+   migrate transparently on unlock. Backups are format 3.3 and old 3.2 files remain importable.
 2. **Weak master passwords** remain the dominant offline-guessing risk; the recovery phrase is now
    128-bit but the password envelope still depends on the user's password.
 3. **Legacy kits remain ~78-bit** for vaults that have not rotated; users are prompted by docs to

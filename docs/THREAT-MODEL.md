@@ -31,7 +31,7 @@ vault contents against realistic adversaries. This is a concise model, not a for
 | Screenshots / screen recording / recents | FLAG_SECURE; recents screenshots disabled on API 33+ | Screen can be photographed; accessibility APIs can read UI |
 | Clipboard sniffing | Sensitive flag, short auto-clear, ownership-aware wipe on lock | Other apps on old Android or with user-granted permissions may read clipboard |
 | Shoulder surfing / camera | Masked fields until reveal; 15 s re-mask; FLAG_SECURE | Physical observation remains possible |
-| Brute-force unlock | 30 s cooldown after 5 failures; 600k PBKDF2; verifier | Unlimited attempts over time; weak passwords remain weak |
+| Brute-force unlock | 30 s cooldown after 5 failures; Argon2id (64 MiB, t=3) on every envelope; verifier | Unlimited attempts over time; weak passwords remain weak |
 | Malicious keyboard/autofill | No app-level keyboard; user controls input method | A compromised keyboard/autofill service can capture typed data |
 | Coercion | Biometric/password required; no duress mode | Out of scope for this app |
 | Supply chain | Minimal, FOSS dependencies; pinned versions; no network SDKs; production signing key offline | Upstream dependency compromise is possible; Dependabot/review reduce it |

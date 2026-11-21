@@ -1,5 +1,6 @@
 package com.example.crypto
 
+import com.example.crypto.KdfSpec
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -27,7 +28,7 @@ class VaultCryptoTest {
     private val key = VaultCrypto.deriveKey(
         password = "correct horse battery staple",
         salt = ByteArray(16) { (it + 1).toByte() },
-        iterations = 10_000,
+        spec = KdfSpec.pbkdf2(10_000),
     )
 
     // ---- PBKDF2 ----
@@ -35,17 +36,17 @@ class VaultCryptoTest {
     @Test
     fun `deriveKey is deterministic for same password salt and iterations`() {
         val salt = ByteArray(16) { 7 }
-        val a = VaultCrypto.deriveKey("hunter2-test", salt, 10_000)
-        val b = VaultCrypto.deriveKey("hunter2-test", salt, 10_000)
+        val a = VaultCrypto.derivePbkdf2Key("hunter2-test", salt, 10_000)
+        val b = VaultCrypto.derivePbkdf2Key("hunter2-test", salt, 10_000)
         assertTrue(a.encoded.contentEquals(b.encoded))
         assertEquals(VaultCrypto.KEY_LENGTH_BYTES, a.encoded.size)
     }
 
     @Test
     fun `deriveKey changes with salt and with iterations`() {
-        val a = VaultCrypto.deriveKey("hunter2-test", ByteArray(16) { 1 }, 10_000)
-        val b = VaultCrypto.deriveKey("hunter2-test", ByteArray(16) { 2 }, 10_000)
-        val c = VaultCrypto.deriveKey("hunter2-test", ByteArray(16) { 1 }, 20_000)
+        val a = VaultCrypto.derivePbkdf2Key("hunter2-test", ByteArray(16) { 1 }, 10_000)
+        val b = VaultCrypto.derivePbkdf2Key("hunter2-test", ByteArray(16) { 2 }, 10_000)
+        val c = VaultCrypto.derivePbkdf2Key("hunter2-test", ByteArray(16) { 1 }, 20_000)
         assertFalse(a.encoded.contentEquals(b.encoded))
         assertFalse(a.encoded.contentEquals(c.encoded))
     }
@@ -54,7 +55,7 @@ class VaultCryptoTest {
     fun `deriveKey rejects a short salt`() {
         var threw = false
         try {
-            VaultCrypto.deriveKey("pw", ByteArray(8), 10_000)
+            VaultCrypto.derivePbkdf2Key("pw", ByteArray(8), 10_000)
         } catch (expected: IllegalArgumentException) {
             threw = true
         }
@@ -95,7 +96,7 @@ class VaultCryptoTest {
     @Test
     fun `wrong key cannot decrypt`() {
         val sealed = VaultCrypto.encrypt("secret", key)
-        val otherKey = VaultCrypto.deriveKey("another password", ByteArray(16) { 9 }, 10_000)
+        val otherKey = VaultCrypto.derivePbkdf2Key("another password", ByteArray(16) { 9 }, 10_000)
         var threw = false
         try {
             VaultCrypto.decrypt(sealed, otherKey)
@@ -235,8 +236,8 @@ class VaultCryptoTest {
     fun `recovery phrase keys differ from password keys for the same salt`() {
         val salt = ByteArray(16) { 3 }
         val phrase = VaultCrypto.generateRecoveryPhrase()
-        val passwordKey = VaultCrypto.deriveKey("master password", salt, 10_000)
-        val phraseKey = VaultCrypto.deriveKeyFromPhrase(phrase, salt, 10_000)
+        val passwordKey = VaultCrypto.derivePbkdf2Key("master password", salt, 10_000)
+        val phraseKey = VaultCrypto.deriveKeyFromPhrase(phrase, salt, KdfSpec.pbkdf2(10_000))
         assertFalse(passwordKey.encoded.contentEquals(phraseKey.encoded))
         Arrays.fill(phraseKey.encoded, 0)
     }

@@ -1,19 +1,20 @@
 # Backup format
 
 VaultZero backups are self-contained JSON envelopes encrypted with AES-256-GCM. They are the only
-supported way to move a vault to another device. This document describes format version `3.2`
-(release 1.1.0).
+supported way to move a vault to another device. This document describes format version `3.3`
+(release 1.6.0). Files produced by `1.1.0`–`1.5.0` (`3.2`, PBKDF2 only) still import.
 
 ## File shape (standard protection)
 
 ```json
 {
-  "version": "3.2",
+  "version": "3.3",
   "format": "VaultZero_Encrypted_Envelope",
   "protection": "standard",
   "fingerprint": "VZ-XXXX-XXXX-XXXX-XXXX",
   "exportedAt": 1794719910111,
-  "kdfIterations": 600000,
+  "kdfPasswordSpec": "argon2id:65536:3:1",
+  "kdfRecoverySpec": "argon2id:65536:3:1",
   "recoverySalt": "<base64 16-byte salt>",
   "encryptedVmkByRecovery": "<base64 iv||ciphertext+tag>",
   "salt": "<base64 16-byte salt>",
@@ -51,7 +52,9 @@ Everything else (items, salts for recovery) is identical.
 | Field | Meaning |
 | --- | --- |
 | `format` | Must be `VaultZero_Encrypted_Envelope`; otherwise rejected before writes |
-| `version` | Format version (`3.2`); old files with the same envelope fields are accepted |
+| `version` | Format version (`3.3`); `3.2` and older files with the same envelope fields are accepted |
+| `kdfPasswordSpec` / `kdfRecoverySpec` | KDF of each envelope: `argon2id:<memoryKiB>:<time>:<lanes>` or `pbkdf2-sha256:<iterations>`. Missing in `3.2` files, which are read as PBKDF2 at `kdfIterations` |
+| `kdfIterations` | `3.2`-era shared PBKDF2 count. Written only while both envelopes are still PBKDF2 (never by `1.6.0`); import enforces 10,000–2,000,000 |
 | `protection` | `standard` (password + phrase envelopes) or `recovery_phrase_only` |
 | `fingerprint` | Public source-vault key fingerprint; used to identify the vault |
 | `kdfIterations` | PBKDF2 count used for this file's envelopes; import enforces 10,000–600,000 |
@@ -65,8 +68,10 @@ Everything else (items, salts for recovery) is identical.
 | `timestamps` | Creation/update/last-used epoch ms (non-secret) |
 | `tagsJson` | `[]` placeholder; real tags are encrypted |
 
-Maximum import size is **8 MiB** (`BackupFileIo.MAX_BACKUP_BYTES`). Hostile envelope sizes/KDF
-counts are rejected before any cryptographic work.
+Maximum import size is **8 MiB** (`BackupFileIo.MAX_BACKUP_BYTES`). An import file is untrusted:
+envelope sizes, salts, KDF algorithms and every KDF parameter are validated against the ranges this
+app produces (Argon2id 8–128 MiB, time 1–10, lanes 1–4; PBKDF2 10k–2M) before any cryptographic work,
+so a crafted backup can neither weaken the credential KDF nor turn import into a memory/CPU DoS.
 
 ## Restore semantics (1.1.0)
 
@@ -128,15 +133,17 @@ but installs a complete vault instead of merging records:
 
 Backups do not store the phrase itself. On restore/import, VaultZero accepts either the new
 **BIP-39 12-word** phrases (v1.3.0+, 128-bit entropy) or legacy **136-word-list** phrases generated
-by v1.0.0–v1.2.0. Both derive the recovery KEK through PBKDF2-HMAC-SHA256 with the backup's
-`recoverySalt`; the checksum validation scheme is detected automatically. Existing files and old
+by v1.0.0–v1.2.0. Both derive the recovery KEK through the backup's own KDF (Argon2id for `3.3`
+files, PBKDF2 for `3.2` and older) with the backup's `recoverySalt`; the checksum validation scheme
+is detected automatically. Existing files and old
 printed kits remain usable. New backups created after **Settings → Generate New Recovery Kit**
 require the new phrase; older backups retain their original envelope.
 
 ## Security notes
 
 - The envelope is encrypted but **portable**: anyone holding the file can attempt offline password
-  guessing against the PBKDF2 envelope. Use a strong master password and store the file offline.
+  guessing against the password envelope (Argon2id for `3.3` files, PBKDF2 for older ones). Use a
+  strong master password and store the file offline.
 - Import is intentionally conservative (fail-closed) to avoid writing unauthenticated data.
 - The file contains no biometric data; biometrics are device-local and cannot decrypt a foreign
   backup. The recovery phrase is the portable credential.

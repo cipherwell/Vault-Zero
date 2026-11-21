@@ -2,6 +2,8 @@ package com.example.data
 
 import android.os.SystemClock
 import android.util.Base64
+import com.example.crypto.KdfAlgorithm
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
 import com.example.model.ApiSecretPayload
 import com.example.model.CardPayload
@@ -156,7 +158,7 @@ class VaultRepository(
         val cleanPassword = password.trim()
         require(cleanPassword.length >= 8) { "Master Password must be at least 8 characters" }
 
-        val iterations = VaultCrypto.DEFAULT_ITERATIONS
+        val kdf = KdfSpec.CURRENT
 
         // 1. Generate random 256-bit Vault Master Key (VMK)
         val vmk = VaultCrypto.generateRandomKey()
@@ -165,7 +167,7 @@ class VaultRepository(
         // 2. Derive Password Key via PBKDF2-HMAC-SHA256 and encrypt VMK
         val passwordSalt = VaultCrypto.generateSalt()
         val passwordSaltB64 = Base64.encodeToString(passwordSalt, Base64.NO_WRAP)
-        val passwordKey = VaultCrypto.deriveKey(cleanPassword, passwordSalt, iterations)
+        val passwordKey = VaultCrypto.deriveKey(cleanPassword, passwordSalt, kdf)
         val encVmkPassword = VaultCrypto.encrypt(vmkHex, passwordKey)
         val passwordVerifier = VaultCrypto.createKeyVerifier(passwordKey, "PASSWORD")
 
@@ -173,7 +175,7 @@ class VaultRepository(
         val recoveryPhrase = VaultCrypto.generateRecoveryPhrase()
         val recoverySalt = VaultCrypto.generateSalt()
         val recoverySaltB64 = Base64.encodeToString(recoverySalt, Base64.NO_WRAP)
-        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(recoveryPhrase, recoverySalt, iterations)
+        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(recoveryPhrase, recoverySalt, kdf)
         val encVmkRecovery = VaultCrypto.encrypt(vmkHex, recoveryKey)
         val recoveryVerifier = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY")
 
@@ -193,7 +195,8 @@ class VaultRepository(
             encryptedRecoveryPhrase = encRecoveryPhrase,
             recoveryPhraseHash = recoveryVerifier,
             keyFingerprint = fingerprint,
-            kdfIterations = iterations
+            passwordKdf = kdf,
+            recoveryKdf = kdf,
         )
 
         activeSecretKey = vmk
@@ -246,14 +249,11 @@ class VaultRepository(
             throw IllegalArgumentException("backup contains no entries")
         }
 
-        // kdfIterations is attacker-controlled until validated: clamp to values this app
-        // has produced so a crafted backup cannot weaken or CPU-DoS the migration.
-        val iterations = backup.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
-        if (iterations < VaultCrypto.MIN_ACCEPTED_ITERATIONS ||
-            iterations > VaultCrypto.DEFAULT_ITERATIONS
-        ) {
-            throw IllegalArgumentException("backup uses an unsupported KDF iteration count")
-        }
+        // The KDF specs travel inside an untrusted file. decode() rejects malformed or
+        // out-of-range parameters, so a crafted backup can neither weaken the credential
+        // KDF nor turn the restore into a CPU/memory denial of service.
+        val recoveryKdf = parseBackupKdf(backup, "kdfRecoverySpec", "recovery-phrase")
+        val sourcePasswordKdf = parseBackupKdf(backup, "kdfPasswordSpec", "password")
 
         val recoverySaltB64 = backup.optString("recoverySalt", "")
         val encryptedVmkByRecovery = backup.optString("encryptedVmkByRecovery", "")
@@ -265,7 +265,7 @@ class VaultRepository(
 
         val vmk: SecretKey
         try {
-            val recoveryKey = VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, iterations)
+            val recoveryKey = VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, recoveryKdf)
             val vmkHex = VaultCrypto.decrypt(encryptedVmkByRecovery, recoveryKey)
             val vmkBytes = VaultCrypto.hexToBytes(vmkHex)
             require(vmkBytes.size == VaultCrypto.KEY_LENGTH_BYTES) {
@@ -331,12 +331,16 @@ class VaultRepository(
             sourceSaltB64.isNotEmpty() && sourceEncVmk.isNotEmpty() && sourceVerifier.isNotEmpty()
 
         val cleanNewPassword = newMasterPassword?.trim().orEmpty()
+        // A new password is always wrapped with the current KDF. Reusing the backup's own
+        // password envelope keeps that envelope's declared KDF, which may still be PBKDF2;
+        // the first successful unlock then migrates both envelopes to Argon2id.
+        val passwordKdf = if (cleanNewPassword.isNotEmpty()) KdfSpec.CURRENT else sourcePasswordKdf
         val passwordEnvelope: Triple<String, String, String> = if (cleanNewPassword.isNotEmpty()) {
             require(cleanNewPassword.length >= 8) {
                 "New master password must be at least 8 characters"
             }
             val salt = VaultCrypto.generateSalt()
-            val key = VaultCrypto.deriveKey(cleanNewPassword, salt, iterations)
+            val key = VaultCrypto.deriveKey(cleanNewPassword, salt, passwordKdf)
             Triple(
                 Base64.encodeToString(salt, Base64.NO_WRAP),
                 VaultCrypto.encrypt(vmkHex, key),
@@ -356,7 +360,7 @@ class VaultRepository(
         // Keep the existing recovery kit: reuse its salt/envelope and only refresh the
         // VMK-encrypted copy of the phrase plus the verifier derived from the supplied phrase.
         val recoveryVerifier = VaultCrypto.createKeyVerifier(
-            VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, iterations),
+            VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, recoveryKdf),
             "RECOVERY",
         )
         val encryptedRecoveryPhrase = VaultCrypto.encrypt(cleanPhrase, vmk)
@@ -376,7 +380,8 @@ class VaultRepository(
             encryptedRecoveryPhrase = encryptedRecoveryPhrase,
             recoveryPhraseHash = recoveryVerifier,
             keyFingerprint = fingerprint,
-            kdfIterations = iterations,
+            passwordKdf = passwordKdf,
+            recoveryKdf = recoveryKdf,
         )
 
         activeSecretKey = vmk
@@ -437,13 +442,13 @@ class VaultRepository(
         }
         if (salt.size < VaultCrypto.SALT_LENGTH_BYTES) return@withContext false
 
-        val iterations = prefs.kdfIterations.coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
+        val passwordKdf = prefs.passwordKdf
 
         // Check both exact input and trimmed input for robustness
         val candidates = listOf(password, password.trim()).distinct()
         for (candidate in candidates) {
             if (candidate.isEmpty()) continue
-            val passwordKey = VaultCrypto.deriveKey(candidate, salt, iterations)
+            val passwordKey = VaultCrypto.deriveKey(candidate, salt, passwordKdf)
             val v2Verifier = VaultCrypto.createKeyVerifier(passwordKey, "PASSWORD")
             val legacyV1Verifier = VaultCrypto.sha256(candidate + saltB64)
 
@@ -468,7 +473,7 @@ class VaultRepository(
                             }
                             // Transparently strengthen the KDF envelope when this
                             // vault predates the current PBKDF2 work factor.
-                            upgradeKdfIfNeeded(candidate.trim(), vmkHex, iterations)
+                            migrateKdfIfNeeded(candidate.trim(), vmkHex, passwordKdf)
                             purgeLegacyDemoItemsIfPresent(vmk)
                             return@withContext true
                         }
@@ -504,11 +509,11 @@ class VaultRepository(
         if (prefs.encryptedVmkByRecovery.isEmpty() || prefs.recoverySaltBase64.isEmpty()) return@withContext false
 
         try {
-            val iterations = prefs.kdfIterations.coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
+            val recoveryKdf = prefs.recoveryKdf
             val recoverySalt = Base64.decode(prefs.recoverySaltBase64, Base64.NO_WRAP)
             if (recoverySalt.size < VaultCrypto.SALT_LENGTH_BYTES) return@withContext false
 
-            val recoveryKey = VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, iterations)
+            val recoveryKey = VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, recoveryKdf)
             val v2RecoveryVerifier = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY")
             val legacyV1RecoveryVerifier = VaultCrypto.sha256(cleanPhrase)
 
@@ -528,7 +533,7 @@ class VaultRepository(
             // 2. Re-wrap VMK with new password
             val newSalt = VaultCrypto.generateSalt()
             val newSaltB64 = Base64.encodeToString(newSalt, Base64.NO_WRAP)
-            val newPasswordKey = VaultCrypto.deriveKey(cleanNewPassword, newSalt, iterations)
+            val newPasswordKey = VaultCrypto.deriveKey(cleanNewPassword, newSalt, KdfSpec.CURRENT)
             val newEncVmkPassword = VaultCrypto.encrypt(vmkHex, newPasswordKey)
             val newPasswordVerifier = VaultCrypto.createKeyVerifier(newPasswordKey, "PASSWORD")
             val encRecoveryPhrase = VaultCrypto.encrypt(cleanPhrase, vmk)
@@ -543,7 +548,8 @@ class VaultRepository(
                 encryptedRecoveryPhrase = encRecoveryPhrase,
                 recoveryPhraseHash = v2RecoveryVerifier,
                 keyFingerprint = prefs.keyFingerprint,
-                kdfIterations = iterations
+                passwordKdf = KdfSpec.CURRENT,
+                recoveryKdf = recoveryKdf,
             )
 
             activeSecretKey = vmk
@@ -567,11 +573,10 @@ class VaultRepository(
     suspend fun regenerateRecoveryKit(): String = withContext(Dispatchers.Default) {
         val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
         val vmkHex = VaultCrypto.bytesToHex(key.encoded)
-        val iterations = prefs.kdfIterations.coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
 
         val phrase = VaultCrypto.generateRecoveryPhrase()
         val recoverySalt = VaultCrypto.generateSalt()
-        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phrase, recoverySalt, iterations)
+        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phrase, recoverySalt, KdfSpec.CURRENT)
         val encryptedVmk = VaultCrypto.encrypt(vmkHex, recoveryKey)
         val encryptedPhrase = VaultCrypto.encrypt(phrase, key)
         val verifier = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY")
@@ -581,6 +586,7 @@ class VaultRepository(
             encryptedVmkByRecovery = encryptedVmk,
             encryptedRecoveryPhrase = encryptedPhrase,
             recoveryPhraseHash = verifier,
+            kdf = KdfSpec.CURRENT,
         )
         phrase
     }
@@ -769,12 +775,19 @@ class VaultRepository(
         VaultCrypto.validateAes256Key(key)
         val entities = dao.getAllList()
         val backupJson = JSONObject()
-        backupJson.put("version", "3.2")
+        backupJson.put("version", "3.3")
         backupJson.put("format", BACKUP_FORMAT)
         backupJson.put("protection", protection.storage)
         backupJson.put("fingerprint", prefs.keyFingerprint)
         backupJson.put("exportedAt", System.currentTimeMillis())
-        backupJson.put("kdfIterations", prefs.kdfIterations)
+        backupJson.put("kdfPasswordSpec", prefs.passwordKdf.encode())
+        backupJson.put("kdfRecoverySpec", prefs.recoveryKdf.encode())
+        // Legacy field for 3.2-era readers: only meaningful while both envelopes are PBKDF2.
+        if (prefs.passwordKdf.algorithm == KdfAlgorithm.PBKDF2_SHA256 &&
+            prefs.recoveryKdf.algorithm == KdfAlgorithm.PBKDF2_SHA256
+        ) {
+            backupJson.put("kdfIterations", prefs.passwordKdf.iterations)
+        }
         backupJson.put("recoverySalt", prefs.recoverySaltBase64)
         backupJson.put("encryptedVmkByRecovery", prefs.encryptedVmkByRecovery)
         if (protection == BackupProtection.STANDARD) {
@@ -863,15 +876,11 @@ class VaultRepository(
         }
         var foreignBackupKey: SecretKey? = null
         if (secretText.isNotEmpty()) {
-            // The iteration count travels inside an untrusted file. Clamp it to the
-            // range this app has ever produced so a crafted backup cannot turn an
-            // import into a CPU-denial-of-service or weaken the credential KDF.
-            val iterations = backupJson.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
-            if (iterations < VaultCrypto.MIN_ACCEPTED_ITERATIONS ||
-                iterations > VaultCrypto.DEFAULT_ITERATIONS
-            ) {
-                throw IllegalArgumentException("backup uses an unsupported KDF iteration count")
-            }
+            // The KDF specs travel inside an untrusted file: parseBackupKdf rejects
+            // malformed or out-of-range parameters before any KDF work happens, so a
+            // crafted backup cannot CPU/memory-DoS the import or weaken the KDF.
+            val backedUpRecoveryKdf = parseBackupKdf(backupJson, "kdfRecoverySpec", "recovery-phrase")
+            val backedUpPasswordKdf = parseBackupKdf(backupJson, "kdfPasswordSpec", "password")
             val phraseCandidate = VaultCrypto.normalizeRecoveryPhrase(secretText)
             val looksLikePhrase = VaultCrypto.validateRecoveryPhrase(
                 phraseCandidate,
@@ -891,7 +900,7 @@ class VaultRepository(
                 validateBackupKeyEnvelope(recoveryEncVmk)
                 try {
                     val salt = decodeBackupSalt(recoverySaltB64, "recovery")
-                    val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phraseCandidate, salt, iterations)
+                    val recoveryKey = VaultCrypto.deriveKeyFromPhrase(phraseCandidate, salt, backedUpRecoveryKdf)
                     val vmkHex = VaultCrypto.decrypt(recoveryEncVmk, recoveryKey)
                     SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
                 } catch (e: Exception) {
@@ -911,7 +920,7 @@ class VaultRepository(
                 validateBackupKeyEnvelope(backupEncVmk)
                 try {
                     val salt = decodeBackupSalt(backupSaltB64, "password")
-                    val passKey = VaultCrypto.deriveKey(secretText, salt, iterations)
+                    val passKey = VaultCrypto.deriveKey(secretText, salt, backedUpPasswordKdf)
                     val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
                     SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
                 } catch (e: Exception) {
@@ -1077,6 +1086,28 @@ class VaultRepository(
         }
     }
 
+    /**
+     * Read the KDF spec a backup declares for one envelope. Backup 3.3+ carries
+     * explicit specs; 3.2 and older carry only the shared PBKDF2 iteration count,
+     * which is still bounded here because the file is untrusted.
+     */
+    private fun parseBackupKdf(backup: JSONObject, key: String, label: String): KdfSpec {
+        val raw = backup.optString(key, "")
+        if (raw.isNotEmpty()) {
+            return KdfSpec.decode(raw)
+                ?: throw IllegalArgumentException(
+                    "backup declares unsupported $label KDF parameters"
+                )
+        }
+        val iterations = backup.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
+        if (iterations < VaultCrypto.MIN_ACCEPTED_ITERATIONS ||
+            iterations > VaultCrypto.MAX_ACCEPTED_ITERATIONS
+        ) {
+            throw IllegalArgumentException("backup uses an unsupported KDF iteration count")
+        }
+        return KdfSpec.pbkdf2(iterations)
+    }
+
     private fun contentFingerprint(item: VaultItem): String {
         val payloadJson = item.payload.toJson()
         val canonicalPayload = payloadJson.keys().asSequence().sorted()
@@ -1113,7 +1144,7 @@ class VaultRepository(
         require(cleanNew != cleanCurrent) { "New password must differ from the current one" }
 
         val salt = Base64.decode(prefs.saltBase64, Base64.NO_WRAP)
-        val currentKey = VaultCrypto.deriveKey(cleanCurrent, salt, prefs.kdfIterations)
+        val currentKey = VaultCrypto.deriveKey(cleanCurrent, salt, prefs.passwordKdf)
         val currentVerifier = VaultCrypto.createKeyVerifier(currentKey, "PASSWORD")
         if (currentVerifier != prefs.masterPasswordHash) {
             throw IllegalArgumentException("Current master password is incorrect")
@@ -1121,7 +1152,7 @@ class VaultRepository(
 
         val vmkHex = VaultCrypto.bytesToHex(key.encoded)
         val newSalt = VaultCrypto.generateSalt()
-        val newKey = VaultCrypto.deriveKey(cleanNew, newSalt, VaultCrypto.DEFAULT_ITERATIONS)
+        val newKey = VaultCrypto.deriveKey(cleanNew, newSalt, KdfSpec.CURRENT)
         val newEncVmk = VaultCrypto.encrypt(vmkHex, newKey)
         val newVerifier = VaultCrypto.createKeyVerifier(newKey, "PASSWORD")
 
@@ -1129,31 +1160,34 @@ class VaultRepository(
             passwordVerifier = newVerifier,
             saltBase64 = Base64.encodeToString(newSalt, Base64.NO_WRAP),
             encryptedVmkByPassword = newEncVmk,
-            kdfIterations = VaultCrypto.DEFAULT_ITERATIONS,
+            kdf = KdfSpec.CURRENT,
         )
     }
 
     /**
-     * Re-wrap both key envelopes with the current [VaultCrypto.DEFAULT_ITERATIONS]
-     * after a successful password unlock of a vault created with a weaker KDF.
+     * Re-wrap both key envelopes with [KdfSpec.CURRENT] (Argon2id) after a
+     * successful password unlock of a vault still using a weaker or legacy KDF
+     * (PBKDF2 at 600k or below, e.g. a vault restored from an old backup).
      *
      * The VMK itself is never re-keyed, so every encrypted record stays valid;
      * only the password and recovery KEKs (and their salts) rotate. Both
-     * envelopes rotate together because the iteration count is global for the
-     * vault: if the recovery phrase cannot be read, the whole upgrade is skipped
-     * rather than leaving a recovery path that no longer derives.
+     * envelopes rotate together because a single unlock cannot know how the
+     * other envelope's KDF will drift: if the recovery phrase cannot be read,
+     * the whole migration is skipped rather than leaving a recovery path that
+     * no longer derives.
      *
      * The write is a single SharedPreferences commit; any failure leaves the
-     * previous envelope and iteration count untouched.
+     * previous envelopes, KDF specs and salts untouched.
      *
-     * @return true when the envelopes were upgraded
+     * @return true when the envelopes were migrated
      */
-    private fun upgradeKdfIfNeeded(
+    private fun migrateKdfIfNeeded(
         cleanPassword: String,
         vmkHex: String,
-        currentIterations: Int,
+        currentPasswordKdf: KdfSpec,
     ): Boolean {
-        if (cleanPassword.isEmpty() || currentIterations >= VaultCrypto.DEFAULT_ITERATIONS) return false
+        if (cleanPassword.isEmpty()) return false
+        if (currentPasswordKdf == KdfSpec.CURRENT && prefs.recoveryKdf == KdfSpec.CURRENT) return false
         return try {
             val vmk = SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
             if (prefs.encryptedRecoveryPhrase.isEmpty()) return false
@@ -1164,7 +1198,7 @@ class VaultRepository(
             val newPasswordKey = VaultCrypto.deriveKey(
                 cleanPassword,
                 newPasswordSalt,
-                VaultCrypto.DEFAULT_ITERATIONS,
+                KdfSpec.CURRENT,
             )
             val newPasswordVerifier = VaultCrypto.createKeyVerifier(newPasswordKey, "PASSWORD")
 
@@ -1172,7 +1206,7 @@ class VaultRepository(
             val newRecoveryKey = VaultCrypto.deriveKeyFromPhrase(
                 recoveryPhrase,
                 newRecoverySalt,
-                VaultCrypto.DEFAULT_ITERATIONS,
+                KdfSpec.CURRENT,
             )
             val newRecoveryVerifier = VaultCrypto.createKeyVerifier(newRecoveryKey, "RECOVERY")
 
@@ -1186,7 +1220,8 @@ class VaultRepository(
                 encryptedRecoveryPhrase = prefs.encryptedRecoveryPhrase,
                 recoveryPhraseHash = newRecoveryVerifier,
                 keyFingerprint = prefs.keyFingerprint,
-                kdfIterations = VaultCrypto.DEFAULT_ITERATIONS,
+                passwordKdf = KdfSpec.CURRENT,
+                recoveryKdf = KdfSpec.CURRENT,
             )
             true
         } catch (e: Exception) {

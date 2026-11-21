@@ -75,8 +75,9 @@ credential). Nothing was written by design. Read the dialog/detail message.
 **"recovery phrase checksum does not match"**
 Recheck word order/spelling; the 12th word is a checksum. All words must be from the wordlist.
 
-**"unsupported KDF iteration count"**
-The backup was crafted with out-of-range PBKDF2 parameters; the app refuses it before doing KDF
+**"unsupported KDF iteration count"** / **"unsupported … KDF parameters"**
+The backup was crafted with out-of-range KDF parameters (PBKDF2 count or Argon2id memory/time);
+the app refuses it before doing KDF
 work. Use an authentic backup.
 
 **Import reports unreadable records**
@@ -112,11 +113,11 @@ version trail with logs that contain no secrets.
 ## Performance
 
 **Import/export takes a few seconds**
-KDF (600k PBKDF2) and decrypt/verify run off the UI thread by design; the UI shows progress and
+KDF (Argon2id, 64 MiB, or legacy PBKDF2) and decrypt/verify run off the UI thread by design; the UI shows progress and
 disables duplicate actions while working. Large vaults take longer.
 
 **App start feels slow after unlock**
-PBKDF2 600k is intentionally expensive. Biometric unlock avoids repeated password KDF by using a
+Argon2id/600k PBKDF2 are intentionally expensive. Biometric unlock avoids repeated password KDF by using a
 hardware-wrapped key.
 
 ## Getting help

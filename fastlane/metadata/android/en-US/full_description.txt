@@ -4,7 +4,7 @@ VAULT
 • Logins with live RFC 6238 TOTP codes, payment cards, API keys, crypto wallets and seed phrases, secure notes, and identity documents.
 • Record titles, categories and tags are encrypted inside each record; raw database columns and backups contain only redacted placeholders.
 • AES-256-GCM per-record encryption with Additional Authenticated Data binding, so swapped or tampered rows fail closed and are never displayed.
-• A random 256-bit vault key is wrapped independently by your master password and a BIP-39 12-word recovery phrase (2048-word standard, 128-bit entropy) using PBKDF2-HMAC-SHA256 (600,000 iterations). Recovery kits can be rotated without changing the vault.
+• A random 256-bit vault key is wrapped independently by your master password and a BIP-39 12-word recovery phrase (2048-word standard, 128-bit entropy) using Argon2id (64 MiB memory, 3 iterations). Vaults created by older versions still open and are upgraded transparently. Recovery kits can be rotated without changing the vault.
 
 SECURITY
 • No INTERNET or network-state permission — the app cannot connect anywhere.

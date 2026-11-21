@@ -1,6 +1,6 @@
 # Cryptographic design
 
-This document is the implementation reference for VaultZero `1.1.0`. It describes what the code
+This document is the implementation reference for VaultZero `1.6.0`. It describes what the code
 actually does; source of truth is `app/src/main/java/com/example/crypto/` and
 `app/src/main/java/com/example/data/VaultRepository.kt`.
 
@@ -12,22 +12,25 @@ actually does; source of truth is `app/src/main/java/com/example/crypto/` and
 | GCM IV | 12 bytes, random per encryption (`SecureRandom`) |
 | GCM tag | 128 bits |
 | Vault master key (VMK) | 32 random bytes (`SecureRandom`) |
-| Password KDF | PBKDF2WithHmacSHA256 |
-| Default/current iterations | 600,000 |
-| Minimum accepted iterations (legacy import) | 10,000 |
+| Password / recovery KDF | **Argon2id** (RFC 9106, version 1.3) |
+| Argon2id parameters (current) | memory 65,536 KiB (64 MiB), time cost 3, lanes 1, 32-byte tag |
+| Argon2id accepted range (stored/imported) | memory 8,192–131,072 KiB, time 1–10, lanes 1–4 |
+| Legacy KDF (accepted, migrated on unlock) | PBKDF2-HMAC-SHA256, 600,000 iterations |
+| PBKDF2 accepted range | 10,000–2,000,000 iterations |
+| KDF descriptor | per envelope, persisted as `pbkdf2-sha256:<iterations>` or `argon2id:<memoryKiB>:<iterations>:<lanes>` |
 | KDF salt | 16 random bytes, stored base64 |
 | Verifier | HMAC-SHA256 over a domain-separated message, never a bare password hash |
 | Recovery phrase | BIP-39 English, 12 words = 128-bit entropy + 4-bit checksum (new kits); legacy v1.x 136-word scheme accepted |
 | TOTP | RFC 6238, HMAC-SHA1, 6 digits, 30-second time step |
-| Backup envelope version | `3.2` (`VaultZero_Encrypted_Envelope`) |
+| Backup envelope version | `3.3` (`VaultZero_Encrypted_Envelope`); `3.2`/older still imports |
 | Base64 | `Base64.NO_WRAP` for IV/ciphertext/envelope concatenation |
 
 ## Key hierarchy
 
 ```mermaid
 flowchart TD
-  PW["Master password"] -->|PBKDF2-HMAC-SHA256<br/>salt, 600k| PKEK["Password KEK"]
-  RP["12-word recovery phrase"] -->|PBKDF2-HMAC-SHA256<br/>recovery salt, 600k| RKEK["Recovery KEK"]
+  PW["Master password"] -->|Argon2id<br/>salt, 64 MiB, t=3| PKEK["Password KEK"]
+  RP["12-word recovery phrase"] -->|Argon2id<br/>recovery salt, 64 MiB, t=3| RKEK["Recovery KEK"]
   PKEK -->|AES-GCM wrap| VMK["Vault Master Key (32 bytes)"]
   RKEK -->|AES-GCM wrap| VMK
   VMK -->|AES-256-GCM + AAD| REC["Records"]
@@ -69,11 +72,17 @@ next save.
 
 ## Unlock and verification
 
-- Unlock derives the password KEK from the stored salt and iteration count, decrypts the wrapped
-  VMK, and compares a domain-separated verifier before accepting the password.
+- Unlock derives the password KEK from the stored salt and that envelope's KDF descriptor
+  (Argon2id for new vaults, PBKDF2 for pre-1.6.0 ones), decrypts the wrapped VMK, and compares a
+  domain-separated verifier before accepting the password.
 - Five failed attempts initiate a 30 s lockout; the check happens before PBKDF2 to avoid abuse.
-- Legacy 100k-iteration vaults are transparently re-wrapped with fresh salts at 600k on a
-  successful unlock (VMK unchanged; atomic preference write).
+- **KDF migration (1.6.0).** After a successful password unlock, if either envelope's descriptor
+  differs from the current Argon2id spec (e.g. a 100k/600k PBKDF2 vault, or a vault restored from a
+  3.2-era backup), both envelopes are re-wrapped with fresh salts under the current spec. The VMK
+  is never re-keyed, so every encrypted record stays valid; the rewrite is one atomic preference
+  commit and is skipped entirely when the encrypted recovery phrase cannot be read.
+- Legacy 100k-iteration vaults use the same migration path: PBKDF2 600k → Argon2id 64 MiB/t=3,
+  with the PBKDF2 work factor only ever a transient state.
 - Recovery uses the normalized 12-word phrase, validates either its BIP-39 checksum or the legacy
   v1.x checksum, derives the recovery KEK and unwraps the same VMK. The phrase can be used to set
   a new master password.

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Base64
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -63,11 +64,15 @@ class VaultRepositoryKdfMigrationTest {
         vmkHex = VaultCrypto.bytesToHex(vmk.encoded)
 
         val passwordSalt = VaultCrypto.generateSalt()
-        val passwordKey = VaultCrypto.deriveKey(password, passwordSalt, legacyIterations)
+        val passwordKey = VaultCrypto.derivePbkdf2Key(password, passwordSalt, legacyIterations)
 
         recoveryPhrase = VaultCrypto.generateRecoveryPhrase()
         val recoverySalt = VaultCrypto.generateSalt()
-        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(recoveryPhrase, recoverySalt, legacyIterations)
+        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(
+            recoveryPhrase,
+            recoverySalt,
+            KdfSpec.pbkdf2(legacyIterations),
+        )
 
         prefs.saveEnvelopeCredentials(
             passwordHash = VaultCrypto.createKeyVerifier(passwordKey, "PASSWORD"),
@@ -78,7 +83,8 @@ class VaultRepositoryKdfMigrationTest {
             encryptedRecoveryPhrase = VaultCrypto.encrypt(recoveryPhrase, vmk),
             recoveryPhraseHash = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY"),
             keyFingerprint = VaultCrypto.generateFingerprint(vmkHex),
-            kdfIterations = legacyIterations,
+            passwordKdf = KdfSpec.pbkdf2(legacyIterations),
+            recoveryKdf = KdfSpec.pbkdf2(legacyIterations),
         )
     }
 
@@ -90,8 +96,8 @@ class VaultRepositoryKdfMigrationTest {
 
         assertTrue("legacy vault must still unlock", repository.unlock(password))
 
-        assertEquals(VaultCrypto.DEFAULT_ITERATIONS, prefs.kdfIterations)
-        assertEquals(600_000, prefs.kdfIterations)
+        assertEquals("unlock must migrate the password envelope to Argon2id", KdfSpec.CURRENT, prefs.passwordKdf)
+        assertEquals("unlock must migrate the recovery envelope too", KdfSpec.CURRENT, prefs.recoveryKdf)
         assertNotEquals("password salt must rotate", oldSalt, prefs.saltBase64)
         assertNotEquals("recovery salt must rotate", oldRecoverySalt, prefs.recoverySaltBase64)
         assertNotEquals("VMK must be re-wrapped under the new KEK", oldWrapped, prefs.encryptedVmkByPassword)
@@ -101,7 +107,7 @@ class VaultRepositoryKdfMigrationTest {
     @Test
     fun `migrated vault unlocks again with the same password`() = runTest {
         assertTrue(repository.unlock(password))
-        assertEquals(600_000, prefs.kdfIterations)
+        assertEquals(KdfSpec.CURRENT, prefs.passwordKdf)
 
         repository.lock()
         assertTrue("password must still unlock after re-wrap", repository.unlock(password))
@@ -111,7 +117,7 @@ class VaultRepositoryKdfMigrationTest {
     @Test
     fun `recovery phrase still restores the same vmk after migration`() = runTest {
         assertTrue(repository.unlock(password))
-        assertEquals(600_000, prefs.kdfIterations)
+        assertEquals(KdfSpec.CURRENT, prefs.passwordKdf)
         repository.lock()
 
         assertTrue(
@@ -128,7 +134,11 @@ class VaultRepositoryKdfMigrationTest {
 
         assertFalse(repository.unlock("wrongpass1"))
 
-        assertEquals("a failed unlock must not strengthen or rotate anything", legacyIterations, prefs.kdfIterations)
+        assertEquals(
+            "a failed unlock must not strengthen or rotate anything",
+            KdfSpec.pbkdf2(legacyIterations),
+            prefs.passwordKdf,
+        )
         assertEquals(oldSalt, prefs.saltBase64)
         assertEquals(oldWrapped, prefs.encryptedVmkByPassword)
     }
@@ -141,9 +151,14 @@ class VaultRepositoryKdfMigrationTest {
         assertTrue("password unlock must not depend on the recovery copy", repository.unlock(password))
 
         assertEquals(
-            "without a readable recovery phrase the global iteration count must stay consistent",
-            legacyIterations,
-            prefs.kdfIterations,
+            "without a readable recovery phrase the legacy KDF must stay untouched",
+            KdfSpec.pbkdf2(legacyIterations),
+            prefs.passwordKdf,
+        )
+        assertEquals(
+            "the recovery spec must not drift away from the password spec",
+            KdfSpec.pbkdf2(legacyIterations),
+            prefs.recoveryKdf,
         )
         assertEquals(oldSalt, prefs.saltBase64)
         assertEquals(vmkHex, repository.getActiveVmkHex())

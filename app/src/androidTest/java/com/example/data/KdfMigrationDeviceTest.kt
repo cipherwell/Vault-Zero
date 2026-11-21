@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -55,10 +56,14 @@ class KdfMigrationDeviceTest {
         val vmk = VaultCrypto.generateRandomKey()
         val vmkHex = VaultCrypto.bytesToHex(vmk.encoded)
         val passwordSalt = VaultCrypto.generateSalt()
-        val passwordKey = VaultCrypto.deriveKey(password, passwordSalt, legacyIterations)
+        val passwordKey = VaultCrypto.derivePbkdf2Key(password, passwordSalt, legacyIterations)
         recoveryPhrase = VaultCrypto.generateRecoveryPhrase()
         val recoverySalt = VaultCrypto.generateSalt()
-        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(recoveryPhrase, recoverySalt, legacyIterations)
+        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(
+            recoveryPhrase,
+            recoverySalt,
+            KdfSpec.pbkdf2(legacyIterations),
+        )
         prefs.saveEnvelopeCredentials(
             passwordHash = VaultCrypto.createKeyVerifier(passwordKey, "PASSWORD"),
             saltBase64 = Base64.encodeToString(passwordSalt, Base64.NO_WRAP),
@@ -68,7 +73,8 @@ class KdfMigrationDeviceTest {
             encryptedRecoveryPhrase = VaultCrypto.encrypt(recoveryPhrase, vmk),
             recoveryPhraseHash = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY"),
             keyFingerprint = VaultCrypto.generateFingerprint(vmkHex),
-            kdfIterations = legacyIterations,
+            passwordKdf = KdfSpec.pbkdf2(legacyIterations),
+            recoveryKdf = KdfSpec.pbkdf2(legacyIterations),
         )
     }
 
@@ -78,9 +84,9 @@ class KdfMigrationDeviceTest {
         assertTrue(repository.unlock(password))
         val unlockMs = System.currentTimeMillis() - startedAt
 
-        assertEquals(600_000, prefs.kdfIterations)
+        assertEquals("on-device unlock must migrate to Argon2id", KdfSpec.CURRENT, prefs.passwordKdf)
         assertTrue("migrated vault must still hold a usable VMK", repository.getActiveVmkHex()?.length == 64)
-        assertTrue("600k PBKDF2 must stay usable on device (took ${unlockMs}ms)", unlockMs < 15_000)
+        assertTrue("PBKDF2 unlock + Argon2id migration must stay usable on device (took ${unlockMs}ms)", unlockMs < 20_000)
 
         repository.lock()
         assertTrue("password must open the migrated vault", repository.unlock(password))
@@ -96,7 +102,7 @@ class KdfMigrationDeviceTest {
         val wrongStarted = System.currentTimeMillis()
         assertTrue(!repository.unlock("wrongpass1"))
         val wrongMs = System.currentTimeMillis() - wrongStarted
-        assertEquals(legacyIterations, prefs.kdfIterations)
+        assertEquals(KdfSpec.pbkdf2(legacyIterations), prefs.passwordKdf)
         assertEquals(beforeSalt, prefs.saltBase64)
         assertEquals(beforeWrapped, prefs.encryptedVmkByPassword)
         assertTrue("one rejected 100k derivation should be fast (${wrongMs}ms)", wrongMs < 10_000)

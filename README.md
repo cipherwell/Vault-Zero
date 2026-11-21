@@ -6,7 +6,7 @@
 
 **Offline, zero-knowledge password manager and encrypted vault for Android.**
 
-AES-256-GCM · PBKDF2-HMAC-SHA256 (600,000) · BIP-39 128-bit recovery kits · hardware biometrics · no network permission · no accounts · no telemetry
+AES-256-GCM · Argon2id (64 MiB, t=3) · BIP-39 128-bit recovery kits · hardware biometrics · no network permission · no accounts · no telemetry
 
 🌐 [cipherwell.github.io/Vault-Zero](https://cipherwell.github.io/Vault-Zero/) · 📦 [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases) · 📚 [Documentation](docs/README.md)
 
@@ -33,7 +33,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.5.0** (`versionCode 7`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
+> **Status:** production release **v1.6.0** (`versionCode 8`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -73,7 +73,9 @@ More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 
 ### Security
 - Random 256-bit vault master key (VMK); per-record AES-256-GCM with `VaultZero_Record_v2:<id>:<type>` AAD.
-- PBKDF2-HMAC-SHA256 with **600,000 iterations** and 128-bit salts; transparent upgrade of legacy vaults on unlock.
+- **Argon2id** (RFC 9106: 64 MiB, 3 iterations, 1 lane) with 128-bit random salts for every new key
+  envelope. Vaults and backups still using PBKDF2-HMAC-SHA256 (600,000) open normally and are
+  transparently migrated to Argon2id on the next successful unlock.
 - **BIP-39 128-bit recovery kit** (2048-word standard, unique words); change master password without re-encrypting records; rotate an exposed kit without changing the vault.
 - Hardware-backed biometric unlock through Android Keystore + `BiometricPrompt.CryptoObject` — **per-use** authentication, invalidated when biometrics are re-enrolled. The prompt auto-appears on app open when enabled.
 - Configurable auto-lock, background lock (screen-off locks immediately; SAF picker exempt), clipboard auto-clear, `FLAG_SECURE`, Recent-Apps preview blocked.
@@ -97,7 +99,7 @@ More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 | --- | --- |
 | Records | AES-256-GCM, random per-record IV, 128-bit tag, AAD bound to record id + type |
 | Key hierarchy | Random 256-bit VMK wraps records; VMK wrapped by password KEK and recovery-phrase KEK |
-| Password KDF | PBKDF2-HMAC-SHA256, 600,000 iterations, 128-bit random salt |
+| Password KDF | Argon2id, m=64 MiB, t=3, p=1, 128-bit random salt (PBKDF2-HMAC-SHA256 600k accepted and migrated) |
 | Recovery | BIP-39 12-word phrase (128-bit entropy) with unique words; legacy v1.x phrases still accepted; encrypted under the VMK at rest; rotatable in Settings |
 | Biometrics | AES-256-GCM Keystore key, `AUTH_BIOMETRIC_STRONG`, per-use auth (`CryptoObject`), StrongBox→TEE, invalidated by biometric enrolment changes |
 | Backups | AES-256-GCM envelope, redacted metadata, 8 MiB import cap, phrase/password restore |
@@ -111,11 +113,11 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.5.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.6.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.5.0.apk` (sideload) | 1,861,347 B | `bbd41378c8404558db1810a16b668dfdfa49bd2a7cabe7a0e28dfdbc75cd753c` |
+| `VaultZero-v1.6.0.apk` (sideload) | 1,894,353 B | `c12234e22711b18c6b05fb311f68989cc4d0e9bb7325389b704f710ced95436d` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
@@ -156,7 +158,7 @@ instructions: [docs/BUILDING.md](docs/BUILDING.md).
 ## Testing
 
 ```bash
-./gradlew :app:testDebugUnitTest       # 105 JVM/Robolectric tests
+./gradlew :app:testDebugUnitTest       # 119 JVM/Robolectric tests
 ./gradlew :app:lintDebug               # Android Lint
 ```
 
@@ -170,7 +172,7 @@ see [docs/TESTING.md](docs/TESTING.md) for commands and the QA checklist.
 flowchart LR
   UI["Compose UI<br/>screens · dialogs"] --> VM["VaultViewModel<br/>state · lifecycle"]
   VM --> REPO["VaultRepository<br/>envelope · import/export"]
-  VM --> CRYPTO["VaultCrypto<br/>AES-GCM · PBKDF2 · TOTP"]
+  VM --> CRYPTO["VaultCrypto<br/>AES-GCM · Argon2id · TOTP"]
   VM --> BIO["BiometricKeyManager<br/>Keystore · CryptoObject"]
   REPO --> ROOM["Room database<br/>vault_items (redacted metadata)"]
   REPO --> PREFS["SharedPreferences<br/>wrapped VMK · salts"]
@@ -187,7 +189,7 @@ unlocked. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · crypto:
 vault-zero-app/
 ├── app/                       Android application module (Kotlin/Compose)
 │   └── src/main/java/com/example/
-│       ├── crypto/            AES-GCM, PBKDF2, TOTP, biometric keystore, audit engine
+│       ├── crypto/            AES-GCM, Argon2id/PBKDF2, TOTP, biometric keystore, audit engine
 │       ├── data/              Room database, repository, preferences, backup IO
 │       ├── model/             Vault records, payloads, audit models
 │       └── ui/                Compose screens, components, theme, backup picker

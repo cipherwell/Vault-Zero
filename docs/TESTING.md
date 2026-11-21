@@ -3,24 +3,35 @@
 VaultZero has a large JVM/Robolectric security suite, a set of on-device instrumentation tests
 (including hardware-backed biometrics), and a manual QA checklist for release builds.
 
-## Test inventory (release 1.1.0)
+## Test inventory (release 1.6.0)
 
-### JVM / Robolectric — 105 tests
+### JVM / Robolectric — 119 tests / 14 classes
 
 | Test class | Tests | Focus |
 | --- | ---: | --- |
-| `data/VaultRepositorySecurityTest` | 32 | AAD tamper/row-swap rejection, backup tamper/duplicate/merge/partial imports, hostile KDF/salt/envelope inputs, brute-force cooldown, metadata redaction, phrase/password restore, password rotation, last-used persistence/favourites |
-| `crypto/VaultCryptoTest` | 22 | AES-GCM round trips/tamper, PBKDF2, recovery phrase checksum, TOTP validity, strength/entropy, generator/passphrase options |
+| `data/VaultRepositorySecurityTest` | 34 | AAD tamper/row-swap rejection, backup tamper/duplicate/merge/partial imports, hostile KDF (PBKDF2 count and Argon2id memory)/salt/envelope inputs, brute-force cooldown, metadata redaction, phrase/password restore, password rotation, last-used persistence/favourites |
+| `crypto/VaultCryptoTest` | 22 | AES-GCM round trips/tamper, PBKDF2 compatibility, recovery phrase checksum, TOTP validity, strength/entropy, generator/passphrase options |
+| `crypto/Argon2KdfTest` | 11 | RFC 9106 Argon2id known-answer vector (secret + associated data), deterministic/salt-bound derivation, Argon2id-vs-PBKDF2 key separation, KDF spec encode/decode round-trip, hostile/malformed spec rejection, PBKDF2 legacy dispatch |
 | `ExampleRobolectricTest` | 8 | end-to-end repository/vault flows, backup cross-vault import, clipboard clearing, auto-lock behaviour |
 | `core/SearchQueryTest` | 7 | search operators/aliases/combinations |
-| `core/GeneratorHistoryTest` | 6 | session history cap/format |
+| `data/VaultRepositorySetupRestoreTest` | 7 | first-run migration: standard/phrase-only restore, password keep/rotate, wrong phrase, tampered record, no-overwrite, 3.2-era PBKDF2 backup restore then Argon2id migration on unlock |
 | `ExampleUnitTest` | 6 | small utility/format checks |
-| `crypto/Bip39VectorsTest` | 3 | all 24 official BIP-39 vectors + 100 random entropy cross-checks against the maintained reference library; tampered checksums rejected |
-| `data/VaultRepositoryRecoveryRotationTest` | 3 | rotation preserves VMK/records/fingerprint/password, retires old phrase, old/new backup phrase compatibility, locked-vault guard |
-| `data/VaultRepositorySetupRestoreTest` | 6 | first-run migration: standard/phrase-only restore, password keep/rotate, wrong phrase, tampered record, no-overwrite |
-| `data/VaultRepositoryKdfMigrationTest` | 5 | 100k→600k re-wrap, atomicity, recovery path |
+| `data/VaultRepositoryKdfMigrationTest` | 5 | PBKDF2 → Argon2id re-wrap on unlock, atomicity, failure paths, recovery path after migration |
 | `core/AuditFilterTest` | 4 | audit search filters/index semantics |
+| `core/GeneratorHistoryTest` | 4 | session history cap/format |
+| `crypto/Bip39VectorsTest` | 3 | all 24 official BIP-39 vectors + 100 random entropy cross-checks against the maintained reference library; tampered checksums rejected |
 | `crypto/SecurityAuditEngineTest` | 3 | weak/reused/stale/2FA findings |
+| `data/VaultRepositoryRecoveryRotationTest` | 3 | rotation preserves VMK/records/fingerprint/password, retires old phrase, old/new backup phrase compatibility, locked-vault guard |
+| `core/VaultGroupingTest` | 2 | grouped-list ordering/counts |
+
+### On-device instrumentation — 8 tests / 4 classes
+
+| Test class | Tests | Focus |
+| --- | ---: | --- |
+| `crypto/BiometricKeyBindingTest` | 4 | hardware per-use key binding, auth-required flags, invalidated-key handling |
+| `data/KdfMigrationDeviceTest` | 2 | on-device PBKDF2 → Argon2id unlock migration and envelope rotation timing |
+| `data/VaultSetupDeviceTest` | 1 | full setup, seeded records for UI QA, persisted vault |
+| `data/VaultSetupOnlyDeviceTest` | 1 | fresh-install setup and unlock |
 
 Run them:
 

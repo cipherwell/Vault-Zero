@@ -100,11 +100,15 @@ class ExampleUnitTest {
         assertTrue(VaultCrypto.validateRecoveryPhrase(recovery))
         assertTrue(VaultCrypto.verifyRecoveryPhraseChecksum(recovery))
 
-        // Corrupting the 12th checksum word to a different valid word must fail checksum verification
-        val differentChecksumWord = com.example.crypto.Bip39Recovery.WORDLIST.first { it != words[11] }
-        val corruptedPhrase = (words.subList(0, 11) + differentChecksumWord).joinToString(" ")
+        // Corrupting the 12th checksum word must fail checksum verification. A BIP-39 checksum is
+        // only 4 bits, so a random replacement still validates ~1 time in 16: pick a word that is
+        // guaranteed to break it instead of the first different one (that made this test flaky).
+        val corruptedPhrase = com.example.crypto.Bip39Recovery.WORDLIST
+            .asSequence()
+            .filter { it != words[11] }
+            .map { candidate -> (words.subList(0, 11) + candidate).joinToString(" ") }
+            .first { !VaultCrypto.verifyRecoveryPhraseChecksum(it) }
         assertTrue(VaultCrypto.validateRecoveryPhrase(corruptedPhrase, enforceChecksum = false))
-        assertFalse(VaultCrypto.verifyRecoveryPhraseChecksum(corruptedPhrase))
         assertFalse(VaultCrypto.validateRecoveryPhrase(corruptedPhrase, enforceChecksum = true))
 
         assertFalse(VaultCrypto.validateRecoveryPhrase("not a valid twelve word phrase"))

@@ -2,6 +2,7 @@ package com.example.crypto
 
 import android.util.Base64
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Arrays
@@ -15,6 +16,91 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.math.log2
 import kotlin.math.min
 import kotlin.math.roundToInt
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator
+import org.bouncycastle.crypto.params.Argon2Parameters
+
+/**
+ * Key-derivation function used to turn a password or recovery phrase into a
+ * key-encryption key (KEK). New envelopes use [ARGON2ID]; [PBKDF2_SHA256] remains
+ * supported so vaults and backups made before 1.6.0 still open.
+ */
+enum class KdfAlgorithm(val id: String) {
+    PBKDF2_SHA256("pbkdf2-sha256"),
+    ARGON2ID("argon2id");
+
+    companion object {
+        fun fromId(raw: String?): KdfAlgorithm? =
+            entries.firstOrNull { it.id == raw?.trim()?.lowercase() }
+    }
+}
+
+/**
+ * Persisted description of the KDF an envelope was created with. Encoded as a
+ * single compact, versioned string so it survives SharedPreferences, backup JSON
+ * and log/diagnostic dumps without extra keys:
+ *
+ * - `pbkdf2-sha256:<iterations>`
+ * - `argon2id:<memoryKiB>:<iterations>:<parallelism>`
+ */
+data class KdfSpec(
+    val algorithm: KdfAlgorithm,
+    val iterations: Int,
+    val memoryKiB: Int = 0,
+    val parallelism: Int = 1,
+) {
+    fun encode(): String = when (algorithm) {
+        KdfAlgorithm.PBKDF2_SHA256 -> "${algorithm.id}:$iterations"
+        KdfAlgorithm.ARGON2ID -> "${algorithm.id}:$memoryKiB:$iterations:$parallelism"
+    }
+
+    /** True when every parameter of this spec is inside the range VaultZero produces. */
+    fun isSupported(): Boolean = when (algorithm) {
+        KdfAlgorithm.PBKDF2_SHA256 ->
+            iterations in VaultCrypto.MIN_ACCEPTED_ITERATIONS..VaultCrypto.MAX_ACCEPTED_ITERATIONS
+        KdfAlgorithm.ARGON2ID ->
+            memoryKiB in VaultCrypto.ARGON2_MIN_MEMORY_KIB..VaultCrypto.ARGON2_MAX_MEMORY_KIB &&
+                iterations in VaultCrypto.ARGON2_MIN_ITERATIONS..VaultCrypto.ARGON2_MAX_ITERATIONS &&
+                parallelism in VaultCrypto.ARGON2_MIN_PARALLELISM..VaultCrypto.ARGON2_MAX_PARALLELISM
+    }
+
+    companion object {
+        /** KDF used for every key envelope this build creates. */
+        val CURRENT = KdfSpec(
+            algorithm = KdfAlgorithm.ARGON2ID,
+            iterations = VaultCrypto.ARGON2_ITERATIONS,
+            memoryKiB = VaultCrypto.ARGON2_MEMORY_KIB,
+            parallelism = VaultCrypto.ARGON2_PARALLELISM,
+        )
+
+        fun pbkdf2(iterations: Int): KdfSpec = KdfSpec(KdfAlgorithm.PBKDF2_SHA256, iterations)
+
+        /**
+         * Parse a stored/attacker-supplied spec. Returns null when the string is
+         * missing, malformed or outside the supported parameter ranges, so callers
+         * must fail closed rather than derive with hostile parameters.
+         */
+        fun decode(raw: String?): KdfSpec? {
+            if (raw.isNullOrBlank()) return null
+            val parts = raw.trim().split(':')
+            val algorithm = KdfAlgorithm.fromId(parts.firstOrNull()) ?: return null
+            val spec = when (algorithm) {
+                KdfAlgorithm.PBKDF2_SHA256 -> {
+                    if (parts.size != 2) return null
+                    val iterations = parts[1].toIntOrNull() ?: return null
+                    pbkdf2(iterations)
+                }
+                KdfAlgorithm.ARGON2ID -> {
+                    if (parts.size != 4) return null
+                    val memoryKiB = parts[1].toIntOrNull() ?: return null
+                    val iterations = parts[2].toIntOrNull() ?: return null
+                    val parallelism = parts[3].toIntOrNull() ?: return null
+                    KdfSpec(algorithm, iterations, memoryKiB, parallelism)
+                }
+            }
+            return spec.takeIf { it.isSupported() }
+        }
+    }
+}
 
 object VaultCrypto {
 
@@ -24,19 +110,37 @@ object VaultCrypto {
     const val GCM_TAG_LENGTH_BITS = 128
     const val GCM_TAG_LENGTH_BYTES = 16
     /**
-     * PBKDF2-HMAC-SHA256 work factor for every NEW key envelope and for the
-     * transparent upgrade of old ones. 600_000 follows the OWASP Password
-     * Storage Cheat Sheet recommendation for SHA-256 (2023+).
-     *
-     * Raising this value is backwards compatible: the iteration count an
-     * envelope was created with is stored in [VaultPreferences.kdfIterations],
-     * and VaultRepository re-wraps older envelopes on the first successful
-     * password unlock.
+     * PBKDF2-HMAC-SHA256 work factor accepted from legacy envelopes and backups.
+     * 600_000 follows the OWASP Password Storage Cheat Sheet recommendation for
+     * SHA-256 (2023+). New envelopes use [KdfSpec.CURRENT] (Argon2id); this
+     * constant only bounds what an old vault or backup may legitimately ask for.
      */
     const val DEFAULT_ITERATIONS = 600_000
 
-    /** Oldest work factor still accepted when opening an existing vault. */
+    /** Oldest PBKDF2 work factor still accepted when opening an existing vault. */
     const val MIN_ACCEPTED_ITERATIONS = 10_000
+
+    /**
+     * Newest PBKDF2 work factor accepted from a stored/imported envelope. An
+     * attacker-controlled backup cannot ask for more work than this app ever
+     * produced, which keeps a crafted file from turning import into a CPU-DoS.
+     */
+    const val MAX_ACCEPTED_ITERATIONS = 2_000_000
+
+    // --- Argon2id parameters (RFC 9106) -------------------------------------------------
+    /** Current memory cost: 64 MiB. */
+    const val ARGON2_MEMORY_KIB = 65_536
+    /** Current time cost. */
+    const val ARGON2_ITERATIONS = 3
+    /** Current parallelism (single lane: derivation runs on one background thread). */
+    const val ARGON2_PARALLELISM = 1
+    const val ARGON2_MIN_MEMORY_KIB = 8_192
+    /** Hard ceiling for imported/stored specs; 128 MiB is bounded work, not a DoS. */
+    const val ARGON2_MAX_MEMORY_KIB = 131_072
+    const val ARGON2_MIN_ITERATIONS = 1
+    const val ARGON2_MAX_ITERATIONS = 10
+    const val ARGON2_MIN_PARALLELISM = 1
+    const val ARGON2_MAX_PARALLELISM = 4
 
     /** Smallest TOTP secret accepted for display/audit (80 bits, RFC 4226 floor). */
     const val MIN_TOTP_SECRET_BYTES = 10
@@ -72,16 +176,55 @@ object VaultCrypto {
     }
 
     /**
-     * Derive a 256-bit AES SecretKey from a master password and salt using PBKDF2-HMAC-SHA256
+     * Derive a 256-bit AES key-encryption key from a password and salt using the
+     * KDF described by [spec]. New envelopes pass [KdfSpec.CURRENT] (Argon2id);
+     * legacy vaults and backups pass the PBKDF2 spec they were created with.
      */
     fun deriveKey(
         password: String,
         salt: ByteArray,
-        iterations: Int = DEFAULT_ITERATIONS
+        spec: KdfSpec = KdfSpec.CURRENT,
     ): SecretKey {
         require(password.isNotEmpty()) { "Password cannot be empty for key derivation" }
         require(salt.size >= SALT_LENGTH_BYTES) { "Salt must be at least $SALT_LENGTH_BYTES bytes" }
-        require(iterations >= 10_000) { "PBKDF2 iterations must be at least 10,000" }
+        require(spec.isSupported()) { "Unsupported KDF parameters" }
+        return when (spec.algorithm) {
+            KdfAlgorithm.PBKDF2_SHA256 -> derivePbkdf2Key(password, salt, spec.iterations)
+            KdfAlgorithm.ARGON2ID -> {
+                val passwordBytes = password.toByteArray(StandardCharsets.UTF_8)
+                try {
+                    SecretKeySpec(
+                        deriveArgon2idBytes(
+                            passwordBytes = passwordBytes,
+                            salt = salt,
+                            memoryKiB = spec.memoryKiB,
+                            iterations = spec.iterations,
+                            parallelism = spec.parallelism,
+                        ),
+                        "AES",
+                    )
+                } finally {
+                    Arrays.fill(passwordBytes, 0.toByte())
+                }
+            }
+        }
+    }
+
+    /**
+     * PBKDF2-HMAC-SHA256 derivation. Kept for opening pre-1.6.0 envelopes, for
+     * importing old backups and for the legacy-format tests; new key material
+     * must use [deriveKey] with an Argon2id [KdfSpec].
+     */
+    fun derivePbkdf2Key(
+        password: String,
+        salt: ByteArray,
+        iterations: Int = DEFAULT_ITERATIONS,
+    ): SecretKey {
+        require(password.isNotEmpty()) { "Password cannot be empty for key derivation" }
+        require(salt.size >= SALT_LENGTH_BYTES) { "Salt must be at least $SALT_LENGTH_BYTES bytes" }
+        require(iterations >= MIN_ACCEPTED_ITERATIONS) {
+            "PBKDF2 iterations must be at least $MIN_ACCEPTED_ITERATIONS"
+        }
 
         val chars = password.toCharArray()
         val spec = PBEKeySpec(chars, salt, iterations, KEY_LENGTH_BITS)
@@ -100,6 +243,65 @@ object VaultCrypto {
     }
 
     /**
+     * Raw Argon2id (RFC 9106, version 1.3) derivation to a 256-bit key.
+     *
+     * Exposed so the RFC known-answer vectors can be exercised with byte-array
+     * passwords, secret and associated data exactly as the RFC defines them;
+     * production callers go through [deriveKey].
+     */
+    internal fun deriveArgon2idBytes(
+        passwordBytes: ByteArray,
+        salt: ByteArray,
+        memoryKiB: Int,
+        iterations: Int,
+        parallelism: Int,
+    ): ByteArray {
+        require(memoryKiB in ARGON2_MIN_MEMORY_KIB..ARGON2_MAX_MEMORY_KIB) {
+            "Argon2 memory cost outside supported range"
+        }
+        require(iterations in ARGON2_MIN_ITERATIONS..ARGON2_MAX_ITERATIONS) {
+            "Argon2 time cost outside supported range"
+        }
+        require(parallelism in ARGON2_MIN_PARALLELISM..ARGON2_MAX_PARALLELISM) {
+            "Argon2 parallelism outside supported range"
+        }
+        return argon2idRaw(passwordBytes, salt, memoryKiB, iterations, parallelism)
+    }
+
+    /**
+     * Unbounded Argon2id core. Kept separately so the RFC 9106 known-answer
+     * vectors (m=32 KiB, p=4) can be exercised; production callers must always
+     * go through [deriveArgon2idBytes]/[deriveKey], which enforce the parameter
+     * ranges this app produces and accepts.
+     */
+    internal fun argon2idRaw(
+        passwordBytes: ByteArray,
+        salt: ByteArray,
+        memoryKiB: Int,
+        iterations: Int,
+        parallelism: Int,
+        secret: ByteArray? = null,
+        associatedData: ByteArray? = null,
+    ): ByteArray {
+        require(salt.size >= 8) { "Argon2 salt must be at least 8 bytes" }
+
+        val builder = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+            .withIterations(iterations)
+            .withMemoryAsKB(memoryKiB)
+            .withParallelism(parallelism)
+            .withSalt(salt)
+        secret?.let { builder.withSecret(it) }
+        associatedData?.let { builder.withAdditional(it) }
+
+        val generator = Argon2BytesGenerator()
+        generator.init(builder.build())
+        val output = ByteArray(KEY_LENGTH_BYTES)
+        generator.generateBytes(passwordBytes, output)
+        return output
+    }
+
+    /**
      * Generate a cryptographically random 256-bit AES Vault Master Key (VMK)
      */
     fun generateRandomKey(): SecretKey {
@@ -113,16 +315,17 @@ object VaultCrypto {
     }
 
     /**
-     * Derive a 256-bit AES SecretKey from a recovery phrase and salt using PBKDF2-HMAC-SHA256
+     * Derive a 256-bit AES key from a recovery phrase and salt using the KDF
+     * described by [spec] (Argon2id for new kits, PBKDF2 for legacy ones).
      */
     fun deriveKeyFromPhrase(
         phrase: String,
         salt: ByteArray,
-        iterations: Int = DEFAULT_ITERATIONS
+        spec: KdfSpec = KdfSpec.CURRENT,
     ): SecretKey {
         val normalizedPhrase = normalizeRecoveryPhrase(phrase)
         require(normalizedPhrase.isNotEmpty()) { "Recovery phrase cannot be empty" }
-        return deriveKey(normalizedPhrase, salt, iterations)
+        return deriveKey(normalizedPhrase, salt, spec)
     }
 
     fun normalizeRecoveryPhrase(phrase: String): String {

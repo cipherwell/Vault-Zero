@@ -3,6 +3,31 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.6.0] — 2026-11-21
+
+### Security
+- **Argon2id key derivation** (RFC 9106, version 1.3) replaces PBKDF2-HMAC-SHA256 for every new
+  password and recovery-phrase envelope: 64 MiB memory, 3 iterations, 1 lane, 256-bit tag, 128-bit
+  random salt. Pure-Java Bouncy Castle implementation, pinned and verified against the RFC 9106
+  known-answer vector in the test suite.
+- Every envelope now records its own KDF descriptor (`argon2id:<mKiB>:<t>:<p>` or
+  `pbkdf2-sha256:<iterations>`), so password and recovery envelopes can never drift apart when one
+  of them rotates or is restored from an older backup.
+- **Transparent migration:** a successful unlock of a PBKDF2 vault (or of a vault restored from a
+  3.2-era backup) re-wraps both envelopes with fresh salts under Argon2id in one atomic commit. The
+  vault master key and every encrypted record stay untouched.
+- Backup format `3.3` carries both KDF descriptors. `3.2` and older backups still import and are
+  treated as PBKDF2. Import validates algorithm and parameters against the supported ranges before
+  any derivation, so a crafted file cannot force a 1 GiB allocation or long CPU burn.
+
+### Changed
+- `versionCode 8`, `versionName 1.6.0`; runtime dependency on `org.bouncycastle:bcprov-jdk18on:1.81`
+  (Argon2id only; no provider is registered).
+
+### Upgrade notes
+- Existing vaults open with the same master password or recovery phrase and migrate in place.
+- Downgrading to 1.5.0 or older is not supported once an envelope has migrated to Argon2id.
+
 ## [1.5.0] — 2026-11-15
 
 ### Changed

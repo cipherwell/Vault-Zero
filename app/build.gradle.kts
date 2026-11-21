@@ -12,8 +12,8 @@ android {
     applicationId = "com.cipherwell.vaultzero"
     minSdk = 24
     targetSdk = 36
-    versionCode = 7
-    versionName = "1.5.0"
+    versionCode = 8
+    versionName = "1.6.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -99,6 +99,8 @@ dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.biometric)
+  // Argon2id (RFC 9106) for the password/recovery KDF; no other provider is used.
+  implementation(libs.bouncycastle.prov)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.compose.ui)

@@ -2,6 +2,7 @@ package com.example.data
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
 import com.example.model.ApiSecretPayload
 import com.example.model.CardPayload
@@ -56,7 +57,8 @@ class VaultSetupDeviceTest {
         val (recoveryPhrase, vmkHex) = repository.setupMasterPassword("test1234")
 
         assertTrue("vault must be initialized", prefs.isInitialized)
-        assertEquals("new vaults use the 600k work factor", 600_000, prefs.kdfIterations)
+        assertEquals("new vaults use Argon2id", KdfSpec.CURRENT, prefs.passwordKdf)
+        assertEquals("both envelopes declare their KDF", KdfSpec.CURRENT, prefs.recoveryKdf)
         assertTrue(VaultCrypto.validateRecoveryPhrase(recoveryPhrase))
         assertEquals(64, vmkHex.length)
         assertEquals("a wrapped VMK must be persisted", 1, prefs.encryptedVmkByPassword.isNotEmpty().compareTo(false))

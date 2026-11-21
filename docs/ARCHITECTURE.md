@@ -12,7 +12,7 @@ intentionally small and offline: the security-critical surface is a handful of `
 | UI | Jetpack Compose (BOM 2024.09.00), Material 3, Material Icons |
 | Architecture | Single `MainActivity` + one `VaultViewModel`; repository/data layer |
 | Persistence | Room 2.7.0 (KSP), SharedPreferences (KTX) for envelopes/settings |
-| Crypto | JCA/JCE AES-256-GCM + PBKDF2-HMAC-SHA256, `SecureRandom`, Keystore |
+| Crypto | JCA/JCE AES-256-GCM + Argon2id (Bouncy Castle) with PBKDF2 legacy support, `SecureRandom`, Keystore |
 | Biometrics | `androidx.biometric` 1.2.0-alpha05, `BiometricPrompt.CryptoObject` |
 | Build | AGP 9.1.1, Gradle 9.3.1, KSP 2.3.5, JDK 17 |
 | SDK | compile/target 36, min 24 |
@@ -29,7 +29,7 @@ app/src/main/java/com/example/
 │                            biometric prompt launch; auto/biometric/background lock; shortcuts
 ├── core/                    Pure/testable helpers: SearchQuery, AuditFilter, VaultGrouping,
 │                            GeneratorHistory, ThemeMode
-├── crypto/                  VaultCrypto (AES-GCM, PBKDF2, TOTP, recovery, strength, generator),
+├── crypto/                  VaultCrypto (AES-GCM, Argon2id/PBKDF2 KDF specs, TOTP, recovery, strength, generator),
 │                            BiometricKeyManager, SecurityAuditEngine
 ├── data/                    VaultDatabase/Room, VaultDao, VaultItemEntity, VaultRepository,
 │                            VaultPreferences, BackupImportReport
@@ -46,7 +46,8 @@ app/src/main/java/com/example/
 
 ### Unlock
 ```
-Master password ──PBKDF2(salt,600k)──► password KEK
+Master password ──Argon2id(salt,64MiB,t=3)──► password KEK
+                    (PBKDF2 600k for pre-1.6.0 vaults, migrated on unlock)
 Vault prefs: encryptedVmkByPassword ──AES-GCM decrypt──► VMK (in-memory SecretKey)
 DAO records ──AES-GCM decrypt + AAD check──► VaultItem models ──► allItems StateFlow
 ```

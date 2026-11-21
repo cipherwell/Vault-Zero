@@ -430,9 +430,12 @@ class VaultRepositorySecurityTest {
     // ---- hostile backup inputs ----
 
     @Test
-    fun `backup with an absurd KDF iteration count is rejected before key derivation`() = runTest {
+    fun `legacy backup with an absurd KDF iteration count is rejected before key derivation`() = runTest {
         repository.saveItem(login("row-kdf", "Kdf", "pw"))
         val backup = JSONObject(repository.exportEncryptedBackup())
+        // 3.2-era envelope: no explicit specs, only the shared iteration count.
+        backup.remove("kdfPasswordSpec")
+        backup.remove("kdfRecoverySpec")
         backup.put("kdfIterations", 50_000_000)
 
         val failure = assertThrows(IllegalArgumentException::class.java) {
@@ -445,6 +448,43 @@ class VaultRepositorySecurityTest {
             failure.message.orEmpty().contains("KDF", ignoreCase = true),
         )
         assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `backup declaring a hostile Argon2 memory cost is rejected before key derivation`() = runTest {
+        repository.saveItem(login("row-argon", "Argon", "pw"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        // 1 GiB of memory cost would be an allocation DoS on a phone.
+        backup.put("kdfPasswordSpec", "argon2id:1048576:3:1")
+
+        val failure = assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup.toString(), backupPassword = password)
+            }
+        }
+        assertTrue(
+            "the hostile memory cost must be rejected as unsupported KDF settings",
+            failure.message.orEmpty().contains("KDF", ignoreCase = true),
+        )
+        assertEquals(1, db.vaultDao().getAllList().size)
+    }
+
+    @Test
+    fun `backup declaring an unknown KDF algorithm is rejected`() = runTest {
+        repository.saveItem(login("row-kdfulg", "KdfAlg", "pw"))
+        val backup = JSONObject(repository.exportEncryptedBackup())
+        backup.put("kdfRecoverySpec", "scrypt:65536:3:1")
+
+        val failure = assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                repository.importEncryptedBackup(backup.toString(), backupPassword = password)
+            }
+        }
+        assertTrue(
+            "unknown KDF algorithms must be refused",
+            failure.message.orEmpty().contains("KDF", ignoreCase = true),
+        )
+        assertEquals("a rejected import must not write rows", 1, db.vaultDao().getAllList().size)
     }
 
     @Test
@@ -539,7 +579,8 @@ class VaultRepositorySecurityTest {
         assertFalse("secret payload must never appear in the clear", backup.contains("super-secret-value-42"))
         assertFalse("record titles are redacted", backup.contains("Zeta Bank"))
         assertTrue("envelope format field", backup.contains("VaultZero_Encrypted_Envelope"))
-        assertTrue("kdf metadata travels with the envelope", backup.contains("\"kdfIterations\": 600000"))
+        assertTrue("kdf metadata travels with the envelope", backup.contains("\"kdfPasswordSpec\""))
+        assertTrue("both envelopes declare their KDF", backup.contains("\"kdfRecoverySpec\""))
     }
 
     // ---- view-state persistence ----

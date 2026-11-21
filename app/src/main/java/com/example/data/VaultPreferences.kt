@@ -3,6 +3,7 @@ package com.example.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
 
 /**
@@ -33,6 +34,12 @@ class VaultPreferences(
 
         /** Isolated file used by instrumentation tests, never the real vault. */
         const val TEST_PREFS_NAME = "vaultzero_test_prefs"
+
+        private const val KEY_PASSWORD_KDF = "kdf_password_spec"
+        private const val KEY_RECOVERY_KDF = "kdf_recovery_spec"
+
+        /** Pre-1.6.0 shared work factor; read-only fallback, never written again. */
+        private const val KEY_LEGACY_ITERATIONS = "kdf_iterations"
     }
 
     var isInitialized: Boolean
@@ -51,9 +58,24 @@ class VaultPreferences(
         get() = prefs.getString("recovery_salt_b64", "") ?: ""
         set(value) = prefs.edit(commit = true) { putString("recovery_salt_b64", value) }
 
-    var kdfIterations: Int
-        get() = prefs.getInt("kdf_iterations", VaultCrypto.DEFAULT_ITERATIONS)
-        set(value) = prefs.edit(commit = true) { putInt("kdf_iterations", value) }
+    /**
+     * KDF of the password envelope. Vaults written before 1.6.0 have no spec key;
+     * they fall back to the legacy shared `kdf_iterations` value (PBKDF2).
+     */
+    var passwordKdf: KdfSpec
+        get() = KdfSpec.decode(prefs.getString(KEY_PASSWORD_KDF, null)) ?: legacyKdf()
+        set(value) = prefs.edit(commit = true) { putString(KEY_PASSWORD_KDF, value.encode()) }
+
+    /** KDF of the recovery-phrase envelope; see [passwordKdf]. */
+    var recoveryKdf: KdfSpec
+        get() = KdfSpec.decode(prefs.getString(KEY_RECOVERY_KDF, null)) ?: legacyKdf()
+        set(value) = prefs.edit(commit = true) { putString(KEY_RECOVERY_KDF, value.encode()) }
+
+    private fun legacyKdf(): KdfSpec {
+        val iterations = prefs.getInt(KEY_LEGACY_ITERATIONS, VaultCrypto.DEFAULT_ITERATIONS)
+            .coerceAtLeast(VaultCrypto.MIN_ACCEPTED_ITERATIONS)
+        return KdfSpec.pbkdf2(iterations)
+    }
 
     var encryptedVmkByPassword: String
         get() = prefs.getString("encrypted_vmk_by_password", "") ?: ""
@@ -134,13 +156,18 @@ class VaultPreferences(
         encryptedRecoveryPhrase: String,
         recoveryPhraseHash: String,
         keyFingerprint: String,
-        kdfIterations: Int = VaultCrypto.DEFAULT_ITERATIONS
+        passwordKdf: KdfSpec = KdfSpec.CURRENT,
+        recoveryKdf: KdfSpec = KdfSpec.CURRENT,
     ) {
         prefs.edit(commit = true) {
             putString("master_password_hash", passwordHash)
             putString("master_salt_b64", saltBase64)
             putString("recovery_salt_b64", recoverySaltBase64)
-            putInt("kdf_iterations", kdfIterations)
+            putString(KEY_PASSWORD_KDF, passwordKdf.encode())
+            putString(KEY_RECOVERY_KDF, recoveryKdf.encode())
+            // Both envelopes now carry an explicit KDF spec; the legacy shared
+            // work factor would only be a stale, ambiguous fallback.
+            remove(KEY_LEGACY_ITERATIONS)
             putString("encrypted_vmk_by_password", encryptedVmkByPassword)
             putString("encrypted_vmk_by_recovery", encryptedVmkByRecovery)
             putString("encrypted_recovery_phrase", encryptedRecoveryPhrase)
@@ -161,13 +188,14 @@ class VaultPreferences(
         passwordVerifier: String,
         saltBase64: String,
         encryptedVmkByPassword: String,
-        kdfIterations: Int = VaultCrypto.DEFAULT_ITERATIONS,
+        kdf: KdfSpec = KdfSpec.CURRENT,
     ) {
         prefs.edit(commit = true) {
             putString("master_password_hash", passwordVerifier)
             putString("master_salt_b64", saltBase64)
             putString("encrypted_vmk_by_password", encryptedVmkByPassword)
-            putInt("kdf_iterations", kdfIterations)
+            putString(KEY_PASSWORD_KDF, kdf.encode())
+            remove(KEY_LEGACY_ITERATIONS)
         }
     }
 
@@ -181,6 +209,7 @@ class VaultPreferences(
         encryptedVmkByRecovery: String,
         encryptedRecoveryPhrase: String,
         recoveryPhraseHash: String,
+        kdf: KdfSpec = KdfSpec.CURRENT,
     ) {
         prefs.edit(commit = true) {
             putString("recovery_salt_b64", recoverySaltBase64)
@@ -188,6 +217,8 @@ class VaultPreferences(
             putString("encrypted_recovery_phrase", encryptedRecoveryPhrase)
             remove("recovery_phrase")
             putString("recovery_phrase_hash", recoveryPhraseHash)
+            putString(KEY_RECOVERY_KDF, kdf.encode())
+            remove(KEY_LEGACY_ITERATIONS)
         }
     }
 

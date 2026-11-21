@@ -3,7 +3,10 @@ package com.example.data
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import android.util.Base64
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
+import javax.crypto.spec.SecretKeySpec
 import com.example.model.LoginPayload
 import com.example.model.VaultItem
 import com.example.model.VaultType
@@ -102,6 +105,44 @@ class VaultRepositorySetupRestoreTest {
         error("unreachable")
     }
 
+
+    /**
+     * Build a genuine 3.2-era backup: both envelopes derived with PBKDF2 (600k), no
+     * per-envelope spec fields, only the shared `kdfIterations`. The source repo stays
+     * unlocked so the records (wrapped by the unchanged VMK) can be exported as-is.
+     */
+    private suspend fun buildLegacyPbkdf2Backup(): String {
+        val vmkHex = sourceRepo.getActiveVmkHex()
+            ?: error("source vault must be unlocked to build the legacy backup")
+        val vmk = SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
+        val legacy = KdfSpec.pbkdf2(600_000)
+
+        val passwordSalt = VaultCrypto.generateSalt()
+        val passwordKey = VaultCrypto.deriveKey(originalPassword, passwordSalt, legacy)
+        val recoverySalt = VaultCrypto.generateSalt()
+        val recoveryKey = VaultCrypto.deriveKeyFromPhrase(recoveryPhrase, recoverySalt, legacy)
+
+        prefs.saveEnvelopeCredentials(
+            passwordHash = VaultCrypto.createKeyVerifier(passwordKey, "PASSWORD"),
+            saltBase64 = Base64.encodeToString(passwordSalt, Base64.NO_WRAP),
+            recoverySaltBase64 = Base64.encodeToString(recoverySalt, Base64.NO_WRAP),
+            encryptedVmkByPassword = VaultCrypto.encrypt(vmkHex, passwordKey),
+            encryptedVmkByRecovery = VaultCrypto.encrypt(vmkHex, recoveryKey),
+            encryptedRecoveryPhrase = VaultCrypto.encrypt(recoveryPhrase, vmk),
+            recoveryPhraseHash = VaultCrypto.createKeyVerifier(recoveryKey, "RECOVERY"),
+            keyFingerprint = prefs.keyFingerprint,
+            passwordKdf = legacy,
+            recoveryKdf = legacy,
+        )
+
+        val json = JSONObject(sourceRepo.exportEncryptedBackup(BackupProtection.STANDARD))
+        json.remove("kdfPasswordSpec")
+        json.remove("kdfRecoverySpec")
+        json.put("kdfIterations", 600_000)
+        json.put("version", "3.2")
+        return json.toString()
+    }
+
     @Test
     fun `standard backup restores records and keeps the original password and seed phrase`() = runTest {
         val (db, repo) = newPhone()
@@ -148,6 +189,32 @@ class VaultRepositorySetupRestoreTest {
             repo.lock()
             assertFalse("old password must be replaced", repo.unlock(originalPassword))
             assertTrue("new password must unlock", repo.unlock(newPassword))
+        } finally {
+            db.close()
+        }
+    }
+
+
+    @Test
+    fun `3_2 PBKDF2 backup restores then migrates to Argon2id on the first unlock`() = runTest {
+        val legacyBackup = buildLegacyPbkdf2Backup()
+        val (db, repo) = newPhone()
+        try {
+            val report = repo.restoreBackupAtSetup(legacyBackup, recoveryPhrase)
+            assertEquals(2, report.itemCount)
+            assertTrue("reusing the backup password keeps the backup's envelope", report.keptOriginalPassword)
+            assertEquals(
+                "a 3.2 backup declares no specs, so the restored envelope is PBKDF2",
+                KdfSpec.pbkdf2(600_000),
+                prefs.passwordKdf,
+            )
+
+            repo.lock()
+            assertTrue("the legacy backup password must open the restored vault", repo.unlock(originalPassword))
+            assertEquals("unlock must migrate the password envelope", KdfSpec.CURRENT, prefs.passwordKdf)
+            assertEquals("unlock must migrate the recovery envelope", KdfSpec.CURRENT, prefs.recoveryKdf)
+            assertEquals(2, repo.getVaultItemsFlow().first().size)
+            assertEquals(recoveryPhrase, repo.getDecryptedRecoveryPhrase())
         } finally {
             db.close()
         }

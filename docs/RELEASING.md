@@ -41,6 +41,10 @@ Outputs:
 - `app/build/outputs/apk/release/app-release.apk`
 - `app/build/outputs/bundle/release/app-release.aab`
 
+Publish the **APK** from a local build. Do not attach a locally built AAB: it embeds local build
+paths and was removed from v1.5.0 for that reason. The tag workflow
+(`.github/workflows/release-apk.yml`) builds the AAB on a clean runner when one is needed.
+
 The release signing config reads only `KEYSTORE_PATH`/`STORE_PASSWORD`/`KEY_PASSWORD`; it must never
 fall back to `debug.keystore`. When those variables are absent, the release variant is **unsigned** —
 this is required for F-Droid's build server, which signs with its own key.

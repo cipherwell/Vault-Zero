@@ -27,7 +27,7 @@ this directory.
 2. Refresh screenshots if the UI changed (see `../docs/SCREENSHOTS.md`; use a dev build with
    `-PallowScreenshots=true`, never a release build).
 3. Regenerate the icon/feature graphic from `../store/` sources if branding changes.
-4. Keep claims factual: PBKDF2 600k, 6 record types, offline/no network permission, hardware
+4. Keep claims factual: Argon2id 64 MiB/t=3 (PBKDF2 600k legacy), 6 record types, offline/no network permission, hardware
    biometrics, SAF-only backups. Do not add “military grade” or unverified audit claims.
 5. Re-run the release checklist in [`../docs/RELEASING.md`](../docs/RELEASING.md).
 

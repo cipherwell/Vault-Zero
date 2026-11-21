@@ -2,6 +2,7 @@ package com.example.data
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.crypto.KdfSpec
 import com.example.crypto.VaultCrypto
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -33,7 +34,7 @@ class VaultSetupOnlyDeviceTest {
 
         val (phrase, vmkHex) = repository.setupMasterPassword("test1234")
         assertTrue(prefs.isInitialized)
-        assertEquals(600_000, prefs.kdfIterations)
+        assertEquals(KdfSpec.CURRENT, prefs.passwordKdf)
         assertTrue(VaultCrypto.validateRecoveryPhrase(phrase))
         assertEquals(64, vmkHex.length)
         repository.lock()

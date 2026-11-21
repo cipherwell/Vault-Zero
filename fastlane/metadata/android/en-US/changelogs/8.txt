@@ -1,0 +1,6 @@
+VaultZero v1.6.0:
+• Argon2id key derivation (64 MiB, 3 iterations) replaces PBKDF2 for new vaults
+• Existing vaults and old backups migrate transparently on your next unlock
+• Backup format 3.3 records each envelope's KDF; 3.2 backups still import
+• New PBKDF2→Argon2id migration tests; 119 tests / 0 failures
+• No UI changes; same offline posture, biometrics and recovery kits
