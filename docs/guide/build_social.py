@@ -118,23 +118,23 @@ def build(lang: str, target: Path) -> None:
       "s6_items": ["Stop malware or a keylogger on your phone",
                    "Fix a weak or reused Master Password",
                    "Protect a rooted or physically compromised device",
-                   "Recover the vault if you lose your 12-word kit"] if not es else
+                   "Recover the vault if you lose both the password and the kit — Reset erases it"] if not es else
                   ["Detener malware o un keylogger en tu teléfono",
                    "Arreglar una contraseña maestra débil o repetida",
                    "Proteger un dispositivo rooteado o comprometido",
-                   "Recuperar la bóveda si pierdes el kit de 12 palabras"],
+                   "Recuperar la bóveda si pierdes la contraseña y el kit: Restablecer la borra"],
       "s6_small": "No app can promise perfect security. VaultZero promises smaller attack surface, not magic." if not es else
                   "Ninguna app promete seguridad perfecta. VaultZero promete menos superficie de ataque, no magia.",
-      "s7_eyebrow": "Audited before beta" if not es else "Auditada antes de la beta",
+      "s7_eyebrow": "Self-audited · public beta" if not es else "Autoauditada · beta pública",
       "s7_h": "Receipts, not slogans." if not es else "Hechos, no eslóganes.",
       "s7_stats": [("0","Critical / High"),("137","automated tests"),("15/15","on-device tests")] if not es else
                   [("0","Críticos / Altos"),("137","pruebas automatizadas"),("15/15","pruebas en dispositivo")],
-      "s7_small": "OWASP MASVS 2.1 audit · 2 Medium backup-import bugs found and fixed · open source (MIT)" if not es else
-                  "Auditoría OWASP MASVS 2.1 · 2 fallos Medios de importación encontrados y corregidos · código abierto (MIT)",
+      "s7_small": "Internal OWASP MASVS 2.1 audit + pentest · 2 Medium bugs fixed · independent audit still pending · beta: test data only" if not es else
+                  "Auditoría y pentest internos OWASP MASVS 2.1 · 2 fallos Medios corregidos · falta auditoría independiente · beta: solo datos de prueba",
       "s8_eyebrow": "Beta" if not es else "Beta",
       "s8_h": "Try it. Then read the guide." if not es else "Pruébala. Luego lee la guía.",
-      "s8_bullets": ["Android 7.0 or newer","GitHub Releases · Obtainium · F-Droid","English & Spanish","No Google Play, no account, no tracking"] if not es else
-                   ["Android 7.0 o superior","GitHub Releases · Obtainium · F-Droid","Inglés y español","Sin Google Play, sin cuenta, sin rastreo"],
+      "s8_bullets": ["Android 7.0 or newer","GitHub Releases · Obtainium · F-Droid","English & Spanish","Beta: use test data only"] if not es else
+                   ["Android 7.0 o superior","GitHub Releases · Obtainium · F-Droid","Inglés y español","Beta: usa solo datos de prueba"],
       "s8_cta": "Guide + downloads in the first comment." if not es else "Guía y descargas en el primer comentario.",
     }
     def s2():
@@ -164,13 +164,15 @@ def build(lang: str, target: Path) -> None:
                f'<p class="small">Intercambio: las copias son manuales. Ese es el punto.</p>'
     def s6():
         items = "".join(f"<li>{html.escape(x)}</li>" for x in t["s6_items"])
+        beta = "BETA RULE: use test data, not your only copy" if not es else "REGLA BETA: datos de prueba, no tu única copia"
         return f'<div class="eyebrow">{t["s6_eyebrow"]}</div><h2>{t["s6_h"]}</h2><ul class="clean no">{items}</ul>' \
-               f'<p class="small">{html.escape(t["s6_small"])}</p>'
+               f'<p class="small">{html.escape(t["s6_small"])}</p>' \
+               f'<div style="margin-top:auto"><span class="badge">{beta}</span></div>'
     def s7():
         stats = "".join(f'<div><b>{a}</b><span>{b}</span></div>' for a,b in t["s7_stats"])
         return f'<div class="eyebrow">{t["s7_eyebrow"]}</div><h2>{t["s7_h"]}</h2><div class="stat">{stats}</div>' \
                f'<p class="small">{html.escape(t["s7_small"])}</p>' \
-               f'<div style="margin-top:auto;text-align:center"><img class="phone" style="max-height:400px" src="file://{shots / "06-audit.png"}"></div>'
+               f'<div style="margin-top:20px;flex:1;display:flex;align-items:center;justify-content:center"><img class="phone" style="max-height:640px" src="file://{shots / "06-audit.png"}"></div>'
     def s8():
         items = "".join(f"<li>{html.escape(x)}</li>" for x in t["s8_bullets"])
         return f'<div style="text-align:center"><img class="logo" style="width:150px;border-radius:38px" src="file://{A / "icon.png"}"></div>' \
@@ -179,7 +181,8 @@ def build(lang: str, target: Path) -> None:
                f'<p class="lead" style="text-align:center;margin-top:auto">{html.escape(t["s8_cta"])}</p>'
 
     cover = f'<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">' \
-            f'<img class="logo" src="file://{A / "icon.png"}"><h1 style="margin-top:52px">{t["cover_h1"]}</h1>' \
+            f'<img class="logo" src="file://{A / "icon.png"}"><div class="badge" style="margin-top:38px;font-size:30px;letter-spacing:2px">{("OPEN BETA" if not es else "BETA ABIERTA")}</div>' \
+            f'<h1 style="margin-top:26px">{t["cover_h1"]}</h1>' \
             f'<p class="lead" style="max-width:840px">{t["cover_lead"]}</p>' \
             f'<div class="chips" style="justify-content:center">' + "".join(f'<span class="chip">{c}</span>' for c in t["chips"]) + '</div></div>'
     slides = [cover, s2(), s3(), s4(), s5(), s6(), s7(), s8()]
@@ -205,7 +208,7 @@ def build(lang: str, target: Path) -> None:
       <h2 style="font-size:62px">{t['cover_h1']}</h2></div></div>
     <p class="lead" style="font-size:34px">{t['cover_lead']}</p>
     <div class="chips">{"".join(f'<span class="chip">{c}</span>' for c in t['chips'])}</div>
-    <p class="lead" style="font-size:30px;opacity:.85">Open source · Audited before beta</p>
+    <p class="lead" style="font-size:30px;opacity:.85">Open source · Self-audited · Independent audit pending</p>
     <div class="footer" style="background:none"><span>VaultZero</span><span>github.com/cipherwell/Vault-Zero</span></div>
     </section></body></html>""" if not es else f"""<!doctype html><html><head><meta charset="utf-8"><style>{CSS}
     html,body{{width:1080px;height:1080px}} .slide{{height:1080px;padding:70px 76px}}
@@ -216,7 +219,7 @@ def build(lang: str, target: Path) -> None:
       <h2 style="font-size:62px">{t['cover_h1']}</h2></div></div>
     <p class="lead" style="font-size:34px">{t['cover_lead']}</p>
     <div class="chips">{"".join(f'<span class="chip">{c}</span>' for c in t['chips'])}</div>
-    <p class="lead" style="font-size:30px;opacity:.85">Código abierto · Auditada antes de la beta</p>
+    <p class="lead" style="font-size:30px;opacity:.85">Código abierto · Autoauditada · Auditoría pendiente</p>
     <div class="footer" style="background:none"><span>VaultZero</span><span>github.com/cipherwell/Vault-Zero</span></div>
     </section></body></html>"""
     sq_html = OUT / ("square-es.html" if es else "square-en.html")

@@ -1,92 +1,63 @@
-# VaultZero — Facebook post pack
+# VaultZero — Facebook beta launch pack
 
-**Format:** 8 portrait images, 1080 × 1350 (4:5) per language. Facebook shows 4:5 almost full-screen
-in the feed on every phone; the square 1080 × 1080 summary cards are included for a single-image post.
-Upload `01.png` … `08.png` in order as a photo carousel.
+Eight 4:5 slides (1080 × 1350) plus a 1080 × 1080 square summary, in English and Spanish.
+Post the images in order `01.png` … `08.png`; keep the links in the first comment so the post
+stays clean (and does not look like link spam).
 
-| Folder | Language |
-| --- | --- |
-| `facebook-en/` | English carousel |
-| `facebook-es/` | Spanish carousel |
-| `square/` | One-image summary (EN/ES) |
-| `vaultzero-facebook-en.zip`, `vaultzero-facebook-es.zip` | Images + caption, zipped |
+## Post copy — English
+```
+VaultZero is now in public beta: a private, offline Android vault with no account, no cloud and no internet permission.
 
----
+Passwords, cards, 2FA codes, notes and wallets stay encrypted on your phone. Open source, self-audited before beta — an independent audit is still ahead, so this is a beta: use test data, keep backups, and don't make it your only copy of real secrets yet. 🔐
 
-## English caption (short)
-
-Your passwords, cards and 2FA codes — encrypted on your phone. No account. No cloud. No internet
-permission.
-
-VaultZero is an open-source Android vault, audited before beta. Swipe to see how it works, what it
-can honestly protect against, and how to try it. 🔐
+Swipe to see what it does, what it honestly can't do, and how to try it.
 
 Links in the first comment.
+#VaultZero #Privacy #PasswordManager #OpenSource #Android #Beta
+```
 
-`#VaultZero #Privacy #PasswordManager #OpenSource #Android #InfoSec #ZeroKnowledge`
+## Texto del post — Español
+```
+VaultZero ya está en beta pública: una bóveda Android privada y offline, sin cuenta, sin nube y sin permiso de internet.
 
-### English caption (longer)
+Tus contraseñas, tarjetas, códigos 2FA, notas y billeteras quedan cifrados en tu teléfono. Código abierto, autoauditada antes de la beta; todavía falta una auditoría independiente, así que es una beta: usa datos de prueba, mantén copias y no la conviertas aún en tu única copia de secretos reales. 🔐
 
-Most password managers ask you to trust their cloud. VaultZero doesn't have one.
-
-🔐 Passwords, cards, API keys, wallets, notes and IDs in one offline vault
-🚫 No account, no servers, no telemetry
-📵 No INTERNET permission at all
-🔑 Argon2id + AES-256-GCM with record binding, Keystore biometrics
-📄 Open source (MIT) · audited before beta · 137 automated + 15 on-device tests
-
-The trade-off is deliberate: backups are manual, and your 12-word Recovery Kit is your safety net.
-
-Guide + beta downloads in the first comment.
-
-### First comment (English)
-
-Guide (PDF): EN → [link] · ES → [link]
-Beta downloads (GitHub Releases / Obtainium / F-Droid): [link]
-Security audit summary: [link]
-
----
-
-## Texto en español (corto)
-
-Tus contraseñas, tarjetas y códigos 2FA, cifrados en tu teléfono. Sin cuenta. Sin nube. Sin permiso de
-internet.
-
-VaultZero es una bóveda Android de código abierto, auditada antes de la beta. Desliza para ver cómo
-funciona, de qué puede protegerte de verdad y cómo probarla. 🔐
+Desliza para ver qué hace, de qué no puede protegerte y cómo probarla.
 
 Enlaces en el primer comentario.
+#VaultZero #Privacidad #GestorDeContraseñas #CódigoAbierto #Android #Beta
+```
 
-`#VaultZero #Privacidad #GestorDeContraseñas #CódigoAbierto #Android #Seguridad #ZeroKnowledge`
+## First comment — English (paste the real URLs)
+```
+Beta downloads: https://github.com/cipherwell/Vault-Zero/releases
+F-Droid repo: https://cipherwell.github.io/Vault-Zero/fdroid/repo
+Guide (PDF): https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guide-EN.pdf
+What beta means / test-data rules: https://github.com/cipherwell/Vault-Zero/blob/main/docs/BETA.md
+Audit summary: https://github.com/cipherwell/Vault-Zero/blob/main/docs/security/AUDIT-2026-11-21.md
+```
+Obtainium: add `https://github.com/cipherwell/Vault-Zero` and it will pick up new releases.
 
-### Texto en español (más largo)
+## Primer comentario — Español
+```
+Descargas beta: https://github.com/cipherwell/Vault-Zero/releases
+Repositorio F-Droid: https://cipherwell.github.io/Vault-Zero/fdroid/repo
+Guía (PDF): https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guia-ES.pdf
+Qué significa beta / reglas de datos de prueba: https://github.com/cipherwell/Vault-Zero/blob/main/docs/BETA.md
+Resumen de la auditoría: https://github.com/cipherwell/Vault-Zero/blob/main/docs/security/AUDIT-2026-11-21.md
+```
+Obtainium: añade `https://github.com/cipherwell/Vault-Zero` y recibirás las versiones nuevas.
 
-La mayoría de los gestores de contraseñas te piden confiar en su nube. VaultZero no tiene nube.
-
-🔐 Contraseñas, tarjetas, claves API, billeteras, notas e identificaciones en una bóveda offline
-🚫 Sin cuenta, sin servidores, sin telemetría
-📵 Sin permiso de INTERNET
-🔑 Argon2id + AES-256-GCM con vinculación por registro, biometría en Keystore
-📄 Código abierto (MIT) · auditada antes de la beta · 137 pruebas automatizadas + 15 en dispositivo
-
-El intercambio es deliberado: las copias son manuales y tu kit de recuperación de 12 palabras es la
-red de seguridad.
-
-Guía y descargas en el primer comentario.
-
-### Primer comentario (español)
-
-Guía (PDF): EN → [enlace] · ES → [enlace]
-Descargas beta (GitHub Releases / Obtainium / F-Droid): [enlace]
-Resumen de la auditoría: [enlace]
-
----
+## Square summary (single-image post)
+- `social/square/vaultzero-square-en.png`
+- `social/square/vaultzero-square-es.png`
+Use the same caption; swap the first sentence for “VaultZero is now in public beta.”
 
 ## Posting notes
-
-- Upload the 8 images **in order**; Facebook keeps carousel order.
-- Put the external links in the **first comment** (reach-friendly and keeps the caption clean).
-- Never change the claims: no account/cloud/INTERNET permission, open source, audited with **no
-  Critical/High findings**, two Medium backup-import DoS bugs found and fixed.
-- Suggested alt text (EN): “VaultZero carousel: offline encrypted Android vault with no account or
-  internet permission.”
+- Upload `01.png` → `08.png` in order; Facebook preserves carousel order.
+- 4:5 fills most of the phone feed; the square is the safest single-image format.
+- Add alt text per slide: “VaultZero beta cover”, “six record types”, “lock screen”, “generator”,
+  “cloud vs offline”, “honest limits”, “audit results”, “download call to action”.
+- Do not put download links in the post body — first comment, then pin it.
+- Beta rule repeated everywhere: **test data only**, keep the recovery kit, expect rough edges.
+- An independent audit is still pending; never imply otherwise in comments.

@@ -1,131 +1,73 @@
 # VaultZero — social share kit
 
-Short, copy-ready posts for the beta. Keep the claims factual: no account, no cloud, no internet
-permission, open source, audited before release. Always link the guide/PDF.
+Short, copy-ready posts for the **public beta**. Keep the claims factual: no account, no cloud, no
+internet permission, open source, **self-audited + pentested internally; independent audit pending**.
+Always say it is a beta and to use test data.
 
-**Links to use**
+The full launch pack (8-slide carousel, square image, posting notes, alt text and first-comment
+links) is in [`social/FACEBOOK-POST.md`](social/FACEBOOK-POST.md).
 
-- Guide (EN PDF): `https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guide-EN.pdf`
-- Guide (ES PDF): `https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guia-ES.pdf`
+**Links**
+
+- Guide EN: `https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guide-EN.pdf`
+- Guía ES: `https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guia-ES.pdf`
 - Releases: `https://github.com/cipherwell/Vault-Zero/releases`
+- F-Droid repo: `https://cipherwell.github.io/Vault-Zero/fdroid/repo`
+- Beta rules: `https://github.com/cipherwell/Vault-Zero/blob/main/docs/BETA.md`
 - Audit report: `https://github.com/cipherwell/Vault-Zero/blob/main/docs/security/AUDIT-2026-11-21.md`
 
----
+## Short posts — English
 
-## English
+**1. Launch**
+```
+VaultZero is in public beta: an offline Android vault for passwords, cards, 2FA codes, notes and
+wallets — encrypted on your phone. No account, no cloud, no internet permission.
 
-### Post 1 — launch
+Open source, self-audited + pentested internally. Independent audit still ahead, so treat this as a
+beta: test data, backups, and no real secrets you can't afford to lose. 🔐
+```
 
-Most password managers ask you to trust their cloud.
+**2. Why offline**
+```
+No account. No sync server. No INTERNET permission at all. Your vault is a local encrypted database,
+and the key is derived on your phone from your Master Password.
 
-VaultZero doesn't have one.
+The trade-off: backups are manual. That is the point. Public beta — start with test data.
+```
 
-🔐 Offline Android vault
-🚫 No account, no servers, no telemetry
-📵 No INTERNET permission at all
-🔑 Argon2id + AES-256-GCM, biometric unlock
-📄 Open source (MIT), audited before beta
+**3. Security, honestly**
+```
+AES-256-GCM, Argon2id (64 MiB, deliberately slow), BIP-39 recovery kit, biometric unlock, FLAG_SECURE.
+137 automated tests + 15 on-device tests, no Critical/High findings in our internal audit.
 
-Full guide (PDF) → [link]
-Beta builds → [link]
+But we have not had an independent audit yet, and no app can protect a rooted phone or a keylogger.
+VaultZero is a public beta — smaller attack surface, not magic.
+```
 
-### Post 2 — why it is different
+## Publicaciones cortas — Español
 
-Your vault is a file on your phone, encrypted with a key only you can derive.
+**1. Lanzamiento**
+```
+VaultZero está en beta pública: una bóveda Android offline para contraseñas, tarjetas, códigos 2FA,
+notas y billeteras, cifrada en tu teléfono. Sin cuenta, sin nube, sin permiso de internet.
 
-No company can breach it. Nobody can send you a "reset password" email. There is no account to take
-over.
+Código abierto, autoauditada y con pentest interno. Falta la auditoría independiente, así que trátala
+como beta: datos de prueba, copias de seguridad y nada que no puedas permitirte perder. 🔐
+```
 
-The trade-off: backups are manual, and your 12-word Recovery Kit is your safety net. That's the point.
+**2. Por qué offline**
+```
+Sin cuenta. Sin servidor de sincronización. Sin permiso de INTERNET. Tu bóveda es una base de datos
+cifrada local y la clave se deriva en tu teléfono a partir de tu contraseña maestra.
 
-Read the plain-language guide → [link]
+La contrapartida: las copias son manuales. Ese es el punto. Beta pública: empieza con datos de prueba.
+```
 
-### Post 3 — security, briefly
+**3. Seguridad, con honestidad**
+```
+AES-256-GCM, Argon2id (64 MiB, lento a propósito), kit de recuperación BIP-39, biometría y FLAG_SECURE.
+137 pruebas automatizadas + 15 en dispositivo, sin hallazgos Críticos/Altos en nuestra auditoría interna.
 
-What protects VaultZero:
-
-• Argon2id turns your Master Password into a key (64 MiB, deliberately slow)
-• Every record: AES-256-GCM, unique IV, bound to its identity
-• Biometrics live in the phone's secure hardware, never leave it
-• Screenshots blocked, clipboard auto-clears, auto-lock
-• No network permission → nothing to exfiltrate
-
-What it can't protect you from: malware, a weak password, a rooted device, or losing your Recovery Kit.
-
-Honest security → [link]
-
-### Post 4 — for the privacy crowd
-
-No account.
-No analytics.
-No Play Services.
-No "trust us".
-
-VaultZero is an offline, open-source Android vault with a reproducible audit trail: 137 automated
-tests, 15 on-device tests, no Critical/High findings before beta.
-
-Guide (EN/ES) → [link]
-
----
-
-## Español
-
-### Publicación 1 — lanzamiento
-
-La mayoría de los gestores de contraseñas te piden confiar en su nube.
-
-VaultZero no tiene nube.
-
-🔐 Bóveda offline para Android
-🚫 Sin cuenta, sin servidores, sin telemetría
-📵 Sin permiso de internet
-🔑 Argon2id + AES-256-GCM, desbloqueo biométrico
-📄 Código abierto (MIT), auditada antes de la beta
-
-Guía completa (PDF) → [enlace]
-Versiones beta → [enlace]
-
-### Publicación 2 — por qué es diferente
-
-Tu bóveda es un archivo en tu teléfono, cifrado con una clave que solo tú puedes derivar.
-
-Ninguna empresa puede filtrarla. Nadie puede enviarte un correo de "restablece tu contraseña". No hay
-cuenta que robar.
-
-El intercambio: las copias son manuales y tu kit de recuperación de 12 palabras es la red de
-seguridad. Ese es el punto.
-
-Lee la guía en lenguaje sencillo → [enlace]
-
-### Publicación 3 — la seguridad, en breve
-
-Lo que protege a VaultZero:
-
-• Argon2id convierte tu contraseña maestra en una clave (64 MiB, lenta a propósito)
-• Cada registro: AES-256-GCM, IV único, ligado a su identidad
-• La biometría vive en el hardware seguro del teléfono y nunca sale de él
-• Capturas bloqueadas, portapapeles que se limpia, bloqueo automático
-• Sin permiso de red → no hay nada que exfiltrar
-
-De lo que no puede protegerte: malware, una contraseña débil, un dispositivo rooteado o perder el kit
-de recuperación.
-
-Seguridad honesta → [enlace]
-
-### Publicación 4 — para los que cuidan su privacidad
-
-Sin cuenta.
-Sin analítica.
-Sin Play Services.
-Sin "confía en nosotros".
-
-VaultZero es una bóveda Android offline y de código abierto, con un rastro de auditoría reproducible:
-137 pruebas automatizadas, 15 pruebas en dispositivo y ningún hallazgo Crítico/Alto antes de la beta.
-
-Guía (EN/ES) → [enlace]
-
----
-
-## Hashtags
-
-`#VaultZero #Privacy #PasswordManager #OpenSource #Android #InfoSec #ZeroKnowledge #BóvedaDigital`
+Pero todavía no hay auditoría independiente, y ninguna app protege un teléfono rooteado o un keylogger.
+VaultZero es una beta pública: menos superficie de ataque, no magia.
+```

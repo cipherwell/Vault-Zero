@@ -1,6 +1,6 @@
 # VaultZero — documentation & guides
 
-Bilingual (English / Spanish) documentation for the VaultZero Android beta.
+Bilingual (English / Spanish) documentation for the VaultZero Android **public beta** (v1.7.19).
 
 | Document | Format |
 | --- | --- |
@@ -38,8 +38,8 @@ The guides are part of the VaultZero repository and share its MIT license.
 
 ## Social media images
 
-Facebook-ready carousels (1080 × 1350, 8 slides) and square 1080 × 1080 summaries, in English and
-Spanish, with copy-ready captions and ZIPs:
+Public-beta Facebook carousels (1080 × 1350, 8 slides) and square 1080 × 1080 summaries, in English
+and Spanish, with copy-ready captions, first-comment links and ZIPs:
 
 - [`social/facebook-en/`](social/facebook-en) · [`social/facebook-es/`](social/facebook-es)
 - [`social/square/`](social/square)

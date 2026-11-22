@@ -385,10 +385,11 @@ superior.
 
 ## 10. Notas de la beta y auditoría de seguridad
 
-VaultZero está en **beta**: las funciones de esta guía están completas, pero conviene mantener copias
-independientes y esperar algún detalle áspero.
+VaultZero está ahora en **beta pública**: las funciones de esta guía están completas para probar, pero
+no es una versión 1.0. Usa **datos de prueba**, mantén copias independientes y no la conviertas aún en
+tu única copia de secretos reales.
 
-Antes de esta beta, la app pasó por una **auditoría de seguridad y prueba de penetración** completa
+La app pasó por una **auditoría de seguridad y prueba de penetración interna** completa
 (OWASP MASVS 2.1): revisión estática, comprobaciones en el dispositivo, inspección del almacenamiento,
 revisión criptográfica, un corpus de copias malformadas y la suite completa de pruebas.
 
@@ -399,6 +400,9 @@ revisión criptográfica, un corpus de copias malformadas y la suite completa de
 - **137 pruebas automatizadas / 0 fallos**, lint limpio; **15/15 pruebas de instrumentación en un Pixel
   9 Pro XL**, incluidas las de vinculación biométrica.
 - El informe completo está en `docs/security/AUDIT-2026-11-21.md` dentro del repositorio.
+- **Todavía no hay una auditoría independiente de terceros**; está prevista antes de la versión estable 1.0.
+- Si pierdes la contraseña maestra y el kit de recuperación, el enlace **Restablecer bóveda** de la
+  pantalla de bloqueo es la única salida: borra todo permanentemente y empieza de nuevo.
 
 Los elementos de endurecimiento pendientes están documentados en ese informe (piso de KDF al restaurar
 copias antiguas, atomicidad de la restauración). Ninguno expone el contenido de la bóveda; ambos están
@@ -410,7 +414,8 @@ programados para la próxima versión.
 
 **Olvidé mi contraseña maestra. ¿Y ahora?**
 Usa **¿Olvidaste tu contraseña maestra? Usa el kit de emergencia** y tus 12 palabras. Sin el kit, la
-bóveda no se puede recuperar: ese es el modelo de seguridad.
+bóveda no se puede recuperar: ese es el modelo de seguridad. Si perdiste ambos, usa el enlace discreto
+**Restablecer bóveda** de la pantalla de bloqueo: advierte y borra todo para empezar de cero.
 
 **¿Los desarrolladores pueden recuperar mi bóveda?**
 No. No hay servidor, ni cuenta, ni puerta trasera. La app no puede enviar datos a ningún lugar (no

@@ -1,6 +1,6 @@
 # VaultZero — your private vault
 
-**Beta user guide · v1.7.18 · November 2026**
+**Beta user guide · v1.7.19 · November 2026**
 
 VaultZero is an offline password vault for Android. It keeps your logins, cards, notes and
 recovery codes encrypted on your phone — with **no account, no cloud and no internet permission**.
@@ -365,12 +365,13 @@ Every release publishes its SHA-256 and signing certificate fingerprint. The app
 
 ## 10. Beta notes and the security audit
 
-VaultZero is in **beta**: the features in this guide are complete, but you should keep independent
-backups and expect rough edges.
+VaultZero is now in **public beta**: the features in this guide are complete enough to test, but this
+is not a 1.0 release. Use **test data**, keep independent backups, and don't make it your only copy of
+real secrets yet.
 
-Before this beta, the app went through a full **security audit and penetration test** (OWASP MASVS
-2.1): static review, on-device checks, storage inspection, crypto review, a malformed-backup fuzz
-corpus and a full test suite.
+The app has had an **internal security audit and penetration test** (OWASP MASVS 2.1): static review,
+on-device checks, storage inspection, crypto review, a malformed-backup fuzz corpus and a full test
+suite. **An independent third-party audit has not been done yet** and is planned before a stable 1.0.
 
 - **No Critical or High findings.**
 - **Two Medium denial-of-service bugs** in the backup importer were found and fixed before release
@@ -378,6 +379,8 @@ corpus and a full test suite.
 - **137 automated tests / 0 failures**, lint clean; **15/15 on-device instrumentation tests** on a
   Pixel 9 Pro XL, including biometric key binding.
 - The full report is in `docs/security/AUDIT-2026-11-21.md` in the repository.
+- If you lose both the Master Password and the Recovery Kit, the lock-screen **Reset vault** link is
+  the only way forward: it permanently erases everything and starts fresh.
 
 Remaining known hardening items are documented in that report (KDF floor for restored legacy
 backups, restore atomicity). Neither exposes vault contents; both are scheduled for the next release.
@@ -388,7 +391,8 @@ backups, restore atomicity). Neither exposes vault contents; both are scheduled 
 
 **I forgot my Master Password. What now?**
 Use **Forgot Master Password? Use Emergency Kit** and your 12 words. Without the kit, the vault
-cannot be recovered — that is the security model.
+cannot be recovered — that is the security model. If both are lost, use the subtle **Reset vault**
+link on the lock screen: it warns you, then erases everything so you can start over.
 
 **Can the developers recover my vault?**
 No. There is no server, no account and no backdoor. The app cannot send data anywhere (no internet

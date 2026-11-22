@@ -1,6 +1,8 @@
-Your passwords, cards and 2FA codes — encrypted on your phone. No account. No cloud. No internet permission.
+VaultZero is now in public beta: a private, offline Android vault with no account, no cloud and no internet permission.
 
-VaultZero is an open-source Android vault, audited before beta. Swipe to see how it works, what it can honestly protect against, and how to try it. 🔐
+Passwords, cards, 2FA codes, notes and wallets stay encrypted on your phone. Open source, self-audited before beta — an independent audit is still ahead, so this is a beta: use test data, keep backups, and don't make it your only copy of real secrets yet. 🔐
+
+Swipe to see what it does, what it honestly can't do, and how to try it.
 
 Links in the first comment.
-#VaultZero #Privacy #PasswordManager #OpenSource #Android #InfoSec #ZeroKnowledge
+#VaultZero #Privacy #PasswordManager #OpenSource #Android #Beta
