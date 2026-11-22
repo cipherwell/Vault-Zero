@@ -3,6 +3,24 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.1] — 2026-11-21
+
+### Added
+- **Copy diagnostics** in Settings → About: app version, device, Android level, language, vault
+  state, biometric state and the last error — never titles, secrets or key material. Gives beta
+  testers a usable bug-report path while the app intentionally ships no telemetry and blocks
+  screenshots.
+- `docs/BETA.md` (tester guide + known limitations), `docs/SOCIAL-BETA-POST.md` (EN/ES announcement
+  drafts) and `docs/PLAY-INTERNAL-TESTING.md` (maintainer checklist).
+
+### Fixed
+- Android biometric wording no longer says "Touch ID" (iOS branding): "Fingerprint / Biometrics",
+  "Huella digital / Biometría".
+
+### Security
+- No cryptographic changes. The diagnostics payload is built from a pure, unit-tested function and
+  is only generated when the user taps the button.
+
 ## [1.7.0] — 2026-11-21
 
 ### Added

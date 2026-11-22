@@ -1,0 +1,5 @@
+VaultZero v1.7.1:
+• Settings → Copy diagnostics for bug reports (no secrets, no telemetry)
+• Android biometric wording fixed (Fingerprint / Biometrics)
+• Beta tester guide + Play internal-testing notes
+• No cryptographic changes

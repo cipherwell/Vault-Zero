@@ -156,4 +156,7 @@
     </plurals>
     <string name="settings_import_verified">Copia de seguridad verificada</string>
     <string name="settings_import_nothing_new">Copia de seguridad verificada · no hay nada nuevo para importar</string>
+    <string name="settings_section_about">ACERCA DE</string>
+    <string name="settings_copy_diagnostics">Copiar diagnóstico</string>
+    <string name="settings_copy_diagnostics_desc">Versión, dispositivo y estado de la bóveda para reportar errores. Nunca incluye secretos, títulos ni material de claves.</string>
 </resources>

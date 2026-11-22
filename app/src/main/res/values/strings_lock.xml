@@ -33,8 +33,8 @@
     <string name="lock_unlock_title">Unlock Secure Vault</string>
     <string name="lock_decrypting">Decrypting Vault…</string>
     <string name="lock_unlock_button">Unlock Vault</string>
-    <string name="lock_biometrics">Touch ID / Biometrics</string>
-    <string name="lock_biometrics_disabled">Touch ID / Biometrics (Disabled)</string>
+    <string name="lock_biometrics">Fingerprint / Biometrics</string>
+    <string name="lock_biometrics_disabled">Fingerprint / Biometrics (Disabled)</string>
     <string name="lock_forgot_password">Forgot Master Password? Use Emergency Kit</string>
 
     <string name="lock_recovery_title">Vault Recovery</string>

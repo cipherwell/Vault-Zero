@@ -23,6 +23,11 @@ Start here. Documents are grouped by intent; every file is self-contained and li
 4. [RELEASING.md](RELEASING.md) — signing identity, versioning, Play/F-Droid/GitHub.
 5. [CONTRIBUTING.md](../CONTRIBUTING.md) — rules and PR checklist.
 
+### I want to test the beta or run one
+1. [BETA.md](BETA.md) — tester guide, install and verification steps, known limits, how to report.
+2. [SOCIAL-BETA-POST.md](SOCIAL-BETA-POST.md) — announcement drafts (EN/ES) and pinned-comment template.
+3. [PLAY-INTERNAL-TESTING.md](PLAY-INTERNAL-TESTING.md) — maintainer checklist for Play internal testing.
+
 ### I want design/branding assets
 - [DESIGN.md](DESIGN.md) — One UI-inspired tokens, typography, screen inventory, icon.
 - [SCREENSHOTS.md](SCREENSHOTS.md) — current screenshots and archive.

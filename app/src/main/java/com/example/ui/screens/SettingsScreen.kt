@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import com.example.BuildConfig
 import com.example.R
+import com.example.core.DiagnosticsReport
 import com.example.core.ThemeMode
 import com.example.ui.backup.BackupPickerChannel
 import androidx.compose.foundation.clickable
@@ -74,11 +75,13 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.VaultLockState
 import com.example.ui.VaultViewModel
 import com.example.ui.components.ZeroKnowledgeSecurityBadge
 import com.example.ui.i18n.LocalAppLanguageTag
 import com.example.ui.i18n.LocalLanguageController
 import com.example.ui.i18n.SettingsLanguageRow
+import com.example.ui.i18n.asString
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
@@ -114,6 +117,24 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val languageTag = LocalAppLanguageTag.current
+    val lockState by viewModel.lockState.collectAsState()
+    val biometricsEnabled by viewModel.biometricEnabled.collectAsState()
+    val authErrorState by viewModel.authError.collectAsState()
+    val lastErrorText = authErrorState?.asString()
+    val languageSelectionTag = LocalLanguageController.current?.language?.tag ?: "system"
+    val biometricsAvailabilityToken = remember(context) {
+        when (
+            androidx.biometric.BiometricManager.from(context)
+                .canAuthenticate(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG)
+        ) {
+            androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS -> "available"
+            androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> "no enrolment"
+            androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> "no hardware"
+            androidx.biometric.BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> "hardware unavailable"
+            else -> "unsupported"
+        }
+    }
+
     // The backup collector outlives recompositions, so keep the locale-bound context current:
     // otherwise a language switch would keep emitting status messages in the old language.
     val latestContext by rememberUpdatedState(context)
@@ -704,6 +725,74 @@ fun SettingsScreen(
             Icon(imageVector = Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.settings_reset_vault))
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Support diagnostics: build/device/vault state only, never secrets. Testers can copy
+        // this into a bug report without exposing any stored data.
+        Text(
+            text = stringResource(R.string.settings_section_about),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 1.sp
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        val diagnosticsLabel = stringResource(R.string.settings_copy_diagnostics)
+        Card(
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        val report = DiagnosticsReport.build(
+                            DiagnosticsReport.Input(
+                                appVersionName = BuildConfig.VERSION_NAME,
+                                appVersionCode = BuildConfig.VERSION_CODE,
+                                packageName = context.packageName,
+                                androidRelease = android.os.Build.VERSION.RELEASE ?: "?",
+                                sdkInt = android.os.Build.VERSION.SDK_INT,
+                                manufacturer = android.os.Build.MANUFACTURER ?: "?",
+                                model = android.os.Build.MODEL ?: "?",
+                                languageTag = languageTag,
+                                selectedLanguage = languageSelectionTag,
+                                vaultInitialized = lockState != VaultLockState.NEEDS_SETUP,
+                                vaultUnlocked = lockState == VaultLockState.UNLOCKED,
+                                itemCount = vaultItems.size,
+                                biometricsEnabled = biometricsEnabled,
+                                biometricsAvailable = biometricsAvailabilityToken,
+                                keyFingerprint = viewModel.keyFingerprint,
+                                lastError = lastErrorText,
+                            )
+                        )
+                        viewModel.copySecurely(
+                            label = diagnosticsLabel,
+                            value = report,
+                            isSensitive = false,
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.settings_copy_diagnostics))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.settings_copy_diagnostics_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))

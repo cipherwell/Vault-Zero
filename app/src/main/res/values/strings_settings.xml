@@ -150,4 +150,7 @@
     </plurals>
     <string name="settings_import_verified">Backup verified</string>
     <string name="settings_import_nothing_new">Backup verified · nothing new to import</string>
+    <string name="settings_section_about">ABOUT</string>
+    <string name="settings_copy_diagnostics">Copy diagnostics</string>
+    <string name="settings_copy_diagnostics_desc">Version, device and vault state for bug reports. Never includes secrets, titles or key material.</string>
 </resources>
