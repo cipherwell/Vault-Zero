@@ -66,12 +66,14 @@ import androidx.core.view.WindowCompat
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,12 +95,20 @@ import com.example.ui.screens.LockScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.VaultListScreen
 import com.example.ui.theme.CyberEmerald
+import com.example.ui.i18n.AppLocalization
+import com.example.ui.i18n.UiText
+import com.example.ui.i18n.asString
+import com.example.ui.i18n.LanguageController
+import com.example.ui.i18n.LocalLanguageController
 import com.example.ui.theme.VaultZeroTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
 
     private val viewModel: VaultViewModel by viewModels()
+
+    /** Owned by the Activity so the language switch survives navigation and vault state. */
+    private val languageController: LanguageController by lazy { LanguageController(this) }
 
     private var backgroundedAtElapsed = 0L
     private var pickerActive = false
@@ -217,8 +227,12 @@ class MainActivity : FragmentActivity() {
                     isAppearanceLightNavigationBars = !dark
                 }
             }
-            VaultZeroTheme(darkTheme = dark) {
-                VaultZeroApp(viewModel = viewModel)
+            AppLocalization(languageTag = languageController.resolvedTag) {
+                CompositionLocalProvider(LocalLanguageController provides languageController) {
+                    VaultZeroTheme(darkTheme = dark) {
+                        VaultZeroApp(viewModel = viewModel)
+                    }
+                }
             }
         }
     }
@@ -322,17 +336,23 @@ class MainActivity : FragmentActivity() {
      * cipher handed to [viewModel] only becomes usable after a successful
      * authentication of that exact cipher.
      */
+    /** Resolve a resource in the in-app language for non-composable call sites (prompts, toasts). */
+    private fun locString(@androidx.annotation.StringRes id: Int): String {
+        val config = android.content.res.Configuration(resources.configuration).apply {
+            setLocale(java.util.Locale.forLanguageTag(languageController.resolvedTag))
+        }
+        return createConfigurationContext(config).getString(id)
+    }
+
     private fun launchNativeBiometricPrompt(purpose: BiometricPurpose) {
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
         val canAuth = BiometricManager.from(this).canAuthenticate(authenticators)
         if (canAuth == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
-            viewModel.onBiometricError(
-                "No fingerprint or face enrolled. Add one in system Settings, then try again."
-            )
+            viewModel.onBiometricError(UiText.Res(R.string.msg_biometric_no_enrolment))
             return
         }
         if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
-            viewModel.onBiometricError("Biometrics unavailable right now. Use your Master Password.")
+            viewModel.onBiometricError(UiText.Res(R.string.msg_biometric_unavailable))
             return
         }
 
@@ -343,26 +363,29 @@ class MainActivity : FragmentActivity() {
         if (cipher == null) {
             viewModel.onBiometricError(
                 if (purpose == BiometricPurpose.UNLOCK) {
-                    "Biometric key is no longer valid (re-enrolled or removed). " +
-                        "Unlock with your Master Password and enable it again."
+                    UiText.Res(R.string.msg_biometric_key_invalid)
                 } else {
-                    "Could not prepare the secure biometric key. Check device security settings."
+                    UiText.Res(R.string.msg_biometric_key_failed)
                 }
             )
             return
         }
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(if (purpose == BiometricPurpose.ENROLL) "Enable biometric unlock" else "Unlock VaultZero")
+            .setTitle(
+                locString(
+                    if (purpose == BiometricPurpose.ENROLL) R.string.bio_prompt_enable_title
+                    else R.string.bio_prompt_unlock_title
+                )
+            )
             .setSubtitle(
-                if (purpose == BiometricPurpose.ENROLL) {
-                    "Authenticate to wrap your vault key with this device"
-                } else {
-                    "Authenticate to unwrap your vault key"
-                }
+                locString(
+                    if (purpose == BiometricPurpose.ENROLL) R.string.bio_prompt_enroll_subtitle
+                    else R.string.bio_prompt_unlock_subtitle
+                )
             )
             .setAllowedAuthenticators(authenticators)
-            .setNegativeButtonText("Use Master Password")
+            .setNegativeButtonText(locString(R.string.bio_prompt_use_password))
             .build()
 
         val executor = ContextCompat.getMainExecutor(this)
@@ -385,7 +408,7 @@ class MainActivity : FragmentActivity() {
                         errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
                         errorCode != BiometricPrompt.ERROR_CANCELED
                     ) {
-                        viewModel.onBiometricError(errString.toString())
+                        viewModel.onBiometricError(UiText.Raw(errString.toString()))
                     }
                 }
 
@@ -526,7 +549,7 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         TextButton(onClick = { viewModel.undoDelete() }) {
-                            Text("Undo", fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                            Text(stringResource(R.string.common_undo), fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
                         }
                         IconButton(
                             onClick = { viewModel.dismissDeletedBatch() },
@@ -534,7 +557,7 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Dismiss undo",
+                                contentDescription = stringResource(R.string.a11y_dismiss_undo),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(14.dp),
                             )
@@ -560,7 +583,7 @@ fun VaultZeroApp(viewModel: VaultViewModel) {
         ) {
             clipboardStatus?.let { status ->
                 VaultStatusPill(
-                    status = status,
+                    status = status.asString(),
                     onDismiss = { viewModel.dismissClipboardStatus() }
                 )
             }
@@ -595,16 +618,16 @@ fun VaultBottomNavigationBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OneUiNavItem("Vault", Icons.Default.VpnKey, currentTab == VaultNavTab.VAULT, Modifier.weight(1f)) {
+            OneUiNavItem(stringResource(R.string.nav_vault), Icons.Default.VpnKey, currentTab == VaultNavTab.VAULT, Modifier.weight(1f)) {
                 onTabSelected(VaultNavTab.VAULT)
             }
-            OneUiNavItem("Generator", Icons.Default.AutoAwesome, currentTab == VaultNavTab.GENERATOR, Modifier.weight(1f)) {
+            OneUiNavItem(stringResource(R.string.nav_generator), Icons.Default.AutoAwesome, currentTab == VaultNavTab.GENERATOR, Modifier.weight(1f)) {
                 onTabSelected(VaultNavTab.GENERATOR)
             }
-            OneUiNavItem("Audit", Icons.Default.Shield, currentTab == VaultNavTab.AUDIT, Modifier.weight(1f)) {
+            OneUiNavItem(stringResource(R.string.nav_audit), Icons.Default.Shield, currentTab == VaultNavTab.AUDIT, Modifier.weight(1f)) {
                 onTabSelected(VaultNavTab.AUDIT)
             }
-            OneUiNavItem("Settings", Icons.Default.Settings, currentTab == VaultNavTab.SETTINGS, Modifier.weight(1f)) {
+            OneUiNavItem(stringResource(R.string.nav_settings), Icons.Default.Settings, currentTab == VaultNavTab.SETTINGS, Modifier.weight(1f)) {
                 onTabSelected(VaultNavTab.SETTINGS)
             }
         }

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Localized failure messages for VaultError codes plus ViewModel status/auth messages.
+     The data layer keeps throwing English messages; the UI maps the code to these strings. -->
+<resources>
+    <string name="err_password_too_short">Master Password must be at least 8 characters</string>
+    <string name="err_new_password_too_short">New password must be at least 8 characters</string>
+    <string name="err_new_password_unchanged">New password must differ from the current one</string>
+    <string name="err_current_password_incorrect">Current master password is incorrect</string>
+    <string name="err_vault_already_exists">A vault already exists on this device. Use Settings → Restore / Import Encrypted Backup instead.</string>
+    <string name="err_recovery_phrase_invalid">The recovery phrase must contain 12 valid words</string>
+    <string name="err_recovery_phrase_checksum">Recovery phrase checksum does not match — check for a mistyped word or wrong word order</string>
+    <string name="err_recovery_phrase_mismatch">The recovery phrase does not match this vault</string>
+    <string name="err_invalid_json">That file is not valid JSON</string>
+    <string name="err_not_a_vault_backup">That file is not a VaultZero encrypted backup</string>
+    <string name="err_backup_no_items">The backup has no items array</string>
+    <string name="err_backup_empty">The backup contains no entries</string>
+    <string name="err_backup_no_recovery_key">This backup has no recovery-phrase key material</string>
+    <string name="err_backup_no_password_key">This backup has no password envelope to unlock</string>
+    <string name="err_backup_password_wrong">The backup password is wrong</string>
+    <string name="err_backup_verifier_missing">The backup password verifier is missing</string>
+    <string name="err_backup_phrase_only_needs_phrase">This backup can only be opened with its 12-word recovery phrase, not a password</string>
+    <string name="err_backup_phrase_only_needs_password">This is a phrase-only backup with no master password. Enter a new master password for this device.</string>
+    <string name="err_backup_needs_recovery_phrase">This backup is protected by its 12-word recovery phrase; enter that phrase to import it</string>
+    <string name="err_backup_entry_not_object">Entry %1$d is not an object</string>
+    <string name="err_backup_entry_no_id">Entry %1$d has no record id</string>
+    <string name="err_backup_entry_duplicate_id">Entry %1$d has a duplicate record id</string>
+    <string name="err_backup_entry_unknown_type">Entry %1$d has an unknown item type</string>
+    <string name="err_backup_entry_no_payload">Entry %1$d has no encrypted payload</string>
+    <string name="err_backup_entry_failed_auth">Entry %1$d failed authentication (wrong recovery phrase or corrupted file)</string>
+    <string name="err_backup_entry_foreign_key">Entry %1$d failed authentication with this vault\'s key. It looks like a backup of a different vault — provide its master password or 12-word recovery phrase.</string>
+    <string name="err_backup_entry_foreign_key_failed">Entry %1$d failed authentication with the supplied credential</string>
+    <string name="err_backup_salt_too_large">The %1$s salt in the backup is too large</string>
+    <string name="err_backup_salt_length">The %1$s salt in the backup has an unsupported length</string>
+    <string name="err_backup_envelope_too_large">The backup key envelope is unreasonably large</string>
+    <string name="err_backup_kdf_unsupported">The backup declares unsupported KDF settings</string>
+    <string name="err_invalid_vault_key">The recovered vault key has an invalid length</string>
+    <string name="err_vault_locked">The vault is locked</string>
+    <string name="err_record_aad_mismatch">A stored record failed its integrity check</string>
+
+    <!-- ViewModel status / auth messages -->
+    <string name="msg_passwords_do_not_match">Passwords do not match</string>
+    <string name="msg_enter_master_password">Please enter your Master Password</string>
+    <string name="msg_too_many_attempts">Too many failed attempts. Try again in %1$ds.</string>
+    <string name="msg_locked_out">Too many failed attempts. Locked out for %1$ds.</string>
+    <string name="msg_incorrect_password">Incorrect Master Password. Please check and try again.</string>
+    <string name="msg_biometric_disabled">Biometric unlock is disabled in Settings. Unlock with Master Password first.</string>
+    <string name="msg_biometric_enrolment_missing">Biometric enrolment is missing or was invalidated. Unlock with Master Password and re-enable it in Settings.</string>
+    <string name="msg_biometric_not_authorised">Biometric authentication did not authorise the vault key. Please try again.</string>
+    <string name="msg_biometric_failed">Biometric authentication failed. Please enter Master Password.</string>
+    <string name="msg_recovery_phrase_invalid">Recovery phrase must be 12 valid words from your Emergency Recovery Kit</string>
+    <string name="msg_recovery_checksum">Recovery phrase checksum mismatch — check for a mistyped word or wrong word order</string>
+    <string name="msg_enter_backup_phrase">Enter the 12-word recovery phrase for this backup</string>
+    <string name="msg_setup_failed">Setup failed: %1$s</string>
+    <string name="msg_restore_failed">Restore failed: %1$s</string>
+    <string name="msg_restore_failed_invalid">Restore failed: invalid backup</string>
+    <string name="msg_auth_error">Authentication error: %1$s</string>
+    <string name="msg_biometric_error">Biometric unlock error: %1$s</string>
+    <string name="msg_recovery_error">Recovery error: %1$s</string>
+    <string name="msg_delete_failed">Delete failed: %1$s</string>
+    <string name="msg_could_not_restore">Could not restore: %1$s</string>
+    <string name="msg_could_not_favorite">Could not update favourites: %1$s</string>
+    <string name="msg_saved_item">Saved \"%1$s\" securely</string>
+    <string name="msg_save_failed">Failed to save: %1$s</string>
+    <string name="msg_cannot_favorite_locked">Cannot update favorite while locked</string>
+    <string name="msg_deleted_item">Deleted \"%1$s\"</string>
+    <string name="msg_vault_reset">Vault completely reset</string>
+    <string name="msg_export_failed">Export failed: %1$s</string>
+    <string name="msg_import_failed">Import failed — nothing was written: %1$s</string>
+    <string name="msg_import_rejected">Import rejected — nothing was written: %1$s</string>
+    <string name="msg_import_failed_invalid">Import failed — nothing was written: invalid backup</string>
+    <string name="msg_new_passwords_mismatch">New passwords do not match</string>
+    <string name="msg_password_changed">Master password changed</string>
+    <string name="msg_password_change_failed">Could not change password: %1$s</string>
+    <string name="msg_kit_generated">New recovery kit generated — save it offline now</string>
+    <string name="msg_kit_failed">Could not generate a new recovery kit: %1$s</string>
+    <string name="msg_auto_locked">Vault auto-locked due to inactivity</string>
+    <string name="msg_biometric_setup_incomplete">Biometric setup was not completed</string>
+    <string name="msg_clipboard_copied">%1$s copied to clipboard</string>
+    <string name="msg_clipboard_auto_clear">%1$s copied • Auto-clears in %2$ds</string>
+    <string name="msg_clipboard_clears_on_lock">%1$s copied • Clears when the vault locks</string>
+    <string name="msg_charset_required">At least one character set must remain enabled</string>
+    <string name="msg_biometric_disabled_status">Biometric unlock disabled</string>
+    <string name="msg_unlock_before_biometrics">Unlock the vault with your master password before enabling biometrics</string>
+    <string name="msg_new_master_passwords_mismatch">New Master Passwords do not match</string>
+
+    <!-- Biometric prompt + navigation -->
+    <string name="msg_biometric_no_enrolment">No fingerprint or face enrolled. Add one in system Settings, then try again.</string>
+    <string name="msg_biometric_unavailable">Biometrics unavailable right now. Use your Master Password.</string>
+    <string name="msg_biometric_key_invalid">Biometric key is no longer valid (re-enrolled or removed). Unlock with your Master Password and enable it again.</string>
+    <string name="msg_biometric_key_failed">Could not prepare the secure biometric key. Check device security settings.</string>
+    <string name="bio_prompt_enable_title">Enable biometric unlock</string>
+    <string name="bio_prompt_unlock_title">Unlock VaultZero</string>
+    <string name="bio_prompt_enroll_subtitle">Authenticate to wrap your vault key with this device</string>
+    <string name="bio_prompt_unlock_subtitle">Authenticate to unwrap your vault key</string>
+    <string name="bio_prompt_use_password">Use Master Password</string>
+    <string name="nav_vault">Vault</string>
+    <string name="nav_generator">Generator</string>
+    <string name="nav_audit">Audit</string>
+    <string name="nav_settings">Settings</string>
+    <string name="a11y_dismiss_undo">Dismiss undo</string>
+    <string name="msg_import_none">Backup verified · nothing new to import</string>
+    <string name="msg_import_done">Import complete · %1$d new, %2$d updated</string>
+    <plurals name="msg_vault_restored">
+        <item quantity="one">Vault restored · %1$d entry · recovery kit unchanged</item>
+        <item quantity="other">Vault restored · %1$d entries · recovery kit unchanged</item>
+    </plurals>
+    <plurals name="msg_items_restored">
+        <item quantity="one">Restored %1$d item</item>
+        <item quantity="other">Restored %1$d items</item>
+    </plurals>
+    <string name="msg_marked_favorite">Marked %1$d as favourite</string>
+    <string name="msg_unmarked_favorite">Removed favourite from %1$d</string>
+    <string name="msg_biometric_enabled_status">Biometric unlock enabled</string>
+    <string name="msg_biometric_store_failed">Could not store the biometric key</string>
+</resources>

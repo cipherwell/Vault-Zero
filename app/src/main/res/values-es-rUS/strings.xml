@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish (United States) shared strings. Keep keys identical to values/strings.xml. -->
+<resources>
+    <string name="app_name">VaultZero</string>
+    <string name="app_tagline">Bóveda de secretos criptográfica de conocimiento cero</string>
+
+    <!-- Selector de idioma -->
+    <string name="language_title">Idioma</string>
+    <string name="language_system">Sistema</string>
+    <string name="language_english_us">English (US)</string>
+    <string name="language_spanish_us">Español (US)</string>
+
+    <!-- Acciones comunes -->
+    <string name="common_ok">Aceptar</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_delete">Eliminar</string>
+    <string name="common_close">Cerrar</string>
+    <string name="common_copy">Copiar</string>
+    <string name="common_search">Buscar</string>
+    <string name="common_clear">Borrar</string>
+    <string name="common_undo">Deshacer</string>
+    <string name="common_edit">Editar</string>
+
+    <!-- Accesibilidad -->
+    <string name="a11y_show_password">Mostrar contraseña</string>
+    <string name="a11y_hide_password">Ocultar contraseña</string>
+    <string name="a11y_copy_field">Copiar %1$s</string>
+    <string name="a11y_lock_vault">Bloquear bóveda</string>
+    <string name="a11y_close_dialog">Cerrar diálogo</string>
+
+    <!-- Accesos directos -->
+    <string name="shortcut_new_login_short">Nuevo inicio</string>
+    <string name="shortcut_new_login_long">Crear un inicio de sesión nuevo</string>
+    <string name="shortcut_generator_short">Generador</string>
+    <string name="shortcut_generator_long">Generar una contraseña</string>
+
+    <!-- Niveles de seguridad de contraseña -->
+    <string name="strength_very_weak">Muy débil</string>
+    <string name="strength_weak">Débil</string>
+    <string name="strength_fair">Aceptable</string>
+    <string name="strength_strong">Fuerte</string>
+    <string name="strength_excellent">Excelente</string>
+    <string name="strength_entropy_bits">%1$d bits de entropía</string>
+
+    <!-- Tipos de registro -->
+    <string name="type_login">Inicios de sesión</string>
+    <string name="type_card">Tarjetas</string>
+    <string name="type_api_secret">Secretos de API</string>
+    <string name="type_crypto_wallet">Billeteras cripto</string>
+    <string name="type_note">Notas seguras</string>
+    <string name="type_identity">Identidades</string>
+    <string name="type_login_singular">Inicio de sesión</string>
+    <string name="type_card_singular">Tarjeta</string>
+    <string name="type_api_secret_singular">Secreto de API</string>
+    <string name="type_crypto_wallet_singular">Billetera cripto</string>
+    <string name="type_note_singular">Nota segura</string>
+    <string name="type_identity_singular">Identidad</string>
+
+    <!-- Apariencia -->
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+</resources>

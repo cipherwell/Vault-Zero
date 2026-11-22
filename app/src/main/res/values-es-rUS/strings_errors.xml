@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mensajes de error localizados para los códigos VaultError y mensajes del ViewModel. -->
+<resources>
+    <string name="err_password_too_short">La contraseña maestra debe tener al menos 8 caracteres</string>
+    <string name="err_new_password_too_short">La nueva contraseña debe tener al menos 8 caracteres</string>
+    <string name="err_new_password_unchanged">La nueva contraseña debe ser diferente de la actual</string>
+    <string name="err_current_password_incorrect">La contraseña maestra actual es incorrecta</string>
+    <string name="err_vault_already_exists">Ya existe una bóveda en este dispositivo. Usa Ajustes → Restaurar / Importar copia de seguridad cifrada.</string>
+    <string name="err_recovery_phrase_invalid">La frase de recuperación debe contener 12 palabras válidas</string>
+    <string name="err_recovery_phrase_checksum">La suma de verificación de la frase de recuperación no coincide: revisa si hay una palabra mal escrita o fuera de orden</string>
+    <string name="err_recovery_phrase_mismatch">La frase de recuperación no corresponde a esta bóveda</string>
+    <string name="err_invalid_json">Ese archivo no es JSON válido</string>
+    <string name="err_not_a_vault_backup">Ese archivo no es una copia de seguridad cifrada de VaultZero</string>
+    <string name="err_backup_no_items">La copia de seguridad no tiene una lista de elementos</string>
+    <string name="err_backup_empty">La copia de seguridad no contiene entradas</string>
+    <string name="err_backup_no_recovery_key">Esta copia de seguridad no tiene material de clave para la frase de recuperación</string>
+    <string name="err_backup_no_password_key">Esta copia de seguridad no tiene un sobre de contraseña para desbloquear</string>
+    <string name="err_backup_password_wrong">La contraseña de la copia de seguridad es incorrecta</string>
+    <string name="err_backup_verifier_missing">Falta el verificador de contraseña de la copia de seguridad</string>
+    <string name="err_backup_phrase_only_needs_phrase">Esta copia de seguridad solo se puede abrir con su frase de recuperación de 12 palabras, no con una contraseña</string>
+    <string name="err_backup_phrase_only_needs_password">Esta es una copia de seguridad que solo usa frase y no tiene contraseña maestra. Escribe una nueva contraseña maestra para este dispositivo.</string>
+    <string name="err_backup_needs_recovery_phrase">Esta copia de seguridad está protegida por su frase de recuperación de 12 palabras; ingresa esa frase para importarla</string>
+    <string name="err_backup_entry_not_object">La entrada %1$d no es un objeto</string>
+    <string name="err_backup_entry_no_id">La entrada %1$d no tiene identificador de registro</string>
+    <string name="err_backup_entry_duplicate_id">La entrada %1$d tiene un identificador de registro duplicado</string>
+    <string name="err_backup_entry_unknown_type">La entrada %1$d tiene un tipo de elemento desconocido</string>
+    <string name="err_backup_entry_no_payload">La entrada %1$d no tiene carga cifrada</string>
+    <string name="err_backup_entry_failed_auth">La entrada %1$d no pasó la autenticación (frase de recuperación incorrecta o archivo dañado)</string>
+    <string name="err_backup_entry_foreign_key">La entrada %1$d no pasó la autenticación con la clave de esta bóveda. Parece una copia de seguridad de otra bóveda: proporciona su contraseña maestra o su frase de recuperación de 12 palabras.</string>
+    <string name="err_backup_entry_foreign_key_failed">La entrada %1$d no pasó la autenticación con la credencial proporcionada</string>
+    <string name="err_backup_salt_too_large">La sal %1$s de la copia de seguridad es demasiado grande</string>
+    <string name="err_backup_salt_length">La sal %1$s de la copia de seguridad tiene una longitud no admitida</string>
+    <string name="err_backup_envelope_too_large">El sobre de clave de la copia de seguridad es demasiado grande</string>
+    <string name="err_backup_kdf_unsupported">La copia de seguridad declara ajustes de KDF no admitidos</string>
+    <string name="err_invalid_vault_key">La clave de bóveda recuperada tiene una longitud no válida</string>
+    <string name="err_vault_locked">La bóveda está bloqueada</string>
+    <string name="err_record_aad_mismatch">Un registro almacenado no pasó su verificación de integridad</string>
+
+    <!-- Mensajes de estado y autenticación del ViewModel -->
+    <string name="msg_passwords_do_not_match">Las contraseñas no coinciden</string>
+    <string name="msg_enter_master_password">Escribe tu contraseña maestra</string>
+    <string name="msg_too_many_attempts">Demasiados intentos fallidos. Inténtalo de nuevo en %1$d s.</string>
+    <string name="msg_locked_out">Demasiados intentos fallidos. Bloqueado durante %1$d s.</string>
+    <string name="msg_incorrect_password">Contraseña maestra incorrecta. Revísala e inténtalo de nuevo.</string>
+    <string name="msg_biometric_disabled">El desbloqueo biométrico está desactivado en Ajustes. Primero desbloquea con tu contraseña maestra.</string>
+    <string name="msg_biometric_enrolment_missing">Falta el registro biométrico o quedó invalidado. Desbloquea con tu contraseña maestra y vuelve a activarlo en Ajustes.</string>
+    <string name="msg_biometric_not_authorised">La autenticación biométrica no autorizó la clave de la bóveda. Inténtalo de nuevo.</string>
+    <string name="msg_biometric_failed">La autenticación biométrica falló. Escribe tu contraseña maestra.</string>
+    <string name="msg_recovery_phrase_invalid">La frase de recuperación debe tener 12 palabras válidas de tu kit de recuperación de emergencia</string>
+    <string name="msg_recovery_checksum">La suma de verificación de la frase de recuperación no coincide: revisa si hay una palabra mal escrita o fuera de orden</string>
+    <string name="msg_enter_backup_phrase">Escribe la frase de recuperación de 12 palabras de esta copia de seguridad</string>
+    <string name="msg_setup_failed">No se pudo configurar: %1$s</string>
+    <string name="msg_restore_failed">No se pudo restaurar: %1$s</string>
+    <string name="msg_restore_failed_invalid">No se pudo restaurar: copia de seguridad no válida</string>
+    <string name="msg_auth_error">Error de autenticación: %1$s</string>
+    <string name="msg_biometric_error">Error del desbloqueo biométrico: %1$s</string>
+    <string name="msg_recovery_error">Error de recuperación: %1$s</string>
+    <string name="msg_delete_failed">No se pudo eliminar: %1$s</string>
+    <string name="msg_could_not_restore">No se pudo restaurar: %1$s</string>
+    <string name="msg_could_not_favorite">No se pudieron actualizar los favoritos: %1$s</string>
+    <string name="msg_saved_item">Se guardó «%1$s» de forma segura</string>
+    <string name="msg_save_failed">No se pudo guardar: %1$s</string>
+    <string name="msg_cannot_favorite_locked">No se puede actualizar el favorito mientras la bóveda está bloqueada</string>
+    <string name="msg_deleted_item">Se eliminó «%1$s»</string>
+    <string name="msg_vault_reset">Bóveda restablecida por completo</string>
+    <string name="msg_export_failed">No se pudo exportar: %1$s</string>
+    <string name="msg_import_failed">No se pudo importar; no se escribió nada: %1$s</string>
+    <string name="msg_import_rejected">Importación rechazada; no se escribió nada: %1$s</string>
+    <string name="msg_import_failed_invalid">No se pudo importar; no se escribió nada: copia de seguridad no válida</string>
+    <string name="msg_new_passwords_mismatch">Las nuevas contraseñas no coinciden</string>
+    <string name="msg_password_changed">Contraseña maestra cambiada</string>
+    <string name="msg_password_change_failed">No se pudo cambiar la contraseña: %1$s</string>
+    <string name="msg_kit_generated">Se generó un kit de recuperación nuevo: guárdalo sin conexión ahora</string>
+    <string name="msg_kit_failed">No se pudo generar un kit de recuperación nuevo: %1$s</string>
+    <string name="msg_auto_locked">La bóveda se bloqueó automáticamente por inactividad</string>
+    <string name="msg_biometric_setup_incomplete">No se completó la configuración biométrica</string>
+    <string name="msg_clipboard_copied">Se copió %1$s al portapapeles</string>
+    <string name="msg_clipboard_auto_clear">Se copió %1$s • Se borra en %2$d s</string>
+    <string name="msg_clipboard_clears_on_lock">Se copió %1$s • Se borra al bloquear la bóveda</string>
+    <string name="msg_charset_required">Al menos un conjunto de caracteres debe quedar activado</string>
+    <string name="msg_biometric_disabled_status">Desbloqueo biométrico desactivado</string>
+    <string name="msg_unlock_before_biometrics">Desbloquea la bóveda con tu contraseña maestra antes de activar la biometría</string>
+    <string name="msg_new_master_passwords_mismatch">Las nuevas contraseñas maestras no coinciden</string>
+
+    <!-- Diálogo biométrico + navegación -->
+    <string name="msg_biometric_no_enrolment">No hay huella digital ni rostro registrado. Agrega uno en los ajustes del sistema e inténtalo de nuevo.</string>
+    <string name="msg_biometric_unavailable">La biometría no está disponible en este momento. Usa tu contraseña maestra.</string>
+    <string name="msg_biometric_key_invalid">La clave biométrica ya no es válida (se volvió a registrar o se eliminó). Desbloquea con tu contraseña maestra y vuelve a activarla.</string>
+    <string name="msg_biometric_key_failed">No se pudo preparar la clave biométrica segura. Revisa la seguridad del dispositivo.</string>
+    <string name="bio_prompt_enable_title">Activar desbloqueo biométrico</string>
+    <string name="bio_prompt_unlock_title">Desbloquear VaultZero</string>
+    <string name="bio_prompt_enroll_subtitle">Autentícate para vincular la clave de tu bóveda a este dispositivo</string>
+    <string name="bio_prompt_unlock_subtitle">Autentícate para desbloquear la clave de tu bóveda</string>
+    <string name="bio_prompt_use_password">Usar contraseña maestra</string>
+    <string name="nav_vault">Bóveda</string>
+    <string name="nav_generator">Generador</string>
+    <string name="nav_audit">Auditoría</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="a11y_dismiss_undo">Cerrar deshacer</string>
+    <string name="msg_import_none">Copia de seguridad verificada · no hay nada nuevo para importar</string>
+    <string name="msg_import_done">Importación completa · %1$d nuevas, %2$d actualizadas</string>
+    <plurals name="msg_vault_restored">
+        <item quantity="one">Bóveda restaurada · %1$d entrada · kit de recuperación sin cambios</item>
+        <item quantity="other">Bóveda restaurada · %1$d entradas · kit de recuperación sin cambios</item>
+    <item quantity="many">Bóveda restaurada · %1$d entradas · kit de recuperación sin cambios</item>
+    </plurals>
+    <plurals name="msg_items_restored">
+        <item quantity="one">Se restauró %1$d elemento</item>
+        <item quantity="other">Se restauraron %1$d elementos</item>
+    <item quantity="many">Se restauraron %1$d elementos</item>
+    </plurals>
+    <string name="msg_marked_favorite">Se marcó %1$d como favorito</string>
+    <string name="msg_unmarked_favorite">Se quitó de favoritos a %1$d</string>
+    <string name="msg_biometric_enabled_status">Desbloqueo biométrico activado</string>
+    <string name="msg_biometric_store_failed">No se pudo guardar la clave biométrica</string>
+</resources>

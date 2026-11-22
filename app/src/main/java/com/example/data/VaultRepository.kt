@@ -156,7 +156,9 @@ class VaultRepository(
         password: String
     ): Pair<String, String> = withContext(Dispatchers.Default) {
         val cleanPassword = password.trim()
-        require(cleanPassword.length >= 8) { "Master Password must be at least 8 characters" }
+        if (cleanPassword.length < 8) {
+            throw VaultException(VaultError.PASSWORD_TOO_SHORT, "Master Password must be at least 8 characters")
+        }
 
         val kdf = KdfSpec.CURRENT
 
@@ -223,30 +225,39 @@ class VaultRepository(
         recoveryPhrase: String,
         newMasterPassword: String? = null,
     ): SetupRestoreReport = withContext(Dispatchers.Default) {
-        require(!prefs.isInitialized) {
-            "A vault already exists on this device. Use Settings → Restore / Import Encrypted Backup instead."
+        if (prefs.isInitialized) {
+            throw VaultException(
+                VaultError.VAULT_ALREADY_EXISTS,
+                "A vault already exists on this device. Use Settings → Restore / Import Encrypted Backup instead.",
+            )
         }
 
         val cleanPhrase = VaultCrypto.normalizeRecoveryPhrase(recoveryPhrase)
-        require(VaultCrypto.validateRecoveryPhrase(cleanPhrase, enforceChecksum = false)) {
-            "The recovery phrase must contain 12 valid words."
+        if (!VaultCrypto.validateRecoveryPhrase(cleanPhrase, enforceChecksum = false)) {
+            throw VaultException(
+                VaultError.RECOVERY_PHRASE_INVALID,
+                "The recovery phrase must contain 12 valid words.",
+            )
         }
-        require(VaultCrypto.verifyRecoveryPhraseChecksum(cleanPhrase)) {
-            "Recovery phrase checksum does not match — check for a mistyped or reordered word."
+        if (!VaultCrypto.verifyRecoveryPhraseChecksum(cleanPhrase)) {
+            throw VaultException(
+                VaultError.RECOVERY_PHRASE_CHECKSUM_MISMATCH,
+                "Recovery phrase checksum does not match — check for a mistyped or reordered word.",
+            )
         }
 
         val backup = try {
             JSONObject(jsonString)
         } catch (e: Exception) {
-            throw IllegalArgumentException("file is not valid JSON")
+            throw VaultException(VaultError.INVALID_JSON, "file is not valid JSON")
         }
         if (backup.optString("format", "") != BACKUP_FORMAT) {
-            throw IllegalArgumentException("not a VaultZero encrypted backup envelope")
+            throw VaultException(VaultError.NOT_A_VAULT_BACKUP, "not a VaultZero encrypted backup envelope")
         }
         val itemsArray = backup.optJSONArray("items")
-            ?: throw IllegalArgumentException("backup has no items array")
+            ?: throw VaultException(VaultError.BACKUP_NO_ITEMS, "backup has no items array")
         if (itemsArray.length() == 0) {
-            throw IllegalArgumentException("backup contains no entries")
+            throw VaultException(VaultError.BACKUP_EMPTY, "backup contains no entries")
         }
 
         // The KDF specs travel inside an untrusted file. decode() rejects malformed or
@@ -258,7 +269,7 @@ class VaultRepository(
         val recoverySaltB64 = backup.optString("recoverySalt", "")
         val encryptedVmkByRecovery = backup.optString("encryptedVmkByRecovery", "")
         if (recoverySaltB64.isEmpty() || encryptedVmkByRecovery.isEmpty()) {
-            throw IllegalArgumentException("this backup has no recovery-phrase key material")
+            throw VaultException(VaultError.BACKUP_NO_RECOVERY_KEY, "this backup has no recovery-phrase key material")
         }
         validateBackupKeyEnvelope(encryptedVmkByRecovery)
         val recoverySalt = decodeBackupSalt(recoverySaltB64, "recovery")
@@ -268,14 +279,17 @@ class VaultRepository(
             val recoveryKey = VaultCrypto.deriveKeyFromPhrase(cleanPhrase, recoverySalt, recoveryKdf)
             val vmkHex = VaultCrypto.decrypt(encryptedVmkByRecovery, recoveryKey)
             val vmkBytes = VaultCrypto.hexToBytes(vmkHex)
-            require(vmkBytes.size == VaultCrypto.KEY_LENGTH_BYTES) {
-                "recovered vault key has an invalid length"
+            if (vmkBytes.size != VaultCrypto.KEY_LENGTH_BYTES) {
+                throw VaultException(
+                    VaultError.INVALID_VAULT_KEY,
+                    "recovered vault key has an invalid length",
+                )
             }
             vmk = SecretKeySpec(vmkBytes, "AES")
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
-            throw IllegalArgumentException("the recovery phrase does not match this backup")
+            throw VaultException(VaultError.RECOVERY_PHRASE_MISMATCH, "the recovery phrase does not match this backup")
         }
         val vmkHex = VaultCrypto.bytesToHex(vmk.encoded)
 
@@ -286,18 +300,40 @@ class VaultRepository(
         for (i in 0 until itemsArray.length()) {
             try {
                 val itemObj = itemsArray.optJSONObject(i)
-                    ?: throw IllegalArgumentException("entry ${i + 1} is not an object")
+                    ?: throw VaultException(
+                        VaultError.BACKUP_ENTRY_NOT_OBJECT,
+                        "entry ${i + 1} is not an object",
+                        args = listOf(i + 1),
+                    )
                 val id = itemObj.optString("id", "")
-                if (id.isBlank()) throw IllegalArgumentException("entry ${i + 1} has no record id")
+                if (id.isBlank()) {
+                    throw VaultException(
+                        VaultError.BACKUP_ENTRY_NO_ID,
+                        "entry ${i + 1} has no record id",
+                        args = listOf(i + 1),
+                    )
+                }
                 if (!seenIds.add(id)) {
-                    throw IllegalArgumentException("entry ${i + 1} has a duplicate record id")
+                    throw VaultException(
+                        VaultError.BACKUP_ENTRY_DUPLICATE_ID,
+                        "entry ${i + 1} has a duplicate record id",
+                        args = listOf(i + 1),
+                    )
                 }
                 val typeStr = itemObj.optString("type", "")
                 val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull()
-                    ?: throw IllegalArgumentException("entry ${i + 1} has an unknown item type")
+                    ?: throw VaultException(
+                        VaultError.BACKUP_ENTRY_UNKNOWN_TYPE,
+                        "entry ${i + 1} has an unknown item type",
+                        args = listOf(i + 1),
+                    )
                 val encPayload = itemObj.optString("encryptedPayload", "")
                 if (encPayload.isEmpty()) {
-                    throw IllegalArgumentException("entry ${i + 1} has no encrypted payload")
+                    throw VaultException(
+                        VaultError.BACKUP_ENTRY_NO_PAYLOAD,
+                        "entry ${i + 1} has no encrypted payload",
+                        args = listOf(i + 1),
+                    )
                 }
 
                 val entity = VaultItemEntity(
@@ -317,8 +353,10 @@ class VaultRepository(
             } catch (e: IllegalArgumentException) {
                 throw e
             } catch (e: Exception) {
-                throw IllegalArgumentException(
-                    "entry ${i + 1} failed authentication (wrong recovery phrase or corrupted file)"
+                throw VaultException(
+                    VaultError.BACKUP_ENTRY_FAILED_AUTH,
+                    "entry ${i + 1} failed authentication (wrong recovery phrase or corrupted file)",
+                    args = listOf(i + 1),
                 )
             }
         }
@@ -336,8 +374,11 @@ class VaultRepository(
         // the first successful unlock then migrates both envelopes to Argon2id.
         val passwordKdf = if (cleanNewPassword.isNotEmpty()) KdfSpec.CURRENT else sourcePasswordKdf
         val passwordEnvelope: Triple<String, String, String> = if (cleanNewPassword.isNotEmpty()) {
-            require(cleanNewPassword.length >= 8) {
-                "New master password must be at least 8 characters"
+            if (cleanNewPassword.length < 8) {
+                throw VaultException(
+                    VaultError.NEW_PASSWORD_TOO_SHORT,
+                    "New master password must be at least 8 characters",
+                )
             }
             val salt = VaultCrypto.generateSalt()
             val key = VaultCrypto.deriveKey(cleanNewPassword, salt, passwordKdf)
@@ -347,13 +388,18 @@ class VaultRepository(
                 VaultCrypto.createKeyVerifier(key, "PASSWORD"),
             )
         } else {
-            require(hasOriginalPassword) {
-                "This is a phrase-only backup with no master password. " +
-                    "Enter a new master password for this device."
+            if (!hasOriginalPassword) {
+                throw VaultException(
+                    VaultError.BACKUP_PHRASE_ONLY_NEEDS_NEW_PASSWORD,
+                    "This is a phrase-only backup with no master password. " +
+                        "Enter a new master password for this device.",
+                )
             }
             validateBackupKeyEnvelope(sourceEncVmk)
             decodeBackupSalt(sourceSaltB64, "password")
-            require(sourceVerifier.isNotEmpty()) { "backup password verifier is missing" }
+            if (sourceVerifier.isEmpty()) {
+                throw VaultException(VaultError.BACKUP_VERIFIER_MISSING, "backup password verifier is missing")
+            }
             Triple(sourceSaltB64, sourceEncVmk, sourceVerifier)
         }
 
@@ -571,7 +617,7 @@ class VaultRepository(
      * key fingerprint are unchanged; old backups still carry their own old recovery envelope.
      */
     suspend fun regenerateRecoveryKit(): String = withContext(Dispatchers.Default) {
-        val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val key = activeSecretKey ?: throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         val vmkHex = VaultCrypto.bytesToHex(key.encoded)
 
         val phrase = VaultCrypto.generateRecoveryPhrase()
@@ -631,8 +677,8 @@ class VaultRepository(
             if (json.optBoolean("_vz_meta_v2", false)) {
                 val envId = json.optString("id", entity.id)
                 val envType = json.optString("type", entity.type)
-                require(envId == entity.id && envType == entity.type) {
-                    "Record AAD envelope mismatch"
+                if (envId != entity.id || envType != entity.type) {
+                    throw VaultException(VaultError.RECORD_AAD_MISMATCH, "Record AAD envelope mismatch")
                 }
                 val decryptedTitle = json.optString("title", entity.title)
                 val decryptedCategory = json.optString("category", entity.category)
@@ -708,7 +754,7 @@ class VaultRepository(
     }
 
     suspend fun saveItem(item: VaultItem) = withContext(Dispatchers.Default) {
-        val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val key = activeSecretKey ?: throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         val recordId = item.id.ifEmpty { UUID.randomUUID().toString() }
         val encryptedEnvelope = encryptRecordEnvelope(item, recordId, key)
         val now = System.currentTimeMillis()
@@ -729,12 +775,12 @@ class VaultRepository(
     }
 
     suspend fun toggleFavorite(id: String, isFavorite: Boolean) = withContext(Dispatchers.IO) {
-        if (!isUnlocked) throw IllegalStateException("Vault is locked")
+        if (!isUnlocked) throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         dao.updateFavorite(id, isFavorite)
     }
 
     suspend fun setFavorite(ids: Collection<String>, favorite: Boolean) = withContext(Dispatchers.IO) {
-        if (!isUnlocked) throw IllegalStateException("Vault is locked")
+        if (!isUnlocked) throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         if (ids.isNotEmpty()) dao.updateFavoriteAll(ids.toList(), favorite)
     }
 
@@ -745,13 +791,13 @@ class VaultRepository(
     }
 
     suspend fun deleteItem(id: String) = withContext(Dispatchers.IO) {
-        if (!isUnlocked) throw IllegalStateException("Vault is locked")
+        if (!isUnlocked) throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         dao.deleteById(id)
     }
 
     /** Delete several records in one transaction (bulk selection action). */
     suspend fun deleteItems(ids: Collection<String>) = withContext(Dispatchers.IO) {
-        if (!isUnlocked) throw IllegalStateException("Vault is locked")
+        if (!isUnlocked) throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         if (ids.isEmpty()) return@withContext
         dao.deleteByIds(ids.toList())
     }
@@ -771,7 +817,7 @@ class VaultRepository(
     suspend fun exportEncryptedBackup(
         protection: BackupProtection = BackupProtection.STANDARD,
     ): String = withContext(Dispatchers.Default) {
-        val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val key = activeSecretKey ?: throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         VaultCrypto.validateAes256Key(key)
         val entities = dao.getAllList()
         val backupJson = JSONObject()
@@ -847,20 +893,20 @@ class VaultRepository(
         backupPassword: String? = null,
         skipInvalidRecords: Boolean = false,
     ): BackupImportReport = withContext(Dispatchers.Default) {
-        val activeKey = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val activeKey = activeSecretKey ?: throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         val backupJson = try {
             JSONObject(jsonString)
         } catch (e: Exception) {
-            throw IllegalArgumentException("file is not valid JSON")
+            throw VaultException(VaultError.INVALID_JSON, "file is not valid JSON")
         }
         val format = backupJson.optString("format", "")
         if (format != BACKUP_FORMAT) {
-            throw IllegalArgumentException("not a VaultZero encrypted backup envelope")
+            throw VaultException(VaultError.NOT_A_VAULT_BACKUP, "not a VaultZero encrypted backup envelope")
         }
         val itemsArray = backupJson.optJSONArray("items")
-            ?: throw IllegalArgumentException("backup has no items array")
+            ?: throw VaultException(VaultError.BACKUP_NO_ITEMS, "backup has no items array")
         if (itemsArray.length() == 0) {
-            throw IllegalArgumentException("backup contains no entries")
+            throw VaultException(VaultError.BACKUP_EMPTY, "backup contains no entries")
         }
 
         // ---- key needed to authenticate the records ----
@@ -870,8 +916,9 @@ class VaultRepository(
         val protection = BackupProtection.fromStorage(backupJson.optString("protection", null))
         val secretText = backupPassword?.trim().orEmpty()
         if (protection == BackupProtection.RECOVERY_PHRASE_ONLY && secretText.isEmpty()) {
-            throw IllegalArgumentException(
-                "this backup is protected by its 12-word recovery phrase; enter that phrase to import it"
+            throw VaultException(
+                VaultError.BACKUP_PROTECTED_BY_PHRASE,
+                "this backup is protected by its 12-word recovery phrase; enter that phrase to import it",
             )
         }
         var foreignBackupKey: SecretKey? = null
@@ -888,14 +935,15 @@ class VaultRepository(
             )
             foreignBackupKey = if (looksLikePhrase) {
                 if (!VaultCrypto.verifyRecoveryPhraseChecksum(phraseCandidate)) {
-                    throw IllegalArgumentException(
-                        "recovery phrase checksum does not match — check for a mistyped or reordered word"
+                    throw VaultException(
+                        VaultError.RECOVERY_PHRASE_CHECKSUM_MISMATCH,
+                        "recovery phrase checksum does not match — check for a mistyped or reordered word",
                     )
                 }
                 val recoverySaltB64 = backupJson.optString("recoverySalt", "")
                 val recoveryEncVmk = backupJson.optString("encryptedVmkByRecovery", "")
                 if (recoverySaltB64.isEmpty() || recoveryEncVmk.isEmpty()) {
-                    throw IllegalArgumentException("this backup has no recovery-phrase key material")
+                    throw VaultException(VaultError.BACKUP_NO_RECOVERY_KEY, "this backup has no recovery-phrase key material")
                 }
                 validateBackupKeyEnvelope(recoveryEncVmk)
                 try {
@@ -904,18 +952,19 @@ class VaultRepository(
                     val vmkHex = VaultCrypto.decrypt(recoveryEncVmk, recoveryKey)
                     SecretKeySpec(VaultCrypto.hexToBytes(vmkHex), "AES")
                 } catch (e: Exception) {
-                    throw IllegalArgumentException("the recovery phrase does not match this backup")
+                    throw VaultException(VaultError.RECOVERY_PHRASE_MISMATCH, "the recovery phrase does not match this backup")
                 }
             } else {
                 if (protection == BackupProtection.RECOVERY_PHRASE_ONLY) {
-                    throw IllegalArgumentException(
-                        "this backup can only be opened with its 12-word recovery phrase, not a password"
+                    throw VaultException(
+                        VaultError.BACKUP_PHRASE_ONLY_NEEDS_PHRASE,
+                        "this backup can only be opened with its 12-word recovery phrase, not a password",
                     )
                 }
                 val backupSaltB64 = backupJson.optString("salt", "")
                 val backupEncVmk = backupJson.optString("encryptedVmkByPassword", "")
                 if (backupSaltB64.isEmpty() || backupEncVmk.isEmpty()) {
-                    throw IllegalArgumentException("backup has no password envelope to unlock")
+                    throw VaultException(VaultError.BACKUP_NO_PASSWORD_KEY, "backup has no password envelope to unlock")
                 }
                 validateBackupKeyEnvelope(backupEncVmk)
                 try {
@@ -924,7 +973,7 @@ class VaultRepository(
                     val unwrappedVmkHex = VaultCrypto.decrypt(backupEncVmk, passKey)
                     SecretKeySpec(VaultCrypto.hexToBytes(unwrappedVmkHex), "AES")
                 } catch (e: Exception) {
-                    throw IllegalArgumentException("backup password is wrong")
+                    throw VaultException(VaultError.BACKUP_PASSWORD_WRONG, "backup password is wrong")
                 }
             }
         }
@@ -936,15 +985,33 @@ class VaultRepository(
         for (i in 0 until itemsArray.length()) {
             try {
                 val itemObj = itemsArray.optJSONObject(i)
-                    ?: throw IllegalArgumentException("entry ${i + 1} is not an object")
+                    ?: throw VaultException(
+                        VaultError.BACKUP_ENTRY_NOT_OBJECT,
+                        "entry ${i + 1} is not an object",
+                        args = listOf(i + 1),
+                    )
                 val id = itemObj.optString("id", "")
-                if (id.isBlank()) throw IllegalArgumentException("entry ${i + 1} has no record id")
+                if (id.isBlank()) {
+                    throw VaultException(
+                        VaultError.BACKUP_ENTRY_NO_ID,
+                        "entry ${i + 1} has no record id",
+                        args = listOf(i + 1),
+                    )
+                }
                 val typeStr = itemObj.optString("type", "")
                 val validType = runCatching { VaultType.valueOf(typeStr) }.getOrNull()
-                    ?: throw IllegalArgumentException("entry ${i + 1} has an unknown item type")
+                    ?: throw VaultException(
+                        VaultError.BACKUP_ENTRY_UNKNOWN_TYPE,
+                        "entry ${i + 1} has an unknown item type",
+                        args = listOf(i + 1),
+                    )
                 val encPayload = itemObj.optString("encryptedPayload", "")
                 if (encPayload.isEmpty()) {
-                    throw IllegalArgumentException("entry ${i + 1} has no encrypted payload")
+                    throw VaultException(
+                        VaultError.BACKUP_ENTRY_NO_PAYLOAD,
+                        "entry ${i + 1} has no encrypted payload",
+                        args = listOf(i + 1),
+                    )
                 }
 
                 val tempEntity = VaultItemEntity(
@@ -964,15 +1031,19 @@ class VaultRepository(
                     decryptRecordEntity(tempEntity, activeKey)
                 } catch (activeFailure: Exception) {
                     val altKey = foreignBackupKey
-                        ?: throw IllegalArgumentException(
+                        ?: throw VaultException(
+                            VaultError.BACKUP_ENTRY_FOREIGN_KEY,
                             "entry ${i + 1} failed authentication with this vault's key " +
-                                "(backup of a different vault? provide its master password or 12-word recovery phrase)"
+                                "(backup of a different vault? provide its master password or 12-word recovery phrase)",
+                            args = listOf(i + 1),
                         )
                     try {
                         decryptRecordEntity(tempEntity, altKey)
                     } catch (foreignFailure: Exception) {
-                        throw IllegalArgumentException(
-                            "entry ${i + 1} failed authentication (wrong backup password or corrupted file)"
+                        throw VaultException(
+                            VaultError.BACKUP_ENTRY_FOREIGN_KEY_FAILED,
+                            "entry ${i + 1} failed authentication (wrong backup password or corrupted file)",
+                            args = listOf(i + 1),
                         )
                     }
                 }
@@ -1071,18 +1142,26 @@ class VaultRepository(
      */
     private fun decodeBackupSalt(raw: String, label: String): ByteArray {
         if (raw.length > MAX_BACKUP_SALT_BASE64) {
-            throw IllegalArgumentException("$label salt in the backup is too large")
+            throw VaultException(
+                VaultError.BACKUP_SALT_TOO_LARGE,
+                "$label salt in the backup is too large",
+                args = listOf(label),
+            )
         }
         val salt = Base64.decode(raw, Base64.NO_WRAP)
         if (salt.size < VaultCrypto.SALT_LENGTH_BYTES || salt.size > 64) {
-            throw IllegalArgumentException("$label salt in the backup has an unsupported length")
+            throw VaultException(
+                VaultError.BACKUP_SALT_LENGTH,
+                "$label salt in the backup has an unsupported length",
+                args = listOf(label),
+            )
         }
         return salt
     }
 
     private fun validateBackupKeyEnvelope(raw: String) {
         if (raw.length > MAX_BACKUP_KEY_ENVELOPE_CHARS) {
-            throw IllegalArgumentException("backup key envelope is unreasonably large")
+            throw VaultException(VaultError.BACKUP_ENVELOPE_TOO_LARGE, "backup key envelope is unreasonably large")
         }
     }
 
@@ -1095,15 +1174,16 @@ class VaultRepository(
         val raw = backup.optString(key, "")
         if (raw.isNotEmpty()) {
             return KdfSpec.decode(raw)
-                ?: throw IllegalArgumentException(
-                    "backup declares unsupported $label KDF parameters"
+                ?: throw VaultException(
+                    VaultError.BACKUP_KDF_UNSUPPORTED,
+                    "backup declares unsupported $label KDF parameters",
                 )
         }
         val iterations = backup.optInt("kdfIterations", VaultCrypto.DEFAULT_ITERATIONS)
         if (iterations < VaultCrypto.MIN_ACCEPTED_ITERATIONS ||
             iterations > VaultCrypto.MAX_ACCEPTED_ITERATIONS
         ) {
-            throw IllegalArgumentException("backup uses an unsupported KDF iteration count")
+            throw VaultException(VaultError.BACKUP_KDF_UNSUPPORTED, "backup uses an unsupported KDF iteration count")
         }
         return KdfSpec.pbkdf2(iterations)
     }
@@ -1137,17 +1217,21 @@ class VaultRepository(
         currentPassword: String,
         newPassword: String,
     ) = withContext(Dispatchers.Default) {
-        val key = activeSecretKey ?: throw IllegalStateException("Vault is locked")
+        val key = activeSecretKey ?: throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
         val cleanCurrent = currentPassword.trim()
         val cleanNew = newPassword.trim()
-        require(cleanNew.length >= 8) { "New password must be at least 8 characters" }
-        require(cleanNew != cleanCurrent) { "New password must differ from the current one" }
+        if (cleanNew.length < 8) {
+            throw VaultException(VaultError.NEW_PASSWORD_TOO_SHORT, "New password must be at least 8 characters")
+        }
+        if (cleanNew == cleanCurrent) {
+            throw VaultException(VaultError.NEW_PASSWORD_UNCHANGED, "New password must differ from the current one")
+        }
 
         val salt = Base64.decode(prefs.saltBase64, Base64.NO_WRAP)
         val currentKey = VaultCrypto.deriveKey(cleanCurrent, salt, prefs.passwordKdf)
         val currentVerifier = VaultCrypto.createKeyVerifier(currentKey, "PASSWORD")
         if (currentVerifier != prefs.masterPasswordHash) {
-            throw IllegalArgumentException("Current master password is incorrect")
+            throw VaultException(VaultError.CURRENT_PASSWORD_INCORRECT, "Current master password is incorrect")
         }
 
         val vmkHex = VaultCrypto.bytesToHex(key.encoded)

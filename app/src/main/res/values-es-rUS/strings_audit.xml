@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Descripciones y recomendaciones de los hallazgos de auditoría. -->
+<resources>
+    <string name="auditmsg_reused_desc">La contraseña también se usa en: %1$s</string>
+    <string name="auditmsg_reused_rec">Genera una contraseña única de alta entropía para cada servicio</string>
+    <string name="auditmsg_weak_desc">La seguridad de la contraseña es %1$s (%2$d bits de entropía efectiva)</string>
+    <string name="auditmsg_weak_rec">Cambia a una contraseña de más de 16 caracteres con mayúsculas, minúsculas y símbolos, o a una frase de varias palabras</string>
+    <string name="auditmsg_stale_desc">El registro de credenciales no se actualiza desde hace %1$d días</string>
+    <string name="auditmsg_stale_rec">Revisa y rota periódicamente las credenciales de larga duración</string>
+    <string name="auditmsg_totp_desc">El secreto TOTP guardado no es Base32 válido</string>
+    <string name="auditmsg_totp_rec">Escribe una clave Base32 válida para generar códigos 2FA o borra el campo 2FA opcional</string>
+</resources>

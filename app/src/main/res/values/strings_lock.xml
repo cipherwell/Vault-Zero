@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lock / setup / restore / recovery screens. -->
+<resources>
+    <string name="lock_shield_desc">VaultZero Shield</string>
+
+    <string name="lock_setup_title">Initialize Master Password</string>
+    <string name="lock_setup_body">Your Master Password derives the local AES-256-GCM encryption key. It is never transmitted and cannot be reset without your emergency recovery kit.</string>
+    <string name="lock_master_password">Master Password</string>
+    <string name="lock_confirm_password">Confirm Master Password</string>
+    <string name="lock_new_master_password">New Master Password</string>
+    <string name="lock_confirm_new_password">Confirm New Master Password</string>
+    <string name="lock_deriving">Deriving Keys &amp; Encrypting…</string>
+    <string name="lock_create_vault">Create Secure Vault</string>
+
+    <string name="lock_restore_from_backup">Restore from Backup</string>
+    <string name="lock_restore_hint">Moving from another phone? Choose your encrypted backup and enter its existing 12-word recovery kit. No new seed phrase is created.</string>
+    <string name="lock_read_error">Could not read that file (or it is larger than 8 MiB).</string>
+    <string name="lock_restore_title">Restore Existing Vault</string>
+    <string name="lock_backup_file">Backup: %1$s</string>
+    <string name="lock_restore_phrase_hint">Enter the 12-word recovery phrase that belongs to this backup. Your existing recovery kit is kept — VaultZero will not generate a new seed phrase.</string>
+    <string name="lock_recovery_phrase_label">12-Word Recovery Phrase</string>
+    <string name="lock_recovery_phrase_placeholder">word1 word2 … word12</string>
+    <string name="lock_new_password_optional">New Master Password (optional)</string>
+    <string name="lock_new_password_optional_hint">Leave blank to keep the backup\'s original master password (standard backups). Phrase-only backups require a new password on this device.</string>
+    <string name="lock_restore_vault">Restore Vault</string>
+
+    <string name="lock_recovery_kit_title">Emergency Recovery Kit</string>
+    <string name="lock_recovery_kit_body">Save these 12 words in a safe, offline location. This is the ONLY way to recover your vault if you ever forget your master password.</string>
+    <string name="lock_copy_phrase">Copy 12-Word Recovery Phrase</string>
+    <string name="lock_saved_kit">I Saved My Recovery Kit — Open Vault</string>
+
+    <string name="lock_vault_locked_desc">Vault Locked</string>
+    <string name="lock_unlock_title">Unlock Secure Vault</string>
+    <string name="lock_decrypting">Decrypting Vault…</string>
+    <string name="lock_unlock_button">Unlock Vault</string>
+    <string name="lock_biometrics">Touch ID / Biometrics</string>
+    <string name="lock_biometrics_disabled">Touch ID / Biometrics (Disabled)</string>
+    <string name="lock_forgot_password">Forgot Master Password? Use Emergency Kit</string>
+
+    <string name="lock_recovery_title">Vault Recovery</string>
+    <string name="lock_recovery_body">Enter your 12-word recovery phrase to decrypt the Vault Master Key and set a new Master Password.</string>
+    <string name="lock_confirm_new_password_recovery">Confirm New Password</string>
+    <string name="lock_recovering">Recovering Vault…</string>
+    <string name="lock_reset_unlock">Reset &amp; Unlock Vault</string>
+    <string name="lock_back_to_unlock">Back to Password Unlock</string>
+    <string name="lock_recovery_phrase_clipboard">Recovery Phrase</string>
+</resources>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantalla de ajustes: apariencia, controles de seguridad, recuperación y copia de seguridad, zona de peligro. -->
+<resources>
+    <string name="settings_title">Ajustes de la bóveda</string>
+    <string name="settings_subtitle">Preferencias criptográficas, tiempos de espera y kits de emergencia</string>
+
+    <!-- Identidad de la bóveda -->
+    <string name="settings_master_key_fingerprint">Huella de la clave maestra</string>
+    <string name="settings_a11y_copy_fingerprint">Copiar huella de la clave maestra</string>
+    <string name="settings_clipboard_label_fingerprint">Huella de la clave</string>
+
+    <!-- Apariencia -->
+    <string name="settings_section_appearance">Apariencia</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+
+    <!-- Controles de seguridad -->
+    <string name="settings_section_security">Controles de seguridad</string>
+    <string name="settings_auto_lock_inactivity">Bloqueo automático por inactividad</string>
+    <string name="settings_auto_lock_disabled_dev">El bloqueo automático está desactivado en esta compilación de desarrollo (-PdevDisableAutoLock=true).</string>
+    <string name="settings_timeout_off">Nunca</string>
+    <string name="settings_timeout_15s">15 s</string>
+    <string name="settings_timeout_30s">30 s</string>
+    <string name="settings_timeout_1m">1 min</string>
+    <string name="settings_timeout_5m">5 min</string>
+    <string name="settings_timeout_15m">15 min</string>
+    <string name="settings_timeout_60s">60 s</string>
+    <string name="settings_auto_lock_off_warning">Desactivado: la bóveda permanece desbloqueada hasta que tocas el botón de bloqueo.</string>
+    <string name="settings_lock_in_background">Bloquear en segundo plano</string>
+    <string name="settings_background_lock_off_warning">Desactivado: la bóveda permanece desbloqueada cuando sales de la aplicación o apagas la pantalla.</string>
+    <string name="settings_background_lock_locks_after">Se bloquea después de %1$d s fuera de la aplicación o de inmediato al apagar la pantalla. No se aplica mientras el selector de archivos está abierto.</string>
+    <string name="settings_auto_clear_clipboard">Borrado automático del portapapeles</string>
+    <string name="settings_clipboard_off_warning">Desactivado: los secretos copiados permanecen en el portapapeles hasta que copies otra cosa.</string>
+    <string name="settings_biometric_title">Desbloqueo biométrico rápido</string>
+    <string name="settings_biometric_desc">Desbloquea rápidamente con la biometría del dispositivo</string>
+    <string name="settings_change_master_password">Cambiar contraseña maestra</string>
+    <string name="settings_change_master_password_desc">Los registros siguen cifrados · el kit de recuperación sigue funcionando</string>
+    <string name="settings_action_change">Cambiar</string>
+    <string name="settings_lock_vault_now">Bloquear bóveda ahora</string>
+    <string name="settings_lock_vault_now_desc">Bloquea de inmediato y borra los secretos copiados</string>
+    <string name="settings_action_lock">Bloquear</string>
+
+    <!-- Recuperación y copia de seguridad -->
+    <string name="settings_section_recovery">Recuperación y copia de seguridad</string>
+    <string name="settings_working">Procesando…</string>
+    <string name="settings_view_recovery_kit">Ver kit de recuperación de 12 palabras</string>
+    <string name="settings_view_recovery_kit_desc">Descifra y consulta tu frase de recuperación de emergencia</string>
+    <string name="settings_rotate_kit_busy">Generando un kit de recuperación nuevo…</string>
+    <string name="settings_rotate_kit">Generar un kit de recuperación nuevo</string>
+    <string name="settings_rotate_kit_desc">Reemplaza la frase anterior por un kit BIP-39 nuevo de 128 bits (los registros y la clave no cambian)</string>
+    <string name="settings_export_backup">Exportar copia de seguridad cifrada de la bóveda</string>
+    <string name="settings_export_backup_desc">Genera un contenedor JSON de copia de seguridad cifrado con AES-256-GCM</string>
+    <string name="settings_import_backup">Restaurar / importar copia de seguridad cifrada</string>
+    <string name="settings_import_backup_desc">Importa registros desde una copia de seguridad JSON cifrada de VaultZero</string>
+    <string name="settings_specs_title">Especificaciones criptográficas</string>
+    <string name="settings_specs_summary">AES-256-GCM, PBKDF2-HMAC-SHA256, cero telemetría</string>
+
+    <!-- Zona de peligro -->
+    <string name="settings_section_danger">Zona de peligro</string>
+    <string name="settings_reset_vault">Restablecer y borrar la bóveda por completo</string>
+    <string name="settings_version_footer">VaultZero v%1$s (compilación %2$d) • Compilación FOSS 100 %% aislada de la red</string>
+
+    <!-- Estado de exportación e importación -->
+    <string name="settings_backup_saved_phrase_only">Copia de seguridad cifrada guardada en %1$s. Solo se puede abrir con la frase de recuperación de 12 palabras de esta copia.</string>
+    <string name="settings_backup_saved_standard">Copia de seguridad cifrada guardada en %1$s. Se puede abrir con la contraseña maestra de esta bóveda o con su frase de recuperación de 12 palabras. No contiene secretos en texto plano.</string>
+    <string name="settings_backup_write_failed">No se pudo escribir la copia de seguridad en esa ubicación.</string>
+    <string name="settings_backup_unreadable_document">Ese documento no es un contenedor de copia de seguridad legible de VaultZero.</string>
+    <string name="settings_backup_file_default">archivo de copia de seguridad</string>
+    <string name="settings_import_backup_file_default">Archivo de copia de seguridad</string>
+
+    <!-- Diálogos del kit de recuperación -->
+    <string name="settings_rotate_kit_dialog_title">¿Reemplazar el kit de recuperación?</string>
+    <string name="settings_rotate_kit_dialog_body">Se generará una frase nueva de 12 palabras y se guardará en esta bóveda. Tu frase actual dejará de desbloquear esta bóveda y las copias de seguridad que dependan de ella. La clave de la bóveda, los registros y la contraseña maestra no cambian. Exporta una copia de seguridad nueva después de guardar el kit nuevo.</string>
+    <string name="settings_rotate_kit_confirm">Generar kit nuevo</string>
+    <string name="settings_new_kit_dialog_title">Nuevo kit de recuperación de emergencia</string>
+    <string name="settings_new_kit_dialog_body">Anota estas 12 palabras y guárdalas sin conexión. El kit anterior ya no restaura esta bóveda. Esta es la única vez que se muestra la frase nueva.</string>
+    <string name="settings_clipboard_label_recovery_kit">Kit de recuperación</string>
+    <string name="settings_copy_and_close">Copiar y cerrar</string>
+    <string name="settings_dismiss">Descartar</string>
+    <string name="settings_recovery_dialog_title">Kit de recuperación de emergencia</string>
+    <string name="settings_recovery_dialog_body">Frase semilla de 12 palabras para recuperar la clave maestra (descifrada en memoria):</string>
+    <string name="settings_recovery_unavailable">No disponible (bóveda bloqueada)</string>
+
+    <!-- Diálogo de restablecimiento -->
+    <string name="settings_reset_dialog_title">¿Borrar la bóveda por completo?</string>
+    <string name="settings_reset_dialog_body">Todos los registros cifrados, las claves y las contraseñas maestras se borrarán de este dispositivo sin posibilidad de recuperación. ¿Seguro que deseas continuar?</string>
+    <string name="settings_reset_dialog_confirm">Borrar todo</string>
+
+    <!-- Diálogo de resultado de la copia de seguridad -->
+    <string name="settings_backup_dialog_title">Copia de seguridad</string>
+
+    <!-- Diálogo de importación -->
+    <string name="settings_import_dialog_title">Importar copia de seguridad cifrada</string>
+    <string name="settings_import_dialog_body">%1$s ya se puede importar. Escribe la contraseña maestra de la bóveda de origen o su frase de recuperación de 12 palabras si el archivo se creó en otra bóveda; déjalo en blanco si es una copia de esta bóveda (desbloquea con biometría primero para evitar escribir). Las copias que solo se abren con la frase siempre requieren su frase de recuperación.</string>
+    <string name="settings_import_credential_label">Contraseña maestra o frase de recuperación de 12 palabras</string>
+    <string name="settings_import_confirm">Descifrar e importar</string>
+
+    <!-- Resultado de la importación -->
+    <string name="settings_import_complete_title">Importación completada</string>
+    <string name="settings_import_verified_note">La copia de seguridad se verificó antes de escribir cualquier registro.</string>
+    <string name="settings_import_readable">Importar registros legibles</string>
+    <string name="settings_import_prompt_title">La copia de seguridad requiere atención</string>
+
+    <!-- Diálogo de exportación -->
+    <string name="settings_export_dialog_title">Exportar copia de seguridad cifrada</string>
+    <string name="settings_export_dialog_body">¿Con qué se debe poder desbloquear esta copia de seguridad?</string>
+    <string name="settings_export_option_standard">Contraseña maestra o frase de recuperación</string>
+    <string name="settings_export_option_standard_desc">Restaura con cualquiera de las dos credenciales · compatible entre dispositivos</string>
+    <string name="settings_export_option_phrase_only">Solo la frase de recuperación de 12 palabras</string>
+    <string name="settings_export_option_phrase_only_desc">Se elimina el contenedor de la contraseña; solo esa frase puede abrirlo</string>
+    <string name="settings_export_biometrics_note">La biometría desbloquea esta bóveda localmente; no puede descifrar una copia de seguridad ajena. La frase de recuperación es la credencial portátil.</string>
+    <string name="settings_export_choose_file">Elegir archivo</string>
+
+    <!-- Diálogo de cambio de contraseña maestra -->
+    <string name="settings_change_password_dialog_body">Tus registros están cifrados con la clave de la bóveda, no con la contraseña, así que no se vuelven a cifrar. La clave de la bóveda se vuelve a envolver con la contraseña nueva; tu kit de recuperación de 12 palabras sigue siendo válido.</string>
+    <string name="settings_current_master_password">Contraseña maestra actual</string>
+    <string name="settings_new_master_password">Contraseña maestra nueva (mín. 8)</string>
+    <string name="settings_confirm_new_password">Confirmar contraseña nueva</string>
+    <string name="settings_change_password_confirm">Cambiar contraseña</string>
+
+    <!-- Ficha de especificaciones criptográficas -->
+    <string name="settings_specs_dialog_title">Arquitectura de VaultZero</string>
+    <string name="settings_specs_dialog_body">• Cifrado: cifrado autenticado AES-256-GCM (etiqueta de autenticación de 128 bits, IV único de 12 bytes por registro, enlace AAD de GCM por registro).\n\n• Cero filtración de metadatos: los títulos, las categorías, las etiquetas y las cargas útiles de los registros se cifran juntos dentro de AES-256-GCM; las columnas de SQLite almacenan marcadores de posición redactados.\n\n• Derivación de claves y recuperación: PBKDF2WithHmacSHA256 (600,000 rondas), sal CSPRNG de 128 bits, verificadores HMAC-SHA256 y frase mnemónica de recuperación de 12 palabras con suma de comprobación SHA-256.\n\n• Conocimiento cero del lado del cliente: cero permisos de red, cero servidores remotos, Keystore StrongBox/TEE, FLAG_SECURE + supresión de capturas en recientes, y copias de seguridad que solo salen mediante un documento de Storage Access Framework que tú eliges.</string>
+
+    <!-- Cadenas con conteo -->
+    <plurals name="settings_import_new_entries">
+        <item quantity="one">Entrada nueva: %1$d</item>
+        <item quantity="other">Entradas nuevas: %1$d</item>
+    <item quantity="many">Entradas nuevas: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_updated">
+        <item quantity="one">Registro actualizado: %1$d</item>
+        <item quantity="other">Registros actualizados: %1$d</item>
+    <item quantity="many">Registros actualizados: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_duplicates_skipped">
+        <item quantity="one">Duplicado omitido: %1$d</item>
+        <item quantity="other">Duplicados omitidos: %1$d</item>
+    <item quantity="many">Duplicados omitidos: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_unreadable_skipped">
+        <item quantity="one">Registro ilegible omitido: %1$d</item>
+        <item quantity="other">Registros ilegibles omitidos: %1$d</item>
+    <item quantity="many">Registros ilegibles omitidos: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_unreadable_prompt">
+        <item quantity="one">Se omitirá %1$d registro ilegible. Los registros legibles se pueden importar igualmente; el archivo no se modifica.</item>
+        <item quantity="other">Se omitirán %1$d registros ilegibles. Los registros legibles se pueden importar igualmente; el archivo no se modifica.</item>
+    <item quantity="many">Se omitirán %1$d registros ilegibles. Los registros legibles se pueden importar igualmente; el archivo no se modifica.</item>
+    </plurals>
+    <plurals name="settings_export_preview">
+        <item quantity="one">Vista previa: %1$d entrada cifrada (%2$s)</item>
+        <item quantity="other">Vista previa: %1$d entradas cifradas (%2$s)</item>
+    <item quantity="many">Vista previa: %1$d entradas cifradas (%2$s)</item>
+    </plurals>
+    <string name="settings_import_verified">Copia de seguridad verificada</string>
+    <string name="settings_import_nothing_new">Copia de seguridad verificada · no hay nada nuevo para importar</string>
+</resources>

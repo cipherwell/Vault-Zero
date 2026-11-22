@@ -1,7 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared strings: app identity, common actions, accessibility, language picker.
+     Screen-specific strings live in strings_lock.xml / strings_vault.xml / strings_item.xml /
+     strings_settings.xml / strings_generator.xml / strings_audit.xml / strings_errors.xml. -->
 <resources>
     <string name="app_name">VaultZero</string>
+    <string name="app_tagline">Zero-Knowledge Cryptographic Secret Vault</string>
+
+    <!-- Language picker -->
+    <string name="language_title">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_english_us">English (US)</string>
+    <string name="language_spanish_us">Español (US)</string>
+
+    <!-- Common actions -->
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_close">Close</string>
+    <string name="common_copy">Copy</string>
+    <string name="common_search">Search</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_undo">Undo</string>
+    <string name="common_edit">Edit</string>
+
+    <!-- Common accessibility labels -->
+    <string name="a11y_show_password">Show password</string>
+    <string name="a11y_hide_password">Hide password</string>
+    <string name="a11y_copy_field">Copy %1$s</string>
+    <string name="a11y_lock_vault">Lock vault</string>
+    <string name="a11y_close_dialog">Close dialog</string>
+
+    <!-- Launcher shortcuts (system UI, resolved by the OS) -->
     <string name="shortcut_new_login_short">New login</string>
     <string name="shortcut_new_login_long">Create a new login</string>
     <string name="shortcut_generator_short">Generator</string>
     <string name="shortcut_generator_long">Generate a password</string>
+
+    <!-- Password strength grades -->
+    <string name="strength_very_weak">Very Weak</string>
+    <string name="strength_weak">Weak</string>
+    <string name="strength_fair">Fair</string>
+    <string name="strength_strong">Strong</string>
+    <string name="strength_excellent">Excellent</string>
+    <string name="strength_entropy_bits">%1$d bits entropy</string>
+
+    <!-- Record types (list filters, editor, detail sheet) -->
+    <string name="type_login">Logins</string>
+    <string name="type_card">Cards</string>
+    <string name="type_api_secret">API Secrets</string>
+    <string name="type_crypto_wallet">Crypto Wallets</string>
+    <string name="type_note">Secure Notes</string>
+    <string name="type_identity">Identities</string>
+    <string name="type_login_singular">Login</string>
+    <string name="type_card_singular">Card</string>
+    <string name="type_api_secret_singular">API Secret</string>
+    <string name="type_crypto_wallet_singular">Crypto Wallet</string>
+    <string name="type_note_singular">Secure Note</string>
+    <string name="type_identity_singular">Identity</string>
+
+    <!-- Appearance -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>

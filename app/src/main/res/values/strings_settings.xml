@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings screen: appearance, security controls, recovery & backup, danger zone. -->
+<resources>
+    <string name="settings_title">Vault Settings</string>
+    <string name="settings_subtitle">Cryptographic preferences, timeouts, and emergency kits</string>
+
+    <!-- Vault identity -->
+    <string name="settings_master_key_fingerprint">Master key fingerprint</string>
+    <string name="settings_a11y_copy_fingerprint">Copy fingerprint</string>
+    <string name="settings_clipboard_label_fingerprint">Fingerprint</string>
+
+    <!-- Appearance -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+
+    <!-- Security controls -->
+    <string name="settings_section_security">Security controls</string>
+    <string name="settings_auto_lock_inactivity">Auto-Lock Inactivity</string>
+    <string name="settings_auto_lock_disabled_dev">Auto-lock is disabled in this dev build (-PdevDisableAutoLock=true).</string>
+    <string name="settings_timeout_off">Off</string>
+    <string name="settings_timeout_15s">15s</string>
+    <string name="settings_timeout_30s">30s</string>
+    <string name="settings_timeout_1m">1m</string>
+    <string name="settings_timeout_5m">5m</string>
+    <string name="settings_timeout_15m">15m</string>
+    <string name="settings_timeout_60s">60s</string>
+    <string name="settings_auto_lock_off_warning">Off: the vault stays unlocked until you tap the lock button.</string>
+    <string name="settings_lock_in_background">Lock in Background</string>
+    <string name="settings_background_lock_off_warning">Off: the vault stays unlocked when you leave the app or turn the screen off.</string>
+    <string name="settings_background_lock_locks_after">Locks after %1$d s away or immediately when the screen turns off. Not applied while the file picker is open.</string>
+    <string name="settings_auto_clear_clipboard">Auto-Clear Clipboard</string>
+    <string name="settings_clipboard_off_warning">Off: copied secrets stay on the clipboard until you copy something else.</string>
+    <string name="settings_biometric_title">Fast Biometric Unlock</string>
+    <string name="settings_biometric_desc">Quickly unlock with device biometrics</string>
+    <string name="settings_change_master_password">Change Master Password</string>
+    <string name="settings_change_master_password_desc">Records stay encrypted · recovery kit keeps working</string>
+    <string name="settings_action_change">Change</string>
+    <string name="settings_lock_vault_now">Lock Vault Now</string>
+    <string name="settings_lock_vault_now_desc">Lock immediately and clear copied secrets</string>
+    <string name="settings_action_lock">Lock</string>
+
+    <!-- Recovery & backup -->
+    <string name="settings_section_recovery">Recovery &amp; backup</string>
+    <string name="settings_working">Working…</string>
+    <string name="settings_view_recovery_kit">View 12-Word Recovery Kit</string>
+    <string name="settings_view_recovery_kit_desc">Decrypt and view your emergency recovery phrase</string>
+    <string name="settings_rotate_kit_busy">Generating New Recovery Kit…</string>
+    <string name="settings_rotate_kit">Generate New Recovery Kit</string>
+    <string name="settings_rotate_kit_desc">Replace the old phrase with a fresh 128-bit BIP-39 kit (records/key unchanged)</string>
+    <string name="settings_export_backup">Export Encrypted Vault Backup</string>
+    <string name="settings_export_backup_desc">Generate AES-256-GCM encrypted JSON backup envelope</string>
+    <string name="settings_import_backup">Restore / Import Encrypted Backup</string>
+    <string name="settings_import_backup_desc">Import records from a VaultZero encrypted JSON backup</string>
+    <string name="settings_specs_title">Cryptographic Specifications</string>
+    <string name="settings_specs_summary">AES-256-GCM, PBKDF2-HMAC-SHA256, Zero Telemetry</string>
+
+    <!-- Danger zone -->
+    <string name="settings_section_danger">Danger zone</string>
+    <string name="settings_reset_vault">Reset &amp; Erase Vault Completely</string>
+    <string name="settings_version_footer">VaultZero v%1$s (Build %2$d) • 100%% FOSS Air-Gapped Build</string>
+
+    <!-- Backup export / import status -->
+    <string name="settings_backup_saved_phrase_only">Encrypted backup saved to %1$s. It can only be opened with this backup\'s 12-word recovery phrase.</string>
+    <string name="settings_backup_saved_standard">Encrypted backup saved to %1$s. It can be opened with this vault\'s master password or its 12-word recovery phrase. No plaintext secrets inside.</string>
+    <string name="settings_backup_write_failed">Could not write the backup to that location.</string>
+    <string name="settings_backup_unreadable_document">That document is not a readable VaultZero backup envelope.</string>
+    <string name="settings_backup_file_default">backup file</string>
+    <string name="settings_import_backup_file_default">Backup file</string>
+
+    <!-- Recovery kit dialogs -->
+    <string name="settings_rotate_kit_dialog_title">Replace Recovery Kit?</string>
+    <string name="settings_rotate_kit_dialog_body">A new 12-word phrase will be generated and stored in this vault. Your current phrase will stop unlocking this vault and any backups that depend on it. The vault key, records and master password are unchanged. Export a fresh backup after saving the new kit.</string>
+    <string name="settings_rotate_kit_confirm">Generate New Kit</string>
+    <string name="settings_new_kit_dialog_title">New Emergency Recovery Kit</string>
+    <string name="settings_new_kit_dialog_body">Write these 12 words down and store them offline. The previous kit no longer restores this vault. This is the only time the new phrase is shown.</string>
+    <string name="settings_clipboard_label_recovery_kit">Recovery Kit</string>
+    <string name="settings_copy_and_close">Copy &amp; Close</string>
+    <string name="settings_dismiss">Dismiss</string>
+    <string name="settings_recovery_dialog_title">Emergency Recovery Kit</string>
+    <string name="settings_recovery_dialog_body">12-word seed phrase for master key recovery (decrypted in memory):</string>
+    <string name="settings_recovery_unavailable">Unavailable (Vault locked)</string>
+
+    <!-- Reset dialog -->
+    <string name="settings_reset_dialog_title">Erase Vault Completely?</string>
+    <string name="settings_reset_dialog_body">All encrypted records, keys, and master passwords will be irrecoverably wiped from this device. Are you sure you wish to continue?</string>
+    <string name="settings_reset_dialog_confirm">Wipe Everything</string>
+
+    <!-- Backup result dialog -->
+    <string name="settings_backup_dialog_title">Backup</string>
+
+    <!-- Import dialog -->
+    <string name="settings_import_dialog_title">Import Encrypted Backup</string>
+    <string name="settings_import_dialog_body">%1$s is ready to import. Enter the source vault\'s Master Password or its 12-word Recovery Phrase when the file was created by a different vault; leave it blank for a backup of this vault (unlock with biometrics first to avoid typing). Phrase-only backups always require their recovery phrase.</string>
+    <string name="settings_import_credential_label">Master Password or 12-Word Recovery Phrase</string>
+    <string name="settings_import_confirm">Decrypt &amp; Import</string>
+
+    <!-- Import outcome -->
+    <string name="settings_import_complete_title">Import complete</string>
+    <string name="settings_import_verified_note">The backup was verified before any record was written.</string>
+    <string name="settings_import_readable">Import readable records</string>
+    <string name="settings_import_prompt_title">Backup needs attention</string>
+
+    <!-- Export dialog -->
+    <string name="settings_export_dialog_title">Export Encrypted Backup</string>
+    <string name="settings_export_dialog_body">How should this backup be unlockable?</string>
+    <string name="settings_export_option_standard">Master password or recovery phrase</string>
+    <string name="settings_export_option_standard_desc">Restore with either credential · cross-device friendly</string>
+    <string name="settings_export_option_phrase_only">12-word recovery phrase only</string>
+    <string name="settings_export_option_phrase_only_desc">Password envelope is stripped; only that phrase opens it</string>
+    <string name="settings_export_biometrics_note">Biometrics unlock this vault locally; they cannot decrypt a foreign backup. The recovery phrase is the portable credential.</string>
+    <string name="settings_export_choose_file">Choose file</string>
+
+    <!-- Change master password dialog -->
+    <string name="settings_change_password_dialog_body">Your records are encrypted with the vault key, not the password, so they are not re-encrypted. The vault key is re-wrapped with the new password; your 12-word recovery kit remains valid.</string>
+    <string name="settings_current_master_password">Current Master Password</string>
+    <string name="settings_new_master_password">New Master Password (min 8)</string>
+    <string name="settings_confirm_new_password">Confirm New Password</string>
+    <string name="settings_change_password_confirm">Change Password</string>
+
+    <!-- Cryptographic spec sheet -->
+    <string name="settings_specs_dialog_title">VaultZero Architecture</string>
+    <string name="settings_specs_dialog_body">• Cipher: AES-256-GCM authenticated encryption (128-bit authentication tag, unique 12-byte IV per record, per-record GCM AAD binding).\n\n• Zero Metadata Leakage: Record titles, categories, tags, and payloads are encrypted together inside AES-256-GCM; SQLite columns store redacted placeholders.\n\n• Key Derivation &amp; Recovery: PBKDF2WithHmacSHA256 (600,000 rounds), 128-bit CSPRNG salt, HMAC-SHA256 verifiers, and SHA-256 checksummed 12-word recovery mnemonic.\n\n• Client-Side Zero-Knowledge: Zero network permissions, zero remote servers, StrongBox/TEE Keystore, FLAG_SECURE + recents-screenshot suppression, and backups that leave only through a Storage Access Framework document you pick.</string>
+
+    <!-- Counted strings -->
+    <plurals name="settings_import_new_entries">
+        <item quantity="one">New entry: %1$d</item>
+        <item quantity="other">New entries: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_updated">
+        <item quantity="one">Record updated: %1$d</item>
+        <item quantity="other">Records updated: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_duplicates_skipped">
+        <item quantity="one">Duplicate skipped: %1$d</item>
+        <item quantity="other">Duplicates skipped: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_unreadable_skipped">
+        <item quantity="one">Unreadable record skipped: %1$d</item>
+        <item quantity="other">Unreadable records skipped: %1$d</item>
+    </plurals>
+    <plurals name="settings_import_unreadable_prompt">
+        <item quantity="one">%1$d unreadable record will be skipped. The readable records can still be imported; the file itself is not modified.</item>
+        <item quantity="other">%1$d unreadable records will be skipped. The readable records can still be imported; the file itself is not modified.</item>
+    </plurals>
+    <plurals name="settings_export_preview">
+        <item quantity="one">Preview: %1$d encrypted entry (%2$s)</item>
+        <item quantity="other">Preview: %1$d encrypted entries (%2$s)</item>
+    </plurals>
+    <string name="settings_import_verified">Backup verified</string>
+    <string name="settings_import_nothing_new">Backup verified · nothing new to import</string>
+</resources>

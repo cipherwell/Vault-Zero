@@ -1,5 +1,7 @@
 package com.example
 
+import com.example.R
+import com.example.ui.i18n.UiText
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -383,7 +385,7 @@ class ExampleRobolectricTest {
         assertEquals("NoTimerSecret!", clipboard.primaryClip?.getItemAt(0)?.text?.toString())
         assertEquals(
             "Off mode must announce that the vault lock is the wipe trigger",
-            "Password copied • Clears when the vault locks",
+            UiText.Res(R.string.msg_clipboard_clears_on_lock, "Password"),
             vm.clipboardStatus.value,
         )
 
@@ -427,6 +429,6 @@ class ExampleRobolectricTest {
                 includeSymbols = false
             )
         )
-        assertEquals("At least one character set must remain enabled", vm.clipboardStatus.value)
+        assertEquals(UiText.Res(R.string.msg_charset_required), vm.clipboardStatus.value)
     }
 }

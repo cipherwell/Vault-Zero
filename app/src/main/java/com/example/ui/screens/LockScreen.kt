@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import com.example.R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -69,6 +70,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.ui.i18n.UiText
+import com.example.ui.i18n.asString
+import com.example.ui.i18n.LocalLanguageController
+import com.example.ui.i18n.LockScreenLanguageButton
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.example.crypto.VaultCrypto
 import com.example.ui.VaultLockState
@@ -108,13 +114,28 @@ fun LockScreen(
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Language switch must be reachable before any vault exists so a first-time user can
+        // read the setup flow in their language.
+        LockScreenLanguageButton(
+            controller = LocalLanguageController.current,
+            modifier = Modifier.align(Alignment.TopEnd),
+        )
         when (lockState) {
             VaultLockState.NEEDS_SETUP -> {
                 if (newRecoveryPhrase != null) {
+                    // Resolved here: the onCopy lambda is not a composable scope.
+                    val recoveryClipboardLabel =
+                        stringResource(R.string.lock_recovery_phrase_clipboard)
                     RecoveryKitDisplayModal(
                         recoveryPhrase = newRecoveryPhrase!!,
                         onDismiss = { viewModel.completeSetupAndEnterVault() },
-                        onCopy = { viewModel.copySecurely("Recovery Phrase", newRecoveryPhrase!!, isSensitive = true) }
+                        onCopy = {
+                            viewModel.copySecurely(
+                                recoveryClipboardLabel,
+                                newRecoveryPhrase!!,
+                                isSensitive = true,
+                            )
+                        }
                     )
                 } else {
                     SetupMasterKeyScreen(
@@ -160,7 +181,7 @@ fun LockScreen(
 
 @Composable
 private fun SetupMasterKeyScreen(
-    authError: String?,
+    authError: UiText?,
     isAuthenticating: Boolean,
     onSetup: (String, String) -> Unit,
     onRestoreBackup: (String, String, String?, String) -> Unit,
@@ -181,6 +202,8 @@ private fun SetupMasterKeyScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    // Resolved here because the collector below runs outside a composition.
+    val readErrorText = stringResource(R.string.lock_read_error)
     LaunchedEffect(Unit) {
         BackupPickerChannel.results.collect { result ->
             if (result.kind == BackupPickerChannel.Kind.IMPORT) {
@@ -188,8 +211,7 @@ private fun SetupMasterKeyScreen(
                     scope.launch {
                         val text = BackupFileIo.readText(context, uri)
                         if (text == null) {
-                            restoreFileError =
-                                "Could not read that file (or it is larger than 8 MiB)."
+                            restoreFileError = readErrorText
                         } else {
                             restoreJson = text
                             restoreFileName = BackupFileIo.displayName(context, uri)
@@ -221,7 +243,7 @@ private fun SetupMasterKeyScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Shield,
-                contentDescription = "VaultZero Shield",
+                contentDescription = stringResource(R.string.lock_shield_desc),
                 tint = CyberEmerald,
                 modifier = Modifier.size(40.dp)
             )
@@ -230,7 +252,7 @@ private fun SetupMasterKeyScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "VaultZero",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -239,7 +261,7 @@ private fun SetupMasterKeyScreen(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Zero-Knowledge Cryptographic Secret Vault",
+            text = stringResource(R.string.app_tagline),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -264,7 +286,7 @@ private fun SetupMasterKeyScreen(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "Initialize Master Password",
+                    text = stringResource(R.string.lock_setup_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     // The card's content colour is derived from its translucent
@@ -275,7 +297,7 @@ private fun SetupMasterKeyScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Your Master Password derives the local AES-256-GCM encryption key. It is never transmitted and cannot be reset without your emergency recovery kit.",
+                    text = stringResource(R.string.lock_setup_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -288,7 +310,7 @@ private fun SetupMasterKeyScreen(
                         password = it
                         onClearError()
                     },
-                    label = { Text("Master Password") },
+                    label = { Text(stringResource(R.string.lock_master_password)) },
                     singleLine = true,
                     enabled = !isAuthenticating,
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -296,7 +318,10 @@ private fun SetupMasterKeyScreen(
                         IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                             Icon(
                                 imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
+                                contentDescription = stringResource(
+                                    if (isPasswordVisible) R.string.a11y_hide_password
+                                    else R.string.a11y_show_password
+                                )
                             )
                         }
                     },
@@ -322,7 +347,7 @@ private fun SetupMasterKeyScreen(
                         confirmPassword = it
                         onClearError()
                     },
-                    label = { Text("Confirm Master Password") },
+                    label = { Text(stringResource(R.string.lock_confirm_password)) },
                     singleLine = true,
                     enabled = !isAuthenticating,
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -353,7 +378,7 @@ private fun SetupMasterKeyScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = authError,
+                            text = authError.asString(),
                             color = DangerRed,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -385,7 +410,7 @@ private fun SetupMasterKeyScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Deriving Keys & Encrypting...",
+                            text = stringResource(R.string.lock_deriving),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
@@ -397,7 +422,7 @@ private fun SetupMasterKeyScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Create Secure Vault",
+                            text = stringResource(R.string.lock_create_vault),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
@@ -431,7 +456,7 @@ private fun SetupMasterKeyScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Restore from Backup",
+                        text = stringResource(R.string.lock_restore_from_backup),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -440,8 +465,7 @@ private fun SetupMasterKeyScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Moving from another phone? Choose your encrypted backup and enter " +
-                        "its existing 12-word recovery kit. No new seed phrase is created.",
+                    text = stringResource(R.string.lock_restore_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -483,7 +507,7 @@ private fun SetupMasterKeyScreen(
 @Composable
 private fun RestoreBackupDialog(
     fileName: String,
-    authError: String?,
+    authError: UiText?,
     isAuthenticating: Boolean,
     onRestore: (String, String?, String) -> Unit,
     onCancel: () -> Unit,
@@ -497,7 +521,7 @@ private fun RestoreBackupDialog(
     AlertDialog(
         onDismissRequest = { if (!isAuthenticating) onCancel() },
         modifier = Modifier.testTag("restore_backup_dialog"),
-        title = { Text("Restore Existing Vault", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.lock_restore_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
@@ -505,15 +529,13 @@ private fun RestoreBackupDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Backup: $fileName",
+                    text = stringResource(R.string.lock_backup_file, fileName),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Enter the 12-word recovery phrase that belongs to this backup. " +
-                        "Your existing recovery kit is kept — VaultZero will not generate a " +
-                        "new seed phrase.",
+                    text = stringResource(R.string.lock_restore_phrase_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -525,8 +547,8 @@ private fun RestoreBackupDialog(
                         onClearError()
                     },
                     enabled = !isAuthenticating,
-                    label = { Text("12-Word Recovery Phrase") },
-                    placeholder = { Text("word1 word2 … word12") },
+                    label = { Text(stringResource(R.string.lock_recovery_phrase_label)) },
+                    placeholder = { Text(stringResource(R.string.lock_recovery_phrase_placeholder)) },
                     minLines = 3,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -535,14 +557,12 @@ private fun RestoreBackupDialog(
                 )
                 Spacer(modifier = Modifier.height(14.dp))
                 Text(
-                    text = "New Master Password (optional)",
+                    text = stringResource(R.string.lock_new_password_optional),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Leave blank to keep the backup's original master password " +
-                        "(standard backups). Phrase-only backups require a new password " +
-                        "on this device.",
+                    text = stringResource(R.string.lock_new_password_optional_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -554,7 +574,7 @@ private fun RestoreBackupDialog(
                         onClearError()
                     },
                     enabled = !isAuthenticating,
-                    label = { Text("New Master Password") },
+                    label = { Text(stringResource(R.string.lock_new_master_password)) },
                     singleLine = true,
                     visualTransformation = if (showPassword) {
                         VisualTransformation.None
@@ -565,7 +585,10 @@ private fun RestoreBackupDialog(
                         IconButton(onClick = { showPassword = !showPassword }) {
                             Icon(
                                 imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showPassword) "Hide password" else "Show password"
+                                contentDescription = stringResource(
+                                    if (showPassword) R.string.a11y_hide_password
+                                    else R.string.a11y_show_password
+                                )
                             )
                         }
                     },
@@ -588,7 +611,7 @@ private fun RestoreBackupDialog(
                             onClearError()
                         },
                         enabled = !isAuthenticating,
-                        label = { Text("Confirm New Master Password") },
+                        label = { Text(stringResource(R.string.lock_confirm_new_password)) },
                         singleLine = true,
                         visualTransformation = if (showPassword) {
                             VisualTransformation.None
@@ -617,7 +640,7 @@ private fun RestoreBackupDialog(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = authError,
+                            text = authError.asString(),
                             color = DangerRed,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -650,12 +673,12 @@ private fun RestoreBackupDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("Restore Vault", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.lock_restore_vault), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onCancel, enabled = !isAuthenticating) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -694,7 +717,7 @@ private fun RecoveryKitDisplayModal(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Emergency Recovery Kit",
+            text = stringResource(R.string.lock_recovery_kit_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -703,7 +726,7 @@ private fun RecoveryKitDisplayModal(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Save these 12 words in a safe, offline location. This is the ONLY way to recover your vault if you ever forget your master password.",
+            text = stringResource(R.string.lock_recovery_kit_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -773,7 +796,7 @@ private fun RecoveryKitDisplayModal(
         ) {
             Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Copy 12-Word Recovery Phrase")
+            Text(stringResource(R.string.lock_copy_phrase))
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -792,7 +815,7 @@ private fun RecoveryKitDisplayModal(
         ) {
             Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("I Saved My Recovery Kit — Open Vault", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.lock_saved_kit), fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -800,7 +823,7 @@ private fun RecoveryKitDisplayModal(
 @Composable
 private fun UnlockVaultScreen(
     fingerprint: String,
-    authError: String?,
+    authError: UiText?,
     isAuthenticating: Boolean,
     isBiometricEnabled: Boolean,
     onUnlock: (String) -> Unit,
@@ -833,7 +856,7 @@ private fun UnlockVaultScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Lock,
-                contentDescription = "Vault Locked",
+                contentDescription = stringResource(R.string.lock_vault_locked_desc),
                 tint = CyberEmerald,
                 modifier = Modifier.size(36.dp)
             )
@@ -842,7 +865,7 @@ private fun UnlockVaultScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "VaultZero",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -895,7 +918,7 @@ private fun UnlockVaultScreen(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "Unlock Secure Vault",
+                    text = stringResource(R.string.lock_unlock_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -908,7 +931,7 @@ private fun UnlockVaultScreen(
                         password = it
                         onClearError()
                     },
-                    label = { Text("Master Password") },
+                    label = { Text(stringResource(R.string.lock_master_password)) },
                     singleLine = true,
                     enabled = !isAuthenticating,
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -916,7 +939,10 @@ private fun UnlockVaultScreen(
                         IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                             Icon(
                                 imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
+                                contentDescription = stringResource(
+                                    if (isPasswordVisible) R.string.a11y_hide_password
+                                    else R.string.a11y_show_password
+                                )
                             )
                         }
                     },
@@ -947,7 +973,7 @@ private fun UnlockVaultScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = authError,
+                            text = authError.asString(),
                             color = DangerRed,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -978,11 +1004,11 @@ private fun UnlockVaultScreen(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Decrypting Vault...", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.lock_decrypting), fontWeight = FontWeight.Bold)
                     } else {
                         Icon(imageVector = Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Unlock Vault", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.lock_unlock_button), fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -1010,7 +1036,10 @@ private fun UnlockVaultScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isBiometricEnabled) "Touch ID / Biometrics" else "Touch ID / Biometrics (Disabled)",
+                        text = stringResource(
+                            if (isBiometricEnabled) R.string.lock_biometrics
+                            else R.string.lock_biometrics_disabled
+                        ),
                         color = if (isBiometricEnabled) CyberCyan else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -1025,7 +1054,7 @@ private fun UnlockVaultScreen(
             modifier = Modifier.testTag("forgot_password_button")
         ) {
             Text(
-                text = "Forgot Master Password? Use Emergency Kit",
+                text = stringResource(R.string.lock_forgot_password),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp
             )
@@ -1035,7 +1064,7 @@ private fun UnlockVaultScreen(
 
 @Composable
 private fun RecoverVaultScreen(
-    authError: String?,
+    authError: UiText?,
     isAuthenticating: Boolean,
     onRecover: (String, String, String) -> Unit,
     onClearError: () -> Unit,
@@ -1052,7 +1081,7 @@ private fun RecoverVaultScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Vault Recovery",
+            text = stringResource(R.string.lock_recovery_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -1060,7 +1089,7 @@ private fun RecoverVaultScreen(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Enter your 12-word recovery phrase to decrypt the Vault Master Key and set a new Master Password.",
+            text = stringResource(R.string.lock_recovery_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -1091,7 +1120,7 @@ private fun RecoverVaultScreen(
                 onClearError()
             },
             enabled = !isAuthenticating,
-            label = { Text("New Master Password") },
+            label = { Text(stringResource(R.string.lock_new_master_password)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
@@ -1112,7 +1141,7 @@ private fun RecoverVaultScreen(
                 onClearError()
             },
             enabled = !isAuthenticating,
-            label = { Text("Confirm New Password") },
+            label = { Text(stringResource(R.string.lock_confirm_new_password_recovery)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
@@ -1141,7 +1170,7 @@ private fun RecoverVaultScreen(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = authError, color = DangerRed, style = MaterialTheme.typography.bodySmall)
+                Text(text = authError.asString(), color = DangerRed, style = MaterialTheme.typography.bodySmall)
             }
         }
 
@@ -1157,16 +1186,16 @@ private fun RecoverVaultScreen(
             if (isAuthenticating) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.Black, strokeWidth = 2.dp)
                 Spacer(modifier = Modifier.width(10.dp))
-                Text("Recovering Vault...", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.lock_recovering), fontWeight = FontWeight.Bold)
             } else {
-                Text("Reset & Unlock Vault", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.lock_reset_unlock), fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
         TextButton(onClick = onCancel, enabled = !isAuthenticating) {
-            Text("Back to Password Unlock", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.lock_back_to_unlock), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

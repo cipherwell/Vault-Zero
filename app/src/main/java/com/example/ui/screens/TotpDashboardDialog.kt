@@ -32,11 +32,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.crypto.VaultCrypto
 import com.example.model.LoginPayload
 import com.example.model.VaultItem
@@ -85,12 +88,12 @@ fun TotpDashboardDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "2FA codes",
+                            text = stringResource(R.string.totp_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "${entries.size} live ${if (entries.size == 1) "code" else "codes"} · refreshes every 30s",
+                            text = pluralStringResource(R.plurals.totp_live_count, entries.size, entries.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -98,7 +101,7 @@ fun TotpDashboardDialog(
                     IconButton(onClick = onDismiss, modifier = Modifier.size(36.dp)) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close 2FA codes",
+                            contentDescription = stringResource(R.string.totp_close_codes),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp),
                         )
@@ -109,7 +112,7 @@ fun TotpDashboardDialog(
 
                 if (entries.isEmpty()) {
                     Text(
-                        text = "No logins have a 2FA secret yet. Add one from an item's editor to see live codes here.",
+                        text = stringResource(R.string.totp_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -167,7 +170,7 @@ fun TotpDashboardDialog(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Copy 2FA code for ${item.title}",
+                                        contentDescription = stringResource(R.string.totp_copy_code_for, item.title),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(13.dp),
                                     )

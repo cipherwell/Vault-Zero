@@ -40,14 +40,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.Severity
 import com.example.model.Vulnerability
 import com.example.model.VulnerabilityType
 import com.example.ui.EditFocus
 import com.example.ui.VaultViewModel
+import com.example.ui.i18n.localizedDescription
+import com.example.ui.i18n.localizedRecommendation
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.DangerRed
@@ -83,12 +88,12 @@ fun AuditScreen(
         item {
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "Security Audit",
+                text = stringResource(R.string.audit_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Local review of password strength, reuse, age and 2FA setup",
+                text = stringResource(R.string.audit_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -118,7 +123,7 @@ fun AuditScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Grade ${report.grade}",
+                                text = stringResource(R.string.audit_grade, report.grade),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = scoreColor
@@ -127,9 +132,13 @@ fun AuditScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (report.vulnerabilities.isEmpty()) {
-                                "No issues found in the logins you have saved."
+                                stringResource(R.string.audit_no_issues)
                             } else {
-                                "${report.vulnerabilities.size} security issues found in your credentials."
+                                pluralStringResource(
+                                    R.plurals.audit_issues_found,
+                                    report.vulnerabilities.size,
+                                    report.vulnerabilities.size
+                                )
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -156,7 +165,7 @@ fun AuditScreen(
                                 color = scoreColor
                             )
                             Text(
-                                text = "SCORE",
+                                text = stringResource(R.string.audit_score_label),
                                 fontFamily = JetBrainsMonoFamily,
                                 fontSize = 8.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -174,25 +183,25 @@ fun AuditScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MetricPill(
-                    title = "Weak",
+                    title = stringResource(R.string.audit_metric_weak),
                     count = report.weakCount,
                     color = DangerRed,
                     modifier = Modifier.weight(1f)
                 )
                 MetricPill(
-                    title = "Reused",
+                    title = stringResource(R.string.audit_metric_reused),
                     count = report.reusedCount,
                     color = WarningAmber,
                     modifier = Modifier.weight(1f)
                 )
                 MetricPill(
-                    title = "Stale",
+                    title = stringResource(R.string.audit_metric_stale),
                     count = report.staleCount,
                     color = CyberCyan,
                     modifier = Modifier.weight(1f)
                 )
                 MetricPill(
-                    title = "2FA Error",
+                    title = stringResource(R.string.audit_metric_2fa_error),
                     count = report.missing2faCount,
                     color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.weight(1f)
@@ -204,7 +213,11 @@ fun AuditScreen(
         item {
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = if (report.vulnerabilities.isEmpty()) "STATUS" else "ACTION ITEMS (${report.vulnerabilities.size})",
+                text = if (report.vulnerabilities.isEmpty()) {
+                    stringResource(R.string.audit_section_status)
+                } else {
+                    stringResource(R.string.audit_section_action_items, report.vulnerabilities.size)
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp
@@ -237,13 +250,13 @@ fun AuditScreen(
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text(
-                                text = "Optimal Security Posture",
+                                text = stringResource(R.string.audit_posture_ok_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = CyberEmerald
                             )
                             Text(
-                                text = "No weak, reused, or stale passwords detected. Keep up the great security habits!",
+                                text = stringResource(R.string.audit_posture_ok_body),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -372,7 +385,7 @@ private fun VulnerabilityCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "FIX",
+                        text = stringResource(R.string.audit_fix),
                         fontFamily = JetBrainsMonoFamily,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -383,7 +396,7 @@ private fun VulnerabilityCard(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = vuln.description,
+                    text = vuln.localizedDescription(),
                     style = MaterialTheme.typography.bodySmall,
                     color = color
                 )
@@ -391,7 +404,7 @@ private fun VulnerabilityCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = vuln.recommendation,
+                    text = vuln.localizedRecommendation(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

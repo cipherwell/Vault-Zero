@@ -45,7 +45,8 @@ object SecurityAuditEngine {
                             type = VulnerabilityType.REUSED_PASSWORD,
                             severity = Severity.CRITICAL,
                             description = "Password is also used by: $otherNames",
-                            recommendation = "Generate a unique high-entropy password for each service"
+                            recommendation = "Generate a unique high-entropy password for each service",
+                            descriptionArgs = listOf(otherNames),
                         )
                     )
                 }
@@ -69,7 +70,8 @@ object SecurityAuditEngine {
                         type = VulnerabilityType.WEAK_PASSWORD,
                         severity = Severity.CRITICAL,
                         description = "Password strength is ${strength.grade.label} (${strength.entropyBits} bits effective entropy)",
-                        recommendation = "Upgrade to a 16+ character mixed-case password with symbols or a multi-word passphrase"
+                        recommendation = "Upgrade to a 16+ character mixed-case password with symbols or a multi-word passphrase",
+                        descriptionArgs = listOf(strength.grade.name, strength.entropyBits),
                     )
                 )
             }
@@ -86,7 +88,8 @@ object SecurityAuditEngine {
                         type = VulnerabilityType.STALE_PASSWORD,
                         severity = Severity.INFO,
                         description = "Credential record has not been updated in $daysOld days",
-                        recommendation = "Review and rotate long-lived credentials periodically"
+                        recommendation = "Review and rotate long-lived credentials periodically",
+                        descriptionArgs = listOf(daysOld),
                     )
                 )
             }

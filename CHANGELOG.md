@@ -3,6 +3,30 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.0] — 2026-11-21
+
+### Added
+- **Bilingual English (US) / Spanish (US)** interface. Every screen, dialog, empty state,
+  accessibility description, status message and validation error is translated; 477 strings and
+  19 plurals per language, tested for key/placeholder parity in CI.
+- **Language switch on the lock/setup screen**, so a first-time user can read the setup flow in
+  their language before any vault exists.
+- **Language switch in Settings**, applied instantly through a localized composition — no activity
+  recreation, so an unlocked vault is not dropped back to the lock screen.
+- Languages are persisted outside the vault preferences: the choice survives app restarts and
+  "Reset vault", and Android 13+ lists the app in the system per-app language picker
+  (`android:localeConfig`).
+
+### Changed
+- `versionCode 9`, `versionName 1.7.0`.
+- Data-layer failures now carry a typed error code (`VaultError`) so the UI can render them in the
+  selected language while logs and tests keep the English message.
+- Password-strength labels, record-type names, sort options and audit findings are resolved through
+  resources instead of model-enum English strings.
+
+### Security
+- No change to the cryptographic design; Argon2id envelopes, backups and migrations are untouched.
+
 ## [1.6.0] — 2026-11-21
 
 ### Security

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish (United States) item detail sheet and item editor strings.
+     Keep keys identical to values/strings_item.xml. -->
+<resources>
+    <!-- Detalle de la entrada: etiquetas de campo -->
+    <string name="item_field_username_email">Usuario / Correo electrónico</string>
+    <string name="item_field_password">Contraseña</string>
+    <string name="item_field_website_url">URL del sitio web</string>
+    <string name="item_field_notes">Notas</string>
+    <string name="item_field_cardholder">Titular de la tarjeta</string>
+    <string name="item_field_card_number">Número de tarjeta</string>
+    <string name="item_field_expires">Vencimiento</string>
+    <string name="item_field_cvv">CVV</string>
+    <string name="item_field_atm_pin">PIN del cajero</string>
+    <string name="item_field_card_brand">Marca de la tarjeta</string>
+    <string name="item_field_service_provider">Servicio / Proveedor</string>
+    <string name="item_field_api_key">Clave de API</string>
+    <string name="item_field_secret_token">Token secreto</string>
+    <string name="item_field_environment">Entorno</string>
+    <string name="item_field_scopes">Ámbitos</string>
+    <string name="item_field_endpoint_url">URL del punto de conexión</string>
+    <string name="item_field_wallet_name">Nombre de la billetera</string>
+    <string name="item_field_network">Red</string>
+    <string name="item_field_public_address">Dirección pública</string>
+    <string name="item_field_seed_recovery_phrase">Frase semilla / de recuperación</string>
+    <string name="item_field_private_key">Clave privada</string>
+    <string name="item_field_derivation_path">Ruta de derivación</string>
+    <string name="item_field_secure_note_content">Contenido de la nota segura</string>
+    <string name="item_field_full_name">Nombre completo</string>
+    <string name="item_field_id_type_number">Número de %1$s</string>
+    <string name="item_field_birth_date">Fecha de nacimiento</string>
+    <string name="item_field_expiry_date">Fecha de vencimiento</string>
+
+    <!-- Etiquetas de confirmación al copiar -->
+    <string name="item_copy_username">Usuario</string>
+    <string name="item_copy_2fa_code">Código 2FA</string>
+    <string name="item_copy_expiry">Vencimiento</string>
+    <string name="item_copy_pin">PIN</string>
+    <string name="item_copy_brand">Marca</string>
+    <string name="item_copy_service">Servicio</string>
+    <string name="item_copy_seed_phrase">Frase semilla</string>
+    <string name="item_copy_note">Nota</string>
+    <string name="item_copy_id_number">Número de identificación</string>
+
+    <!-- Detalle de la entrada: confirmación de eliminación -->
+    <string name="item_delete_title">¿Eliminar \'%1$s\'?</string>
+    <string name="item_delete_message">Esta entrada cifrada se eliminará permanentemente de tu bóveda. Esta acción no se puede deshacer.</string>
+    <string name="item_delete_permanently">Eliminar permanentemente</string>
+
+    <!-- Editor de la entrada: encabezado y accesibilidad -->
+    <string name="item_editor_title_new">Nueva entrada: %1$s</string>
+    <string name="item_editor_title_edit">Editar entrada</string>
+    <string name="item_editor_subtitle_encrypted">Cifrado en tu dispositivo con AES-256-GCM</string>
+    <string name="item_a11y_close_editor">Cerrar editor</string>
+    <string name="item_a11y_generate_password">Generar contraseña segura</string>
+
+    <!-- Editor de la entrada: campos comunes -->
+    <string name="item_field_title">Título / etiqueta</string>
+    <string name="item_placeholder_title">p. ej., GitHub, AWS Prod, Tarjeta personal</string>
+    <string name="item_field_category">Categoría / etiqueta</string>
+    <string name="item_placeholder_category">p. ej., Trabajo, Finanzas, Personal</string>
+
+    <!-- Editor de la entrada: campos de inicio de sesión -->
+    <string name="item_field_username_or_email">Usuario o correo electrónico</string>
+    <string name="item_field_totp_secret">Secreto del autenticador 2FA (Base32 opcional)</string>
+    <string name="item_placeholder_totp">p. ej., JBSWY3DPEHPK3PXP</string>
+    <string name="item_field_website_url_optional">URL del sitio web (opcional)</string>
+    <string name="item_placeholder_url">https://example.com</string>
+    <string name="item_field_private_notes_optional">Notas privadas (opcional)</string>
+
+    <!-- Editor de la entrada: campos de tarjeta -->
+    <string name="item_field_cardholder_name">Nombre del titular de la tarjeta</string>
+    <string name="item_placeholder_card_number">4532 8812 9014 3829</string>
+    <string name="item_field_expiry_month">Mes (MM)</string>
+    <string name="item_field_expiry_year">Año (AA)</string>
+    <string name="item_field_atm_pin_optional">PIN del cajero (opcional)</string>
+    <string name="item_field_card_network_brand">Red / marca de la tarjeta</string>
+    <string name="item_field_card_notes_optional">Notas de la tarjeta (opcional)</string>
+
+    <!-- Editor de la entrada: campos de secreto de API -->
+    <string name="item_field_provider">Proveedor / Plataforma</string>
+    <string name="item_placeholder_provider">p. ej., OpenAI, Stripe, AWS</string>
+    <string name="item_field_api_key_client_id">Clave de API / ID de cliente</string>
+    <string name="item_field_secret_token_private_key">Token secreto / Clave privada</string>
+    <string name="item_placeholder_environment">Producción / Pruebas / Desarrollo</string>
+    <string name="item_field_scopes_permissions_optional">Ámbitos / Permisos (opcional)</string>
+    <string name="item_field_endpoint_url_optional">URL del punto de conexión (opcional)</string>
+    <string name="item_field_notes_optional">Notas (opcional)</string>
+
+    <!-- Editor de la entrada: campos de billetera cripto -->
+    <string name="item_placeholder_wallet_name">p. ej., Ledger Cold Vault</string>
+    <string name="item_field_blockchain_network">Red de blockchain</string>
+    <string name="item_placeholder_network">Ethereum, Solana, Bitcoin</string>
+    <string name="item_field_seed_phrase">Frase semilla (12 o 24 palabras)</string>
+    <string name="item_field_private_key_optional">Clave privada (opcional)</string>
+    <string name="item_field_derivation_path_optional">Ruta de derivación (opcional)</string>
+
+    <!-- Editor de la entrada: campos de nota segura -->
+    <string name="item_field_secure_note">Nota segura (cifrada con AES-256)</string>
+
+    <!-- Editor de la entrada: campos de identidad -->
+    <string name="item_field_full_legal_name">Nombre legal completo</string>
+    <string name="item_field_document_type">Tipo de documento</string>
+    <string name="item_placeholder_document_type">Pasaporte, identificación nacional, licencia de conducir</string>
+    <string name="item_field_document_number">Número de documento / licencia</string>
+    <string name="item_field_birth_date_optional">Fecha de nacimiento (opcional)</string>
+    <string name="item_field_expiry_date_optional">Fecha de vencimiento (opcional)</string>
+
+    <!-- Editor de la entrada: valores predeterminados de una entrada nueva -->
+    <string name="item_default_title_login">Nuevo inicio de sesión</string>
+    <string name="item_default_title_card">Tarjeta de pago</string>
+    <string name="item_default_title_api">Clave de API</string>
+    <string name="item_default_title_crypto">Billetera cripto</string>
+    <string name="item_default_title_note">Nota segura</string>
+    <string name="item_default_title_identity">Documento de identidad</string>
+    <string name="item_default_category">Personal</string>
+
+    <!-- Editor de la entrada: acciones y protección de cambios sin guardar -->
+    <string name="item_save_encrypted">Guardar cifrado</string>
+    <string name="item_discard_title">¿Descartar los cambios?</string>
+    <string name="item_discard_message">Tienes cambios sin guardar en esta entrada. Si cierras ahora, se perderán.</string>
+    <string name="item_discard_confirm">Descartar</string>
+    <string name="item_keep_editing">Seguir editando</string>
+</resources>

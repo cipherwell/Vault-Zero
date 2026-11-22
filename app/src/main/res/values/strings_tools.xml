@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Password generator, security audit, and shared UI components. -->
+<resources>
+    <!-- Password generator -->
+    <string name="gen_title">Password Generator</string>
+    <string name="gen_subtitle">Strong, unique credentials generated locally with a CSPRNG</string>
+    <string name="gen_result_label">GENERATED CREDENTIAL</string>
+    <string name="gen_regenerate">Regenerate</string>
+    <string name="gen_clipboard_password">Password</string>
+    <string name="gen_clipboard_generated">Generated credential</string>
+    <string name="gen_save_to_vault">Save to Vault</string>
+    <string name="gen_mode_password">Password</string>
+    <string name="gen_mode_passphrase">Passphrase</string>
+    <string name="gen_password_length">Password Length</string>
+    <plurals name="gen_chars_count">
+        <item quantity="one">%1$d char</item>
+        <item quantity="other">%1$d chars</item>
+    </plurals>
+    <string name="gen_opt_uppercase">Uppercase Letters (A-Z)</string>
+    <string name="gen_opt_lowercase">Lowercase Letters (a-z)</string>
+    <string name="gen_opt_numbers">Numbers (0-9)</string>
+    <string name="gen_opt_symbols">Special Symbols (!@#$)</string>
+    <string name="gen_opt_avoid_ambiguous">Avoid Ambiguous (1, l, 0, O)</string>
+    <string name="gen_word_count">Word Count</string>
+    <plurals name="gen_words_count">
+        <item quantity="one">%1$d word</item>
+        <item quantity="other">%1$d words</item>
+    </plurals>
+    <string name="gen_separator">Separator</string>
+    <string name="gen_separator_space">space</string>
+    <string name="gen_opt_capitalise">Capitalise Words</string>
+    <string name="gen_passphrase_hint">Passphrases trade symbols for word entropy. Use a unique passphrase per account and store it here.</string>
+    <string name="gen_history_title">SESSION HISTORY</string>
+    <string name="gen_history_subtitle">In memory only · cleared when the vault locks</string>
+    <plurals name="gen_history_passphrase">
+        <item quantity="one">Passphrase · %1$d char</item>
+        <item quantity="other">Passphrase · %1$d chars</item>
+    </plurals>
+    <plurals name="gen_history_password">
+        <item quantity="one">Password · %1$d char</item>
+        <item quantity="other">Password · %1$d chars</item>
+    </plurals>
+    <string name="gen_time_just_now">just now</string>
+    <plurals name="gen_time_minutes_ago">
+        <item quantity="one">%1$d min ago</item>
+        <item quantity="other">%1$d min ago</item>
+    </plurals>
+    <plurals name="gen_time_hours_ago">
+        <item quantity="one">%1$d h ago</item>
+        <item quantity="other">%1$d h ago</item>
+    </plurals>
+    <string name="gen_a11y_copy_generated">Copy generated credential</string>
+
+    <!-- Security audit -->
+    <string name="audit_title">Security Audit</string>
+    <string name="audit_subtitle">Local review of password strength, reuse, age and 2FA setup</string>
+    <string name="audit_grade">Grade %1$s</string>
+    <string name="audit_no_issues">No issues found in the logins you have saved.</string>
+    <plurals name="audit_issues_found">
+        <item quantity="one">%1$d security issue found in your credentials.</item>
+        <item quantity="other">%1$d security issues found in your credentials.</item>
+    </plurals>
+    <string name="audit_score_label">SCORE</string>
+    <string name="audit_metric_weak">Weak</string>
+    <string name="audit_metric_reused">Reused</string>
+    <string name="audit_metric_stale">Stale</string>
+    <string name="audit_metric_2fa_error">2FA Error</string>
+    <string name="audit_section_status">STATUS</string>
+    <string name="audit_section_action_items">ACTION ITEMS (%1$d)</string>
+    <string name="audit_posture_ok_title">Optimal Security Posture</string>
+    <string name="audit_posture_ok_body">No weak, reused, or stale passwords detected. Keep up the great security habits!</string>
+    <string name="audit_fix">FIX</string>
+
+    <!-- Shared components -->
+    <string name="comp_totp_code_label">2FA CODE</string>
+    <string name="comp_copy_2fa_code">Copy 2FA code</string>
+    <string name="comp_reveal">Reveal</string>
+    <string name="comp_hide">Hide</string>
+    <string name="comp_zk_badge">AES-256-GCM · ZERO-KNOWLEDGE</string>
+</resources>

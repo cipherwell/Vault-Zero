@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import com.example.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -59,6 +60,6 @@ object BackupFileIo {
         }.getOrNull()
         return fromProvider?.takeIf { it.isNotBlank() }
             ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
-            ?: "backup file"
+            ?: context.getString(R.string.settings_backup_file_default)
     }
 }

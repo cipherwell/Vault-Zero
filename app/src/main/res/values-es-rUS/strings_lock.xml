@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantallas de bloqueo, configuración inicial, restauración y recuperación. -->
+<resources>
+    <string name="lock_shield_desc">Escudo de VaultZero</string>
+
+    <string name="lock_setup_title">Inicializa la contraseña maestra</string>
+    <string name="lock_setup_body">Tu contraseña maestra deriva la clave de cifrado AES-256-GCM local. Nunca se transmite y no se puede restablecer sin tu kit de recuperación de emergencia.</string>
+    <string name="lock_master_password">Contraseña maestra</string>
+    <string name="lock_confirm_password">Confirma la contraseña maestra</string>
+    <string name="lock_new_master_password">Nueva contraseña maestra</string>
+    <string name="lock_confirm_new_password">Confirma la nueva contraseña maestra</string>
+    <string name="lock_deriving">Derivando claves y cifrando…</string>
+    <string name="lock_create_vault">Crear bóveda segura</string>
+
+    <string name="lock_restore_from_backup">Restaurar desde copia de seguridad</string>
+    <string name="lock_restore_hint">¿Vienes de otro teléfono? Elige tu copia de seguridad cifrada e ingresa su kit de recuperación de 12 palabras. No se creará una frase semilla nueva.</string>
+    <string name="lock_read_error">No se pudo leer el archivo (o supera los 8 MiB).</string>
+    <string name="lock_restore_title">Restaurar bóveda existente</string>
+    <string name="lock_backup_file">Copia de seguridad: %1$s</string>
+    <string name="lock_restore_phrase_hint">Ingresa la frase de recuperación de 12 palabras de esta copia de seguridad. Se conserva tu kit de recuperación actual: VaultZero no generará una frase semilla nueva.</string>
+    <string name="lock_recovery_phrase_label">Frase de recuperación de 12 palabras</string>
+    <string name="lock_recovery_phrase_placeholder">palabra1 palabra2 … palabra12</string>
+    <string name="lock_new_password_optional">Nueva contraseña maestra (opcional)</string>
+    <string name="lock_new_password_optional_hint">Déjala en blanco para conservar la contraseña maestra original de la copia de seguridad (copias estándar). Las copias que solo usan frase requieren una contraseña nueva en este dispositivo.</string>
+    <string name="lock_restore_vault">Restaurar bóveda</string>
+
+    <string name="lock_recovery_kit_title">Kit de recuperación de emergencia</string>
+    <string name="lock_recovery_kit_body">Guarda estas 12 palabras en un lugar seguro y sin conexión. Es la ÚNICA forma de recuperar tu bóveda si olvidas tu contraseña maestra.</string>
+    <string name="lock_copy_phrase">Copiar frase de recuperación de 12 palabras</string>
+    <string name="lock_saved_kit">Ya guardé mi kit de recuperación — Abrir bóveda</string>
+
+    <string name="lock_vault_locked_desc">Bóveda bloqueada</string>
+    <string name="lock_unlock_title">Desbloquear bóveda segura</string>
+    <string name="lock_decrypting">Descifrando bóveda…</string>
+    <string name="lock_unlock_button">Desbloquear bóveda</string>
+    <string name="lock_biometrics">Touch ID / Biometría</string>
+    <string name="lock_biometrics_disabled">Touch ID / Biometría (desactivada)</string>
+    <string name="lock_forgot_password">¿Olvidaste tu contraseña maestra? Usa el kit de emergencia</string>
+
+    <string name="lock_recovery_title">Recuperación de la bóveda</string>
+    <string name="lock_recovery_body">Ingresa tu frase de recuperación de 12 palabras para descifrar la clave maestra de la bóveda y establecer una nueva contraseña maestra.</string>
+    <string name="lock_confirm_new_password_recovery">Confirma la nueva contraseña</string>
+    <string name="lock_recovering">Recuperando bóveda…</string>
+    <string name="lock_reset_unlock">Restablecer y desbloquear bóveda</string>
+    <string name="lock_back_to_unlock">Volver al desbloqueo con contraseña</string>
+    <string name="lock_recovery_phrase_clipboard">Frase de recuperación</string>
+</resources>

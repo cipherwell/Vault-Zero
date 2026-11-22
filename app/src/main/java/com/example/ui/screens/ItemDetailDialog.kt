@@ -43,11 +43,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.crypto.VaultCrypto
 import com.example.model.ApiSecretPayload
 import com.example.model.CardPayload
@@ -65,6 +67,9 @@ import com.example.ui.components.StrengthMeter
 import com.example.ui.components.TotpLiveBadge
 import com.example.ui.components.VaultStatusPill
 import com.example.ui.components.VaultTypeIcon
+import com.example.ui.i18n.UiText
+import com.example.ui.i18n.asString
+import com.example.ui.i18n.localizedPluralName
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
@@ -153,7 +158,7 @@ fun ItemDetailDialog(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = item.type.displayName.uppercase(),
+                                        text = item.type.localizedPluralName().uppercase(),
                                         fontSize = 9.sp,
                                         fontFamily = JetBrainsMonoFamily,
                                         color = CyberEmerald,
@@ -167,7 +172,7 @@ fun ItemDetailDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close dialog"
+                            contentDescription = stringResource(R.string.a11y_close_dialog)
                         )
                     }
                 }
@@ -178,10 +183,12 @@ fun ItemDetailDialog(
                 when (val p = item.payload) {
                     is LoginPayload -> {
                         if (p.username.isNotEmpty()) {
+                            val usernameLabel = stringResource(R.string.item_field_username_email)
+                            val usernameCopyLabel = stringResource(R.string.item_copy_username)
                             SensitiveValueRow(
-                                label = "Username / Email",
+                                label = usernameLabel,
                                 value = p.username,
-                                onCopy = { viewModel.copySecurely("Username", p.username, isSensitive = false) },
+                                onCopy = { viewModel.copySecurely(usernameCopyLabel, p.username, isSensitive = false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -189,10 +196,11 @@ fun ItemDetailDialog(
                         }
 
                         if (p.password.isNotEmpty()) {
+                            val passwordLabel = stringResource(R.string.item_field_password)
                             SensitiveValueRow(
-                                label = "Password",
+                                label = passwordLabel,
                                 value = p.password,
-                                onCopy = { viewModel.copySecurely("Password", p.password, isSensitive = true) },
+                                onCopy = { viewModel.copySecurely(passwordLabel, p.password, isSensitive = true) },
                                 isMonospace = true,
                                 isMaskable = true
                             )
@@ -205,9 +213,10 @@ fun ItemDetailDialog(
                         if (p.totpSecret.isNotEmpty()) {
                             val totp = VaultCrypto.generateTotp(p.totpSecret, clockTicker)
                             if (totp != null) {
+                                val totpCopyLabel = stringResource(R.string.item_copy_2fa_code)
                                 TotpLiveBadge(
                                     totpResult = totp,
-                                    onCopy = { viewModel.copySecurely("2FA Code", totp.code, isSensitive = true) },
+                                    onCopy = { viewModel.copySecurely(totpCopyLabel, totp.code, isSensitive = true) },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
@@ -215,10 +224,11 @@ fun ItemDetailDialog(
                         }
 
                         if (p.url.isNotEmpty()) {
+                            val websiteUrlLabel = stringResource(R.string.item_field_website_url)
                             SensitiveValueRow(
-                                label = "Website URL",
+                                label = websiteUrlLabel,
                                 value = p.url,
-                                onCopy = { viewModel.copySecurely("Website URL", p.url, isSensitive = false) },
+                                onCopy = { viewModel.copySecurely(websiteUrlLabel, p.url, isSensitive = false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -226,10 +236,11 @@ fun ItemDetailDialog(
                         }
 
                         if (p.notes.isNotEmpty()) {
+                            val notesLabel = stringResource(R.string.item_field_notes)
                             SensitiveValueRow(
-                                label = "Notes",
+                                label = notesLabel,
                                 value = p.notes,
-                                onCopy = { viewModel.copySecurely("Notes", p.notes, isSensitive = false) },
+                                onCopy = { viewModel.copySecurely(notesLabel, p.notes, isSensitive = false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -237,65 +248,75 @@ fun ItemDetailDialog(
                     }
 
                     is CardPayload -> {
+                        val cardholderLabel = stringResource(R.string.item_field_cardholder)
                         SensitiveValueRow(
-                            label = "Cardholder",
+                            label = cardholderLabel,
                             value = p.cardholderName,
-                            onCopy = { viewModel.copySecurely("Cardholder", p.cardholderName, isSensitive = false) },
+                            onCopy = { viewModel.copySecurely(cardholderLabel, p.cardholderName, isSensitive = false) },
                             isMonospace = false,
                             isMaskable = false
                         )
                         Spacer(modifier = Modifier.height(10.dp))
+                        val cardNumberLabel = stringResource(R.string.item_field_card_number)
                         SensitiveValueRow(
-                            label = "Card Number",
+                            label = cardNumberLabel,
                             value = p.cardNumber,
-                            onCopy = { viewModel.copySecurely("Card Number", p.cardNumber, isSensitive = true) },
+                            onCopy = { viewModel.copySecurely(cardNumberLabel, p.cardNumber, isSensitive = true) },
                             isMonospace = true,
                             isMaskable = true
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Box(modifier = Modifier.weight(1f)) {
+                                val expiresLabel = stringResource(R.string.item_field_expires)
+                                val expiryCopyLabel = stringResource(R.string.item_copy_expiry)
                                 SensitiveValueRow(
-                                    label = "Expires",
+                                    label = expiresLabel,
                                     value = "${p.expMonth}/${p.expYear}",
-                                    onCopy = { viewModel.copySecurely("Expiry", "${p.expMonth}/${p.expYear}", false) },
+                                    onCopy = { viewModel.copySecurely(expiryCopyLabel, "${p.expMonth}/${p.expYear}", false) },
                                     isMaskable = false
                                 )
                             }
                             Box(modifier = Modifier.weight(1f)) {
+                                val cvvLabel = stringResource(R.string.item_field_cvv)
                                 SensitiveValueRow(
-                                    label = "CVV",
+                                    label = cvvLabel,
                                     value = p.cvv,
-                                    onCopy = { viewModel.copySecurely("CVV", p.cvv, true) },
+                                    onCopy = { viewModel.copySecurely(cvvLabel, p.cvv, true) },
                                     isMaskable = true
                                 )
                             }
                         }
                         if (p.pin.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val atmPinLabel = stringResource(R.string.item_field_atm_pin)
+                            val pinCopyLabel = stringResource(R.string.item_copy_pin)
                             SensitiveValueRow(
-                                label = "ATM PIN",
+                                label = atmPinLabel,
                                 value = p.pin,
-                                onCopy = { viewModel.copySecurely("PIN", p.pin, true) },
+                                onCopy = { viewModel.copySecurely(pinCopyLabel, p.pin, true) },
                                 isMaskable = true
                             )
                         }
                         if (p.brand.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val cardBrandLabel = stringResource(R.string.item_field_card_brand)
+                            val brandCopyLabel = stringResource(R.string.item_copy_brand)
                             SensitiveValueRow(
-                                label = "Card Brand",
+                                label = cardBrandLabel,
                                 value = p.brand,
-                                onCopy = { viewModel.copySecurely("Brand", p.brand, false) },
+                                onCopy = { viewModel.copySecurely(brandCopyLabel, p.brand, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
                         }
                         if (p.notes.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val cardNotesLabel = stringResource(R.string.item_field_notes)
                             SensitiveValueRow(
-                                label = "Notes",
+                                label = cardNotesLabel,
                                 value = p.notes,
-                                onCopy = { viewModel.copySecurely("Notes", p.notes, false) },
+                                onCopy = { viewModel.copySecurely(cardNotesLabel, p.notes, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -303,65 +324,73 @@ fun ItemDetailDialog(
                     }
 
                     is ApiSecretPayload -> {
+                        val serviceLabel = stringResource(R.string.item_field_service_provider)
+                        val serviceCopyLabel = stringResource(R.string.item_copy_service)
                         SensitiveValueRow(
-                            label = "Service / Provider",
+                            label = serviceLabel,
                             value = p.serviceName,
-                            onCopy = { viewModel.copySecurely("Service", p.serviceName, false) },
+                            onCopy = { viewModel.copySecurely(serviceCopyLabel, p.serviceName, false) },
                             isMonospace = false,
                             isMaskable = false
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         if (p.apiKey.isNotEmpty()) {
+                            val apiKeyLabel = stringResource(R.string.item_field_api_key)
                             SensitiveValueRow(
-                                label = "API Key",
+                                label = apiKeyLabel,
                                 value = p.apiKey,
-                                onCopy = { viewModel.copySecurely("API Key", p.apiKey, true) },
+                                onCopy = { viewModel.copySecurely(apiKeyLabel, p.apiKey, true) },
                                 isMaskable = true
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                         if (p.secretToken.isNotEmpty()) {
+                            val secretTokenLabel = stringResource(R.string.item_field_secret_token)
                             SensitiveValueRow(
-                                label = "Secret Token",
+                                label = secretTokenLabel,
                                 value = p.secretToken,
-                                onCopy = { viewModel.copySecurely("Secret Token", p.secretToken, true) },
+                                onCopy = { viewModel.copySecurely(secretTokenLabel, p.secretToken, true) },
                                 isMaskable = true
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                         }
+                        val environmentLabel = stringResource(R.string.item_field_environment)
                         SensitiveValueRow(
-                            label = "Environment",
+                            label = environmentLabel,
                             value = p.environment,
-                            onCopy = { viewModel.copySecurely("Environment", p.environment, false) },
+                            onCopy = { viewModel.copySecurely(environmentLabel, p.environment, false) },
                             isMonospace = false,
                             isMaskable = false
                         )
                         if (p.scopes.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val scopesLabel = stringResource(R.string.item_field_scopes)
                             SensitiveValueRow(
-                                label = "Scopes",
+                                label = scopesLabel,
                                 value = p.scopes,
-                                onCopy = { viewModel.copySecurely("Scopes", p.scopes, false) },
+                                onCopy = { viewModel.copySecurely(scopesLabel, p.scopes, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
                         }
                         if (p.endpointUrl.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val endpointUrlLabel = stringResource(R.string.item_field_endpoint_url)
                             SensitiveValueRow(
-                                label = "Endpoint URL",
+                                label = endpointUrlLabel,
                                 value = p.endpointUrl,
-                                onCopy = { viewModel.copySecurely("Endpoint URL", p.endpointUrl, false) },
+                                onCopy = { viewModel.copySecurely(endpointUrlLabel, p.endpointUrl, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
                         }
                         if (p.notes.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val apiNotesLabel = stringResource(R.string.item_field_notes)
                             SensitiveValueRow(
-                                label = "Notes",
+                                label = apiNotesLabel,
                                 value = p.notes,
-                                onCopy = { viewModel.copySecurely("Notes", p.notes, false) },
+                                onCopy = { viewModel.copySecurely(apiNotesLabel, p.notes, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -370,64 +399,72 @@ fun ItemDetailDialog(
 
                     is CryptoPayload -> {
                         if (p.walletName.isNotEmpty()) {
+                            val walletNameLabel = stringResource(R.string.item_field_wallet_name)
                             SensitiveValueRow(
-                                label = "Wallet Name",
+                                label = walletNameLabel,
                                 value = p.walletName,
-                                onCopy = { viewModel.copySecurely("Wallet Name", p.walletName, false) },
+                                onCopy = { viewModel.copySecurely(walletNameLabel, p.walletName, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                         }
+                        val networkLabel = stringResource(R.string.item_field_network)
                         SensitiveValueRow(
-                            label = "Network",
+                            label = networkLabel,
                             value = p.network,
-                            onCopy = { viewModel.copySecurely("Network", p.network, false) },
+                            onCopy = { viewModel.copySecurely(networkLabel, p.network, false) },
                             isMonospace = false,
                             isMaskable = false
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         if (p.publicAddress.isNotEmpty()) {
+                            val publicAddressLabel = stringResource(R.string.item_field_public_address)
                             SensitiveValueRow(
-                                label = "Public Address",
+                                label = publicAddressLabel,
                                 value = p.publicAddress,
-                                onCopy = { viewModel.copySecurely("Public Address", p.publicAddress, false) },
+                                onCopy = { viewModel.copySecurely(publicAddressLabel, p.publicAddress, false) },
                                 isMaskable = false
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                         if (p.seedPhrase.isNotEmpty()) {
+                            val seedRecoveryLabel = stringResource(R.string.item_field_seed_recovery_phrase)
+                            val seedPhraseCopyLabel = stringResource(R.string.item_copy_seed_phrase)
                             SensitiveValueRow(
-                                label = "Seed / Recovery Phrase",
+                                label = seedRecoveryLabel,
                                 value = p.seedPhrase,
-                                onCopy = { viewModel.copySecurely("Seed Phrase", p.seedPhrase, true) },
+                                onCopy = { viewModel.copySecurely(seedPhraseCopyLabel, p.seedPhrase, true) },
                                 isMaskable = true
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                         if (p.privateKey.isNotEmpty()) {
+                            val privateKeyLabel = stringResource(R.string.item_field_private_key)
                             SensitiveValueRow(
-                                label = "Private Key",
+                                label = privateKeyLabel,
                                 value = p.privateKey,
-                                onCopy = { viewModel.copySecurely("Private Key", p.privateKey, true) },
+                                onCopy = { viewModel.copySecurely(privateKeyLabel, p.privateKey, true) },
                                 isMaskable = true
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                         if (p.derivationPath.isNotEmpty()) {
+                            val derivationPathLabel = stringResource(R.string.item_field_derivation_path)
                             SensitiveValueRow(
-                                label = "Derivation Path",
+                                label = derivationPathLabel,
                                 value = p.derivationPath,
-                                onCopy = { viewModel.copySecurely("Derivation Path", p.derivationPath, false) },
+                                onCopy = { viewModel.copySecurely(derivationPathLabel, p.derivationPath, false) },
                                 isMaskable = false
                             )
                         }
                         if (p.notes.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val cryptoNotesLabel = stringResource(R.string.item_field_notes)
                             SensitiveValueRow(
-                                label = "Notes",
+                                label = cryptoNotesLabel,
                                 value = p.notes,
-                                onCopy = { viewModel.copySecurely("Notes", p.notes, false) },
+                                onCopy = { viewModel.copySecurely(cryptoNotesLabel, p.notes, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -435,56 +472,64 @@ fun ItemDetailDialog(
                     }
 
                     is NotePayload -> {
+                        val secureNoteContentLabel = stringResource(R.string.item_field_secure_note_content)
+                        val noteCopyLabel = stringResource(R.string.item_copy_note)
                         SensitiveValueRow(
-                            label = "Secure Note Content",
+                            label = secureNoteContentLabel,
                             value = p.content,
-                            onCopy = { viewModel.copySecurely("Note", p.content, true) },
+                            onCopy = { viewModel.copySecurely(noteCopyLabel, p.content, true) },
                             isMonospace = false,
                             isMaskable = false
                         )
                     }
 
                     is IdentityPayload -> {
+                        val fullNameLabel = stringResource(R.string.item_field_full_name)
                         SensitiveValueRow(
-                            label = "Full Name",
+                            label = fullNameLabel,
                             value = p.fullName,
-                            onCopy = { viewModel.copySecurely("Full Name", p.fullName, false) },
+                            onCopy = { viewModel.copySecurely(fullNameLabel, p.fullName, false) },
                             isMonospace = false,
                             isMaskable = false
                         )
                         Spacer(modifier = Modifier.height(10.dp))
+                        val idTypeNumberLabel = stringResource(R.string.item_field_id_type_number, p.idType)
+                        val idNumberCopyLabel = stringResource(R.string.item_copy_id_number)
                         SensitiveValueRow(
-                            label = "${p.idType} Number",
+                            label = idTypeNumberLabel,
                             value = p.idNumber,
-                            onCopy = { viewModel.copySecurely("ID Number", p.idNumber, true) },
+                            onCopy = { viewModel.copySecurely(idNumberCopyLabel, p.idNumber, true) },
                             isMaskable = true
                         )
                         if (p.birthDate.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val birthDateLabel = stringResource(R.string.item_field_birth_date)
                             SensitiveValueRow(
-                                label = "Birth Date",
+                                label = birthDateLabel,
                                 value = p.birthDate,
-                                onCopy = { viewModel.copySecurely("Birth Date", p.birthDate, false) },
+                                onCopy = { viewModel.copySecurely(birthDateLabel, p.birthDate, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
                         }
                         if (p.expiryDate.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val expiryDateLabel = stringResource(R.string.item_field_expiry_date)
                             SensitiveValueRow(
-                                label = "Expiry Date",
+                                label = expiryDateLabel,
                                 value = p.expiryDate,
-                                onCopy = { viewModel.copySecurely("Expiry Date", p.expiryDate, false) },
+                                onCopy = { viewModel.copySecurely(expiryDateLabel, p.expiryDate, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
                         }
                         if (p.notes.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
+                            val identityNotesLabel = stringResource(R.string.item_field_notes)
                             SensitiveValueRow(
-                                label = "Notes",
+                                label = identityNotesLabel,
                                 value = p.notes,
-                                onCopy = { viewModel.copySecurely("Notes", p.notes, false) },
+                                onCopy = { viewModel.copySecurely(identityNotesLabel, p.notes, false) },
                                 isMonospace = false,
                                 isMaskable = false
                             )
@@ -502,7 +547,7 @@ fun ItemDetailDialog(
                 ) {
                     clipboardStatus?.let { status ->
                         VaultStatusPill(
-                            status = status,
+                            status = status.asString(),
                             onDismiss = { viewModel.dismissClipboardStatus() }
                         )
                     }
@@ -523,7 +568,7 @@ fun ItemDetailDialog(
                     ) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Delete")
+                        Text(stringResource(R.string.common_delete))
                     }
 
                     Button(
@@ -534,7 +579,7 @@ fun ItemDetailDialog(
                     ) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Edit", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.common_edit), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -545,8 +590,8 @@ fun ItemDetailDialog(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete '${item.title}'?") },
-            text = { Text("This encrypted item will be permanently removed from your vault. This cannot be undone.") },
+            title = { Text(stringResource(R.string.item_delete_title, item.title)) },
+            text = { Text(stringResource(R.string.item_delete_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -556,12 +601,12 @@ fun ItemDetailDialog(
                     modifier = Modifier.testTag("confirm_delete_button"),
                     colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
                 ) {
-                    Text("Delete Permanently")
+                    Text(stringResource(R.string.item_delete_permanently))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )

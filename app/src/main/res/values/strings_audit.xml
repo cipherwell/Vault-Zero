@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Audit finding descriptions/recommendations rendered by AuditScreen. -->
+<resources>
+    <string name="auditmsg_reused_desc">Password is also used by: %1$s</string>
+    <string name="auditmsg_reused_rec">Generate a unique high-entropy password for each service</string>
+    <string name="auditmsg_weak_desc">Password strength is %1$s (%2$d bits effective entropy)</string>
+    <string name="auditmsg_weak_rec">Upgrade to a 16+ character mixed-case password with symbols or a multi-word passphrase</string>
+    <string name="auditmsg_stale_desc">Credential record has not been updated in %1$d days</string>
+    <string name="auditmsg_stale_rec">Review and rotate long-lived credentials periodically</string>
+    <string name="auditmsg_totp_desc">Stored TOTP secret is malformed Base32</string>
+    <string name="auditmsg_totp_rec">Enter a valid Base32 secret key to generate 2FA codes, or clear the optional 2FA field</string>
+</resources>

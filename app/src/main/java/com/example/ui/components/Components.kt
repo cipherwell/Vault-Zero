@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -55,13 +56,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.crypto.VaultCrypto
 import com.example.model.VaultType
+import com.example.ui.i18n.localizedPluralName
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.ElectricBlue
@@ -93,11 +97,20 @@ fun VaultTypeIcon(type: VaultType, modifier: Modifier = Modifier) {
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = type.displayName,
+            contentDescription = type.localizedPluralName(),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp)
         )
     }
+}
+
+@StringRes
+private fun strengthLabelRes(grade: VaultCrypto.StrengthGrade): Int = when (grade) {
+    VaultCrypto.StrengthGrade.VERY_WEAK -> R.string.strength_very_weak
+    VaultCrypto.StrengthGrade.WEAK -> R.string.strength_weak
+    VaultCrypto.StrengthGrade.FAIR -> R.string.strength_fair
+    VaultCrypto.StrengthGrade.STRONG -> R.string.strength_strong
+    VaultCrypto.StrengthGrade.FORTIFIED -> R.string.strength_excellent
 }
 
 @Composable
@@ -130,14 +143,14 @@ fun StrengthMeter(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = strength.grade.label,
+                    text = stringResource(strengthLabelRes(strength.grade)),
                     style = MaterialTheme.typography.labelMedium,
                     color = animatedColor,
                     fontWeight = FontWeight.SemiBold
                 )
             }
             Text(
-                text = "${strength.entropyBits} bits entropy",
+                text = stringResource(R.string.strength_entropy_bits, strength.entropyBits),
                 style = MaterialTheme.typography.labelSmall,
                 fontFamily = JetBrainsMonoFamily,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -221,7 +234,7 @@ fun TotpLiveBadge(
 
             Column {
                 Text(
-                    text = "2FA CODE",
+                    text = stringResource(R.string.comp_totp_code_label),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -243,7 +256,7 @@ fun TotpLiveBadge(
 
             Icon(
                 imageVector = Icons.Default.ContentCopy,
-                contentDescription = "Copy 2FA code",
+                contentDescription = stringResource(R.string.comp_copy_2fa_code),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)
             )
@@ -309,7 +322,11 @@ fun SensitiveValueRow(
                     ) {
                         Icon(
                             imageVector = if (isRevealed) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (isRevealed) "Hide" else "Reveal",
+                            contentDescription = if (isRevealed) {
+                                stringResource(R.string.comp_hide)
+                            } else {
+                                stringResource(R.string.comp_reveal)
+                            },
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
@@ -324,7 +341,7 @@ fun SensitiveValueRow(
                 ) {
                     Icon(
                         imageVector = if (justCopied) Icons.Default.Check else Icons.Default.ContentCopy,
-                        contentDescription = "Copy $label",
+                        contentDescription = stringResource(R.string.a11y_copy_field, label),
                         tint = CyberEmerald,
                         modifier = Modifier.size(18.dp)
                     )
@@ -412,7 +429,7 @@ fun ZeroKnowledgeSecurityBadge(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = "AES-256-GCM · ZERO-KNOWLEDGE",
+            text = stringResource(R.string.comp_zk_badge),
             fontSize = 9.sp,
             fontFamily = JetBrainsMonoFamily,
             fontWeight = FontWeight.Medium,

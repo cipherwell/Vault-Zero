@@ -5,7 +5,7 @@ VaultZero has a large JVM/Robolectric security suite, a set of on-device instrum
 
 ## Test inventory (release 1.6.0)
 
-### JVM / Robolectric — 119 tests / 14 classes
+### JVM / Robolectric — 128 tests / 16 classes
 
 | Test class | Tests | Focus |
 | --- | ---: | --- |
@@ -23,8 +23,10 @@ VaultZero has a large JVM/Robolectric security suite, a set of on-device instrum
 | `crypto/SecurityAuditEngineTest` | 3 | weak/reused/stale/2FA findings |
 | `data/VaultRepositoryRecoveryRotationTest` | 3 | rotation preserves VMK/records/fingerprint/password, retires old phrase, old/new backup phrase compatibility, locked-vault guard |
 | `core/VaultGroupingTest` | 2 | grouped-list ordering/counts |
+| `i18n/LocalizationCatalogTest` | 4 | EN/ES key parity, no duplicate keys across catalog files, identical format placeholders, translation ratio |
+| `i18n/LanguageControllerTest` | 5 | default follows system, explicit selection persists, unsupported locale falls back to English, storage independent of vault prefs |
 
-### On-device instrumentation — 8 tests / 4 classes
+### On-device instrumentation — 11 tests / 5 classes
 
 | Test class | Tests | Focus |
 | --- | ---: | --- |
@@ -32,6 +34,7 @@ VaultZero has a large JVM/Robolectric security suite, a set of on-device instrum
 | `data/KdfMigrationDeviceTest` | 2 | on-device PBKDF2 → Argon2id unlock migration and envelope rotation timing |
 | `data/VaultSetupDeviceTest` | 1 | full setup, seeded records for UI QA, persisted vault |
 | `data/VaultSetupOnlyDeviceTest` | 1 | fresh-install setup and unlock |
+| `i18n/LanguageDeviceTest` | 3 | Spanish resources ship in the APK and resolve on device, every string resolves in both languages, selection persists outside vault prefs |
 
 Run them:
 

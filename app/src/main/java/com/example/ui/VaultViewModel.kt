@@ -1,6 +1,10 @@
 package com.example.ui
 
+import com.example.R
+import com.example.ui.i18n.UiText
+import com.example.ui.i18n.messageRes
 import android.app.Application
+import androidx.annotation.StringRes
 import com.example.BuildConfig
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -25,7 +29,10 @@ import com.example.crypto.VaultCrypto
 import com.example.data.BackupProtection
 import com.example.data.BackupVerificationException
 import com.example.data.VaultDatabase
+import com.example.data.VaultError
 import com.example.data.VaultPreferences
+import com.example.data.VaultException
+import com.example.data.VaultStateException
 import com.example.data.VaultRepository
 import com.example.model.ApiSecretPayload
 import com.example.model.AuditReport
@@ -160,8 +167,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val sortOption: StateFlow<VaultSortOption> = _sortOption.asStateFlow()
     val favoritesOnly: StateFlow<Boolean> = _favoritesOnly.asStateFlow()
 
-    private val _authError = MutableStateFlow<String?>(null)
-    val authError: StateFlow<String?> = _authError.asStateFlow()
+    private val _authError = MutableStateFlow<UiText?>(null)
+    val authError: StateFlow<UiText?> = _authError.asStateFlow()
 
     private val _viewingItem = MutableStateFlow<VaultItem?>(null)
     val viewingItem: StateFlow<VaultItem?> = _viewingItem.asStateFlow()
@@ -172,8 +179,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _newRecoveryPhrase = MutableStateFlow<String?>(null)
     val newRecoveryPhrase: StateFlow<String?> = _newRecoveryPhrase.asStateFlow()
 
-    private val _clipboardStatus = MutableStateFlow<String?>(null)
-    val clipboardStatus: StateFlow<String?> = _clipboardStatus.asStateFlow()
+    private val _clipboardStatus = MutableStateFlow<UiText?>(null)
+    val clipboardStatus: StateFlow<UiText?> = _clipboardStatus.asStateFlow()
 
     private val _isAuthenticating = MutableStateFlow(false)
     val isAuthenticating: StateFlow<Boolean> = _isAuthenticating.asStateFlow()
@@ -225,7 +232,23 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     @Volatile
     private var lastCopiedSensitiveValue: String? = null
 
-    private fun postStatusMessage(message: String, durationMs: Long = 2200L) {
+
+    /**
+     * Localized text for a failed operation: a typed [VaultException] carries a code the UI can
+     * translate, everything else falls back to the (English) platform/exception message under a
+     * localized prefix.
+     */
+    private fun failureText(@StringRes prefix: Int, error: Throwable?): UiText {
+        when (error) {
+            is VaultException -> return UiText.Res(error.error.messageRes(), error.args)
+            is VaultStateException -> return UiText.Res(error.error.messageRes(), error.args)
+            else -> Unit
+        }
+        val detail = error?.message
+        return if (detail.isNullOrBlank()) UiText.Res(prefix, "") else UiText.Res(prefix, detail)
+    }
+
+    private fun postStatusMessage(message: UiText, durationMs: Long = 2200L) {
         _clipboardStatus.value = message
         statusDismissJob?.cancel()
         statusDismissJob = viewModelScope.launch {
@@ -388,11 +411,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val cleanPassword = password.trim()
         val cleanConfirm = confirm.trim()
         if (cleanPassword.length < 8) {
-            _authError.value = "Master Password must be at least 8 characters"
+            _authError.value = UiText.Res(R.string.err_password_too_short)
             return
         }
         if (cleanPassword != cleanConfirm) {
-            _authError.value = "Passwords do not match"
+            _authError.value = UiText.Res(R.string.msg_passwords_do_not_match)
             return
         }
 
@@ -404,7 +427,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 _newRecoveryPhrase.value = phrase
                 _authError.value = null
             } catch (e: Exception) {
-                _authError.value = "Setup failed: ${e.message}"
+                _authError.value = failureText(R.string.msg_setup_failed, e)
             } finally {
                 _isAuthenticating.value = false
             }
@@ -431,17 +454,17 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         confirmPassword: String,
     ) {
         if (recoveryPhrase.trim().isEmpty()) {
-            _authError.value = "Enter the 12-word recovery phrase for this backup"
+            _authError.value = UiText.Res(R.string.msg_enter_backup_phrase)
             return
         }
         val cleanNewPassword = newPassword?.trim().orEmpty()
         if (cleanNewPassword.isNotEmpty()) {
             if (cleanNewPassword.length < 8) {
-                _authError.value = "New Master Password must be at least 8 characters"
+                _authError.value = UiText.Res(R.string.err_new_password_too_short)
                 return
             }
             if (cleanNewPassword != confirmPassword.trim()) {
-                _authError.value = "New Master Passwords do not match"
+                _authError.value = UiText.Res(R.string.msg_new_master_passwords_mismatch)
                 return
             }
         }
@@ -458,21 +481,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 _lockState.value = VaultLockState.UNLOCKED
                 _authError.value = null
                 resetAutoLockTimer()
-                val passwordNote = when {
-                    report.phraseOnlyBackup -> "new master password set"
-                    report.keptOriginalPassword -> "your original master password still works"
-                    else -> "new master password set"
-                }
                 postStatusMessage(
-                    "Vault restored · ${report.itemCount} " +
-                        (if (report.itemCount == 1) "entry" else "entries") +
-                        " · recovery kit unchanged · $passwordNote",
+                    UiText.Plural(R.plurals.msg_vault_restored, report.itemCount),
                     durationMs = 6000L,
                 )
             } catch (e: IllegalArgumentException) {
-                _authError.value = "Restore failed: ${e.message}"
+                _authError.value = failureText(R.string.msg_restore_failed, e)
             } catch (e: Exception) {
-                _authError.value = "Restore failed: ${e.message ?: "invalid backup"}"
+                _authError.value = failureText(R.string.msg_restore_failed_invalid, e)
             } finally {
                 _isAuthenticating.value = false
             }
@@ -482,12 +498,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun unlockVault(password: String) {
         if (password.isBlank()) {
-            _authError.value = "Please enter your Master Password"
+            _authError.value = UiText.Res(R.string.msg_enter_master_password)
             return
         }
         val lockoutSec = repository.getRemainingLockoutSeconds()
         if (lockoutSec > 0) {
-            _authError.value = "Too many failed attempts. Try again in ${lockoutSec}s."
+            _authError.value = UiText.Res(R.string.msg_too_many_attempts, lockoutSec)
             return
         }
 
@@ -503,13 +519,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     val newLockoutSec = repository.getRemainingLockoutSeconds()
                     if (newLockoutSec > 0) {
-                        _authError.value = "Too many failed attempts. Locked out for ${newLockoutSec}s."
+                        _authError.value = UiText.Res(R.string.msg_locked_out, newLockoutSec)
                     } else {
-                        _authError.value = "Incorrect Master Password. Please check and try again."
+                        _authError.value = UiText.Res(R.string.msg_incorrect_password)
                     }
                 }
             } catch (e: Exception) {
-                _authError.value = "Authentication error: ${e.message}"
+                _authError.value = failureText(R.string.msg_auth_error, e)
             } finally {
                 _isAuthenticating.value = false
             }
@@ -518,11 +534,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun requestBiometricUnlock() {
         if (!repository.isBiometricEnabled() || !_biometricEnabled.value) {
-            _authError.value = "Biometric unlock is disabled in Settings. Unlock with Master Password first."
+            _authError.value = UiText.Res(R.string.msg_biometric_disabled)
             return
         }
         if (!BiometricKeyManager.hasCurrentEnrollment(getApplication())) {
-            _authError.value = "Biometric enrolment is missing or was invalidated. Unlock with Master Password and re-enable it in Settings."
+            _authError.value = UiText.Res(R.string.msg_biometric_enrolment_missing)
             return
         }
         _authError.value = null
@@ -534,7 +550,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             _isAuthenticating.value = true
             try {
                 if (authenticatedCipher == null) {
-                    _authError.value = "Biometric authentication did not authorise the vault key. Please try again."
+                    _authError.value = UiText.Res(R.string.msg_biometric_not_authorised)
                     return@launch
                 }
                 val vmkHex = BiometricKeyManager.decryptVmkWithCipher(getApplication(), authenticatedCipher)
@@ -547,16 +563,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                         return@launch
                     }
                 }
-                _authError.value = "Biometric authentication failed. Please enter Master Password."
+                _authError.value = UiText.Res(R.string.msg_biometric_failed)
             } catch (e: Exception) {
-                _authError.value = "Biometric unlock error: ${e.message}"
+                _authError.value = failureText(R.string.msg_biometric_error, e)
             } finally {
                 _isAuthenticating.value = false
             }
         }
     }
 
-    fun onBiometricError(message: String) {
+    fun onBiometricError(message: UiText) {
         _authError.value = message
     }
 
@@ -571,19 +587,19 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val cleanNewPass = newPass.trim()
         val cleanConfirm = confirmPass.trim()
         if (!VaultCrypto.validateRecoveryPhrase(cleanPhrase, enforceChecksum = false)) {
-            _authError.value = "Recovery phrase must be 12 valid words from your Emergency Recovery Kit"
+            _authError.value = UiText.Res(R.string.msg_recovery_phrase_invalid)
             return
         }
         if (!VaultCrypto.verifyRecoveryPhraseChecksum(cleanPhrase)) {
-            _authError.value = "Recovery phrase checksum mismatch — check for a mistyped word or wrong word order"
+            _authError.value = UiText.Res(R.string.msg_recovery_checksum)
             return
         }
         if (cleanNewPass.length < 8) {
-            _authError.value = "New password must be at least 8 characters"
+            _authError.value = UiText.Res(R.string.err_new_password_too_short)
             return
         }
         if (cleanNewPass != cleanConfirm) {
-            _authError.value = "Passwords do not match"
+            _authError.value = UiText.Res(R.string.msg_passwords_do_not_match)
             return
         }
 
@@ -597,10 +613,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     _authError.value = null
                     resetAutoLockTimer()
                 } else {
-                    _authError.value = "Recovery phrase does not match this vault"
+                    _authError.value = UiText.Res(R.string.err_recovery_phrase_mismatch)
                 }
             } catch (e: Exception) {
-                _authError.value = "Recovery error: ${e.message}"
+                _authError.value = failureText(R.string.msg_recovery_error, e)
             } finally {
                 _isAuthenticating.value = false
             }
@@ -630,7 +646,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _recentlyDeleted.value = null
         deletedExpiryJob?.cancel()
         if (autoLocked) {
-            postStatusMessage("Vault auto-locked due to inactivity")
+            postStatusMessage(UiText.Res(R.string.msg_auto_locked))
         } else {
             dismissClipboardStatus()
         }
@@ -731,7 +747,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 clearSelection()
             } catch (e: Exception) {
                 _recentlyDeleted.value = null
-                postStatusMessage("Delete failed: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_delete_failed, e))
             }
         }
     }
@@ -753,11 +769,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 batch.items.forEach { repository.saveItem(it) }
-                postStatusMessage(
-                    "Restored ${batch.items.size} ${if (batch.items.size == 1) "item" else "items"}"
-                )
+                postStatusMessage(UiText.Plural(R.plurals.msg_items_restored, batch.items.size))
             } catch (e: Exception) {
-                postStatusMessage("Could not restore: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_could_not_restore, e))
             }
         }
     }
@@ -775,10 +789,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 repository.setFavorite(ids, favorite)
                 postStatusMessage(
-                    if (favorite) "Marked ${ids.size} as favourite" else "Removed favourite from ${ids.size}"
+                    if (favorite) UiText.Res(R.string.msg_marked_favorite, ids.size)
+                    else UiText.Res(R.string.msg_unmarked_favorite, ids.size)
                 )
             } catch (e: Exception) {
-                postStatusMessage("Could not update favourites: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_could_not_favorite, e))
             }
         }
     }
@@ -854,10 +869,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 repository.saveItem(item)
                 _editingItem.value = null
                 _viewingItem.value = null
-                postStatusMessage("Saved '${item.title}' securely")
+                postStatusMessage(UiText.Res(R.string.msg_saved_item, item.title))
                 onUserInteraction()
             } catch (e: Exception) {
-                postStatusMessage("Failed to save: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_save_failed, e))
             }
         }
     }
@@ -868,7 +883,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 repository.toggleFavorite(item.id, !item.isFavorite)
                 onUserInteraction()
             } catch (e: Exception) {
-                postStatusMessage("Cannot update favorite while locked")
+                postStatusMessage(UiText.Res(R.string.msg_cannot_favorite_locked))
             }
         }
     }
@@ -880,10 +895,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 repository.deleteItem(item.id)
                 _viewingItem.value = null
                 _editingItem.value = null
-                postStatusMessage("Deleted '${item.title}'")
+                postStatusMessage(UiText.Res(R.string.msg_deleted_item, item.title))
                 onUserInteraction()
             } catch (e: Exception) {
-                postStatusMessage("Failed to delete: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_delete_failed, e))
             }
         }
     }
@@ -897,7 +912,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             _viewingItem.value = null
             _editingItem.value = null
             _newRecoveryPhrase.value = null
-            postStatusMessage("Vault completely reset")
+            postStatusMessage(UiText.Res(R.string.msg_vault_reset))
         }
     }
 
@@ -916,7 +931,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 onResult(json)
                 onUserInteraction()
             } catch (e: Exception) {
-                postStatusMessage("Export failed: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_export_failed, e))
             } finally {
                 _backupBusy.value = false
             }
@@ -974,13 +989,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     skippedInvalid = report.skippedInvalid,
                     summary = msg,
                 )
-                postStatusMessage(msg)
+                postStatusMessage(
+                    if (report.totalNew == 0) UiText.Res(R.string.msg_import_none)
+                    else UiText.Res(R.string.msg_import_done, report.imported, report.updated)
+                )
                 onUserInteraction()
             } catch (prompt: BackupVerificationException) {
                 if (allowPartial) {
                     // Should not happen (partial mode no longer throws), but never
                     // leave the UI without feedback.
-                    postStatusMessage("Import failed — nothing was written: ${prompt.message}")
+                    postStatusMessage(UiText.Res(R.string.msg_import_failed, prompt.message.orEmpty()))
                 } else {
                     pendingPartialImportJson = json
                     pendingPartialImportPassword = backupPassword
@@ -990,9 +1008,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
             } catch (e: IllegalArgumentException) {
-                postStatusMessage("Import rejected — nothing was written: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_import_rejected, e))
             } catch (e: Exception) {
-                postStatusMessage("Import failed — nothing was written: ${e.message ?: "invalid backup"}")
+                postStatusMessage(failureText(R.string.msg_import_failed_invalid, e))
             } finally {
                 _backupBusy.value = false
             }
@@ -1029,22 +1047,22 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         onResult: (Boolean) -> Unit,
     ) {
         if (newPassword.length < 8) {
-            postStatusMessage("New password must be at least 8 characters")
+            postStatusMessage(UiText.Res(R.string.err_new_password_too_short))
             onResult(false)
             return
         }
         if (newPassword != confirmPassword) {
-            postStatusMessage("New passwords do not match")
+            postStatusMessage(UiText.Res(R.string.msg_new_passwords_mismatch))
             onResult(false)
             return
         }
         viewModelScope.launch {
             try {
                 repository.changeMasterPassword(currentPassword, newPassword)
-                postStatusMessage("Master password changed")
+                postStatusMessage(UiText.Res(R.string.msg_password_changed))
                 onResult(true)
             } catch (e: Exception) {
-                postStatusMessage("Could not change password: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_password_change_failed, e))
                 onResult(false)
             }
         }
@@ -1059,11 +1077,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val phrase = repository.regenerateRecoveryKit()
                 onResult(phrase)
-                postStatusMessage("New recovery kit generated — save it offline now", durationMs = 6000L)
+                postStatusMessage(UiText.Res(R.string.msg_kit_generated), durationMs = 6000L)
                 onUserInteraction()
             } catch (e: Exception) {
                 onResult(null)
-                postStatusMessage("Could not generate a new recovery kit: ${e.message}")
+                postStatusMessage(failureText(R.string.msg_kit_failed, e))
             }
         }
     }
@@ -1096,10 +1114,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         clipboardManager.setPrimaryClip(clip)
 
         val timeout = repository.clipboardTimeoutSeconds
-        val statusMsg = when {
-            !isSensitive -> "$label copied to clipboard"
-            timeout > 0 -> "$label copied • Auto-clears in ${timeout}s"
-            else -> "$label copied • Clears when the vault locks"
+        val statusMsg: UiText = when {
+            !isSensitive -> UiText.Res(R.string.msg_clipboard_copied, label)
+            timeout > 0 -> UiText.Res(R.string.msg_clipboard_auto_clear, label, timeout)
+            else -> UiText.Res(R.string.msg_clipboard_clears_on_lock, label)
         }
         postStatusMessage(statusMsg)
         onUserInteraction()
@@ -1163,7 +1181,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             !config.includeDigits &&
             !config.includeSymbols
         ) {
-            postStatusMessage("At least one character set must remain enabled")
+            postStatusMessage(UiText.Res(R.string.msg_charset_required))
             return
         }
         val clampedConfig = config.copy(
@@ -1248,13 +1266,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             BiometricKeyManager.clearBiometricKey(getApplication())
             repository.setBiometricEnabled(false)
             _biometricEnabled.value = false
-            postStatusMessage("Biometric unlock disabled")
+            postStatusMessage(UiText.Res(R.string.msg_biometric_disabled_status))
         }
     }
 
     fun requestBiometricEnrollment() {
         if (repository.getActiveVmkHex() == null) {
-            postStatusMessage("Unlock the vault with your master password before enabling biometrics")
+            postStatusMessage(UiText.Res(R.string.msg_unlock_before_biometrics))
             return
         }
         if (!BiometricKeyManager.hasCurrentEnrollment(getApplication())) {
@@ -1269,14 +1287,15 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val vmkHex = repository.getActiveVmkHex()
         if (vmkHex == null || authenticatedCipher == null) {
             _biometricEnabled.value = repository.isBiometricEnabled()
-            postStatusMessage("Biometric setup was not completed")
+            postStatusMessage(UiText.Res(R.string.msg_biometric_setup_incomplete))
             return
         }
         val stored = BiometricKeyManager.storeVmkWithCipher(getApplication(), vmkHex, authenticatedCipher)
         repository.setBiometricEnabled(stored)
         _biometricEnabled.value = stored
         postStatusMessage(
-            if (stored) "Biometric unlock enabled" else "Could not store the biometric key"
+            if (stored) UiText.Res(R.string.msg_biometric_enabled_status)
+            else UiText.Res(R.string.msg_biometric_store_failed)
         )
     }
 

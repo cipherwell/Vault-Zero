@@ -83,10 +83,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.crypto.VaultCrypto
 import com.example.model.ApiSecretPayload
 import com.example.model.CardPayload
@@ -120,6 +123,7 @@ fun VaultListScreen(
     val selectedIds by viewModel.selectedIds.collectAsState()
     val groupByType by viewModel.groupByType.collectAsState()
     val allVaultItems by viewModel.allItems.collectAsState()
+    val copy2faCodeLabel = stringResource(R.string.vault_2fa_code)
 
     var showCreateMenu by remember { mutableStateOf(false) }
     var showTotpSheet by remember { mutableStateOf(false) }
@@ -159,13 +163,13 @@ fun VaultListScreen(
                     IconButton(onClick = { viewModel.clearSelection() }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Exit selection",
+                            contentDescription = stringResource(R.string.vault_exit_selection),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Text(
-                        text = "${selectedIds.size} selected",
+                        text = pluralStringResource(R.plurals.vault_selected_count, selectedIds.size, selectedIds.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f)
@@ -177,7 +181,7 @@ fun VaultListScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
-                            contentDescription = "Mark selected as favourite",
+                            contentDescription = stringResource(R.string.vault_mark_favorite),
                             tint = if (selectedIds.isNotEmpty()) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(20.dp)
@@ -190,7 +194,7 @@ fun VaultListScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete selected",
+                            contentDescription = stringResource(R.string.vault_delete_selected),
                             tint = if (selectedIds.isNotEmpty()) DangerRed else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -207,7 +211,7 @@ fun VaultListScreen(
             ) {
                 Column {
                     Text(
-                        text = "Vault",
+                        text = stringResource(R.string.vault_title),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontSize = titleSize.sp,
                             lineHeight = (titleSize * 1.15f).sp,
@@ -228,7 +232,7 @@ fun VaultListScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "${items.size} ${if (items.size == 1) "item" else "items"} · AES-256 · unlocked",
+                            text = pluralStringResource(R.plurals.vault_item_count, items.size, items.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -242,7 +246,7 @@ fun VaultListScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add item",
+                        contentDescription = stringResource(R.string.vault_add_item),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(22.dp)
                     )
@@ -254,7 +258,7 @@ fun VaultListScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Sort and view options",
+                            contentDescription = stringResource(R.string.vault_sort_and_view_options),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -265,7 +269,7 @@ fun VaultListScreen(
                     ) {
                         VaultSortOption.entries.forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(option.label) },
+                                text = { Text(stringResource(vaultSortLabelRes(option))) },
                                 onClick = {
                                     viewModel.setSortOption(option)
                                     showSortMenu = false
@@ -284,7 +288,7 @@ fun VaultListScreen(
                         }
                         HorizontalDivider()
                         DropdownMenuItem(
-                            text = { Text("Group by type") },
+                            text = { Text(stringResource(R.string.vault_group_by_type)) },
                             onClick = {
                                 viewModel.setGroupByType(!groupByType)
                                 showSortMenu = false
@@ -301,14 +305,14 @@ fun VaultListScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("2FA codes") },
+                            text = { Text(stringResource(R.string.vault_2fa_codes)) },
                             onClick = {
                                 showTotpSheet = true
                                 showSortMenu = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Select items") },
+                            text = { Text(stringResource(R.string.vault_select_items)) },
                             onClick = {
                                 viewModel.enterSelectionMode()
                                 showSortMenu = false
@@ -325,7 +329,7 @@ fun VaultListScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Lock vault",
+                        contentDescription = stringResource(R.string.a11y_lock_vault),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -338,11 +342,11 @@ fun VaultListScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.setSearchQuery(it) },
-                placeholder = { Text("Search", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.common_search), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
+                        contentDescription = stringResource(R.string.common_search),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -352,7 +356,7 @@ fun VaultListScreen(
                         IconButton(onClick = { viewModel.setSearchQuery("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear search",
+                                contentDescription = stringResource(R.string.vault_clear_search),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -390,7 +394,7 @@ fun VaultListScreen(
                         viewModel.setTypeFilter(null)
                         if (favoritesOnly) viewModel.toggleFavoritesFilter()
                     },
-                    label = { Text("All", fontSize = 12.sp) },
+                    label = { Text(stringResource(R.string.vault_filter_all), fontSize = 12.sp) },
                     shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
@@ -410,7 +414,7 @@ fun VaultListScreen(
                             modifier = Modifier.size(14.dp)
                         )
                     },
-                    label = { Text("Favorites", fontSize = 12.sp) },
+                    label = { Text(stringResource(R.string.vault_favorites), fontSize = 12.sp) },
                     shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
@@ -424,7 +428,7 @@ fun VaultListScreen(
                     FilterChip(
                         selected = selectedType == type,
                         onClick = { viewModel.setTypeFilter(if (selectedType == type) null else type) },
-                        label = { Text(type.displayName, fontSize = 12.sp) },
+                        label = { Text(stringResource(vaultTypeLabelRes(type)), fontSize = 12.sp) },
                         shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
@@ -448,17 +452,18 @@ fun VaultListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val emptyType = selectedType
                         val emptyTitle = when {
-                            searchQuery.isNotEmpty() -> "No matches for \"$searchQuery\""
-                            favoritesOnly -> "No favorites yet"
-                            selectedType != null -> "No ${selectedType?.displayName?.lowercase()} yet"
-                            else -> "Your vault is empty"
+                            searchQuery.isNotEmpty() -> stringResource(R.string.vault_empty_search_title, searchQuery)
+                            favoritesOnly -> stringResource(R.string.vault_empty_favorites_title)
+                            emptyType != null -> stringResource(vaultTypeEmptyTitleRes(emptyType))
+                            else -> stringResource(R.string.vault_empty_vault_title)
                         }
                         val emptyBody = when {
-                            searchQuery.isNotEmpty() -> "Try a different term, or use type:login, is:weak or tag:work."
-                            favoritesOnly -> "Tap the heart on any item to pin it here."
-                            selectedType != null -> "Add an item of this type with the + button."
-                            else -> "Tap the + button below to securely store your logins, cards, and secrets."
+                            searchQuery.isNotEmpty() -> stringResource(R.string.vault_empty_search_body)
+                            favoritesOnly -> stringResource(R.string.vault_empty_favorites_body)
+                            emptyType != null -> stringResource(R.string.vault_empty_type_body)
+                            else -> stringResource(R.string.vault_empty_vault_body)
                         }
                         Box(
                             modifier = Modifier
@@ -496,7 +501,7 @@ fun VaultListScreen(
                                 },
                                 shape = CircleShape
                             ) {
-                                Text("Clear filters", fontSize = 13.sp)
+                                Text(stringResource(R.string.vault_clear_filters), fontSize = 13.sp)
                             }
                         } else {
                             Spacer(modifier = Modifier.height(18.dp))
@@ -507,13 +512,13 @@ fun VaultListScreen(
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Add item", fontSize = 13.sp)
+                                    Text(stringResource(R.string.vault_add_item), fontSize = 13.sp)
                                 }
                                 OutlinedButton(
                                     onClick = { viewModel.setTab(VaultNavTab.GENERATOR) },
                                     shape = CircleShape,
                                 ) {
-                                    Text("Generator", fontSize = 13.sp)
+                                    Text(stringResource(R.string.vault_open_generator), fontSize = 13.sp)
                                 }
                             }
                         }
@@ -529,7 +534,7 @@ fun VaultListScreen(
                         VaultGrouping.group(items).forEach { section ->
                             item(key = "h-${section.type.name}") {
                                 Text(
-                                    text = section.title,
+                                    text = stringResource(vaultTypeLabelRes(section.type)),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(start = 6.dp, top = 16.dp, bottom = 8.dp)
@@ -553,7 +558,7 @@ fun VaultListScreen(
                                         viewModel.copySecurely(label, value, isSensitive = true, itemId = item.id)
                                     },
                                     onCopyTotp = { item, code ->
-                                        viewModel.copySecurely("2FA code", code, isSensitive = true, itemId = item.id)
+                                        viewModel.copySecurely(copy2faCodeLabel, code, isSensitive = true, itemId = item.id)
                                     },
                                 )
                             }
@@ -577,7 +582,7 @@ fun VaultListScreen(
                                     viewModel.copySecurely(label, value, isSensitive = true, itemId = item.id)
                                 },
                                 onCopyTotp = { item, code ->
-                                    viewModel.copySecurely("2FA code", code, isSensitive = true, itemId = item.id)
+                                    viewModel.copySecurely(copy2faCodeLabel, code, isSensitive = true, itemId = item.id)
                                 },
                             )
                         }
@@ -589,13 +594,16 @@ fun VaultListScreen(
         if (showBulkDelete) {
             AlertDialog(
                 onDismissRequest = { showBulkDelete = false },
-                title = { Text("Delete ${selectedIds.size} selected?") },
-                text = {
+                title = {
                     Text(
-                        "These encrypted records are removed from this device permanently. " +
-                            "This cannot be undone."
+                        pluralStringResource(
+                            R.plurals.vault_delete_selected_title,
+                            selectedIds.size,
+                            selectedIds.size,
+                        )
                     )
                 },
+                text = { Text(stringResource(R.string.vault_bulk_delete_body)) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -603,10 +611,10 @@ fun VaultListScreen(
                             showBulkDelete = false
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
-                    ) { Text("Delete") }
+                    ) { Text(stringResource(R.string.common_delete)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showBulkDelete = false }) { Text("Cancel") }
+                    TextButton(onClick = { showBulkDelete = false }) { Text(stringResource(R.string.common_cancel)) }
                 }
             )
         }
@@ -616,7 +624,7 @@ fun VaultListScreen(
                 items = allVaultItems,
                 clockTicker = clockTicker,
                 onCopy = { item, code ->
-                    viewModel.copySecurely("2FA code", code, isSensitive = true, itemId = item.id)
+                    viewModel.copySecurely(copy2faCodeLabel, code, isSensitive = true, itemId = item.id)
                 },
                 onDismiss = { showTotpSheet = false },
             )
@@ -678,22 +686,24 @@ private fun OneUiVaultCard(
     }
 }
 
+@Composable
 private fun vaultItemSubtitle(item: VaultItem): String = when (val p = item.payload) {
     is LoginPayload -> p.username.ifEmpty { p.url }
     is CardPayload -> if (p.cardNumber.length >= 4) "•••• ${p.cardNumber.takeLast(4)}" else p.brand
     is ApiSecretPayload -> "${p.environment} · ${p.serviceName}"
     is CryptoPayload -> "${p.network} · ${if (p.publicAddress.length > 10) p.publicAddress.take(6) + "…" + p.publicAddress.takeLast(4) else p.walletName}"
-    is NotePayload -> p.content.lines().firstOrNull() ?: "Encrypted note"
+    is NotePayload -> p.content.lines().firstOrNull() ?: stringResource(R.string.vault_encrypted_note)
     is IdentityPayload -> "${p.idType} · ${p.fullName}"
 }
 
+@Composable
 private fun vaultItemCopyTarget(item: VaultItem): Pair<String, String> = when (val p = item.payload) {
-    is LoginPayload -> "Password" to p.password
-    is CardPayload -> "Card number" to p.cardNumber
-    is ApiSecretPayload -> "API key" to p.apiKey.ifEmpty { p.secretToken }
-    is CryptoPayload -> "Public address" to p.publicAddress
-    is NotePayload -> "Note" to p.content
-    is IdentityPayload -> "ID number" to p.idNumber
+    is LoginPayload -> stringResource(R.string.vault_field_password) to p.password
+    is CardPayload -> stringResource(R.string.vault_field_card_number) to p.cardNumber
+    is ApiSecretPayload -> stringResource(R.string.vault_field_api_key) to p.apiKey.ifEmpty { p.secretToken }
+    is CryptoPayload -> stringResource(R.string.vault_field_public_address) to p.publicAddress
+    is NotePayload -> stringResource(R.string.vault_field_note) to p.content
+    is IdentityPayload -> stringResource(R.string.vault_field_id_number) to p.idNumber
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -758,7 +768,7 @@ private fun OneUiVaultRow(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .clickable(
-                                onClickLabel = "Copy 2FA code",
+                                onClickLabel = stringResource(R.string.vault_copy_2fa_code),
                             ) { onCopyTotp(item, totp.code) }
                             .padding(vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -786,7 +796,7 @@ private fun OneUiVaultRow(
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy 2FA code for ${item.title}",
+                            contentDescription = stringResource(R.string.vault_copy_2fa_code_for, item.title),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(12.dp)
                         )
@@ -811,7 +821,7 @@ private fun OneUiVaultRow(
                 if (selected) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.vault_selected_check),
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(15.dp)
                     )
@@ -821,7 +831,7 @@ private fun OneUiVaultRow(
             if (item.isFavorite) {
                 Icon(
                     imageVector = Icons.Default.Favorite,
-                    contentDescription = "Favorite",
+                    contentDescription = stringResource(R.string.vault_favorite_icon),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(15.dp)
                 )
@@ -835,7 +845,7 @@ private fun OneUiVaultRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy $copyLabel",
+                        contentDescription = stringResource(R.string.a11y_copy_field, copyLabel),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
@@ -868,13 +878,13 @@ private fun CreateTypeSelectorDialog(
         ) {
             Column(modifier = Modifier.padding(22.dp)) {
                 Text(
-                    text = "New item",
+                    text = stringResource(R.string.vault_new_item),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Choose the type of record to encrypt.",
+                    text = stringResource(R.string.vault_choose_type_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -894,17 +904,17 @@ private fun CreateTypeSelectorDialog(
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text(
-                                text = type.displayName,
+                                text = stringResource(vaultTypeLabelRes(type)),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
                             val desc = when (type) {
-                                VaultType.LOGIN -> "Websites, apps, usernames & 2FA keys"
-                                VaultType.CARD -> "Credit & debit cards, CVV & PINs"
-                                VaultType.API_SECRET -> "API keys, access tokens & backend secrets"
-                                VaultType.CRYPTO_WALLET -> "Seed phrases, private keys & wallets"
-                                VaultType.NOTE -> "Encrypted notes & private text"
-                                VaultType.IDENTITY -> "Passports, IDs & legal documents"
+                                VaultType.LOGIN -> stringResource(R.string.vault_type_desc_login)
+                                VaultType.CARD -> stringResource(R.string.vault_type_desc_card)
+                                VaultType.API_SECRET -> stringResource(R.string.vault_type_desc_api_secret)
+                                VaultType.CRYPTO_WALLET -> stringResource(R.string.vault_type_desc_crypto_wallet)
+                                VaultType.NOTE -> stringResource(R.string.vault_type_desc_note)
+                                VaultType.IDENTITY -> stringResource(R.string.vault_type_desc_identity)
                             }
                             Text(
                                 text = desc,
@@ -917,4 +927,29 @@ private fun CreateTypeSelectorDialog(
             }
         }
     }
+}
+
+private fun vaultTypeLabelRes(type: VaultType): Int = when (type) {
+    VaultType.LOGIN -> R.string.type_login
+    VaultType.CARD -> R.string.type_card
+    VaultType.API_SECRET -> R.string.type_api_secret
+    VaultType.CRYPTO_WALLET -> R.string.type_crypto_wallet
+    VaultType.NOTE -> R.string.type_note
+    VaultType.IDENTITY -> R.string.type_identity
+}
+
+private fun vaultTypeEmptyTitleRes(type: VaultType): Int = when (type) {
+    VaultType.LOGIN -> R.string.vault_empty_type_login
+    VaultType.CARD -> R.string.vault_empty_type_card
+    VaultType.API_SECRET -> R.string.vault_empty_type_api_secret
+    VaultType.CRYPTO_WALLET -> R.string.vault_empty_type_crypto_wallet
+    VaultType.NOTE -> R.string.vault_empty_type_note
+    VaultType.IDENTITY -> R.string.vault_empty_type_identity
+}
+
+private fun vaultSortLabelRes(option: VaultSortOption): Int = when (option) {
+    VaultSortOption.FAVORITES_FIRST -> R.string.vault_sort_favorites_first
+    VaultSortOption.TITLE -> R.string.vault_sort_title
+    VaultSortOption.RECENT -> R.string.vault_sort_recent
+    VaultSortOption.RECENTLY_USED -> R.string.vault_sort_recently_used
 }

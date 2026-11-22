@@ -2,9 +2,11 @@ package com.example.ui.screens
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import com.example.BuildConfig
+import com.example.R
 import com.example.core.ThemeMode
 import com.example.ui.backup.BackupPickerChannel
 import androidx.compose.foundation.clickable
@@ -68,10 +70,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.VaultViewModel
 import com.example.ui.components.ZeroKnowledgeSecurityBadge
+import com.example.ui.i18n.LocalAppLanguageTag
+import com.example.ui.i18n.LocalLanguageController
+import com.example.ui.i18n.SettingsLanguageRow
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
@@ -106,6 +113,12 @@ fun SettingsScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val languageTag = LocalAppLanguageTag.current
+    // The backup collector outlives recompositions, so keep the locale-bound context current:
+    // otherwise a language switch would keep emitting status messages in the old language.
+    val latestContext by rememberUpdatedState(context)
+    val fingerprintClipLabel = stringResource(R.string.settings_clipboard_label_fingerprint)
+    val recoveryKitClipLabel = stringResource(R.string.settings_clipboard_label_recovery_kit)
 
     // Export/import go through MainActivity's SAF intents (see BackupPickerChannel):
     // the user picks the document, we read/write exactly that URI once, no
@@ -123,14 +136,14 @@ fun SettingsScreen(
                         scope.launch {
                             val ok = BackupFileIo.writeText(context, uri, json)
                             backupStatus = if (ok) {
-                                "Encrypted backup saved to ${BackupFileIo.displayName(context, uri)}. " +
-                                    if (pendingExportPhraseOnly) {
-                                        "It can only be opened with this backup's 12-word recovery phrase."
-                                    } else {
-                                        "It can be opened with this vault's master password or its 12-word recovery phrase. No plaintext secrets inside."
-                                    }
+                                val fileName = BackupFileIo.displayName(latestContext, uri)
+                                if (pendingExportPhraseOnly) {
+                                    latestContext.getString(R.string.settings_backup_saved_phrase_only, fileName)
+                                } else {
+                                    latestContext.getString(R.string.settings_backup_saved_standard, fileName)
+                                }
                             } else {
-                                "Could not write the backup to that location."
+                                latestContext.getString(R.string.settings_backup_write_failed)
                             }
                         }
                     }
@@ -139,10 +152,10 @@ fun SettingsScreen(
                     scope.launch {
                         val text = BackupFileIo.readText(context, uri)
                         if (text == null) {
-                            backupStatus = "That document is not a readable VaultZero backup envelope."
+                            backupStatus = latestContext.getString(R.string.settings_backup_unreadable_document)
                         } else {
                             pendingImportJson = text
-                            pendingImportName = BackupFileIo.displayName(context, uri)
+                            pendingImportName = BackupFileIo.displayName(latestContext, uri)
                             showImportDialog = true
                         }
                     }
@@ -158,12 +171,12 @@ fun SettingsScreen(
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         Text(
-            text = "Vault Settings",
+            text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Cryptographic preferences, timeouts, and emergency kits",
+            text = stringResource(R.string.settings_subtitle),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -184,7 +197,7 @@ fun SettingsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Master key fingerprint",
+                            text = stringResource(R.string.settings_master_key_fingerprint),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -199,12 +212,12 @@ fun SettingsScreen(
                     }
                     IconButton(
                         onClick = {
-                            viewModel.copySecurely("Fingerprint", viewModel.keyFingerprint, false)
+                            viewModel.copySecurely(fingerprintClipLabel, viewModel.keyFingerprint, false)
                         }
                     ) {
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy fingerprint",
+                            contentDescription = stringResource(R.string.settings_a11y_copy_fingerprint),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
@@ -219,7 +232,7 @@ fun SettingsScreen(
 
         // One UI appearance selector
         Text(
-            text = "APPEARANCE",
+            text = stringResource(R.string.settings_section_appearance).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
@@ -232,7 +245,7 @@ fun SettingsScreen(
                 FilterChip(
                     selected = themeMode == mode,
                     onClick = { viewModel.setThemeMode(mode) },
-                    label = { Text(mode.label, fontSize = 13.sp) },
+                    label = { Text(themeLabel(mode), fontSize = 13.sp) },
                     shape = CircleShape,
                     border = null,
                     modifier = Modifier.weight(1f),
@@ -248,9 +261,33 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Language selector: applies instantly and is stored outside the vault, so it also works
+        // on the lock screen before the first unlock.
+        Text(
+            text = stringResource(R.string.language_title).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
+        )
+        Card(
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SettingsLanguageRow(
+                controller = LocalLanguageController.current,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         // Security Options Section
         Text(
-            text = "SECURITY CONTROLS",
+            text = stringResource(R.string.settings_section_security).uppercase(),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 1.sp
@@ -276,7 +313,7 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Auto-Lock Inactivity", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.settings_auto_lock_inactivity), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
@@ -284,7 +321,7 @@ fun SettingsScreen(
 
                 if (BuildConfig.DEV_DISABLE_AUTO_LOCK) {
                     Text(
-                        text = "Auto-lock is disabled in this dev build (-PdevDisableAutoLock=true).",
+                        text = stringResource(R.string.settings_auto_lock_disabled_dev),
                         style = MaterialTheme.typography.bodySmall,
                         color = WarningAmber
                     )
@@ -293,18 +330,23 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        listOf(0 to "Off", 30 to "30s", 60 to "1m", 300 to "5m", 900 to "15m")
-                            .forEach { (sec, label) ->
-                                SecurityOptionChip(
-                                    label = label,
-                                    selected = autoLockSeconds == sec,
-                                    modifier = Modifier.weight(1f),
-                                ) { viewModel.updateAutoLock(sec) }
-                            }
+                        listOf(
+                            0 to R.string.settings_timeout_off,
+                            30 to R.string.settings_timeout_30s,
+                            60 to R.string.settings_timeout_1m,
+                            300 to R.string.settings_timeout_5m,
+                            900 to R.string.settings_timeout_15m,
+                        ).forEach { (sec, labelRes) ->
+                            SecurityOptionChip(
+                                label = stringResource(labelRes),
+                                selected = autoLockSeconds == sec,
+                                modifier = Modifier.weight(1f),
+                            ) { viewModel.updateAutoLock(sec) }
+                        }
                     }
                     if (autoLockSeconds == 0) {
                         Text(
-                            text = "Off: the vault stays unlocked until you tap the lock button.",
+                            text = stringResource(R.string.settings_auto_lock_off_warning),
                             style = MaterialTheme.typography.bodySmall,
                             color = WarningAmber,
                             modifier = Modifier.padding(top = 8.dp)
@@ -317,16 +359,21 @@ fun SettingsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Lock in Background", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.settings_lock_in_background), style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
-                    listOf(0 to "Off", 15 to "15s", 30 to "30s", 60 to "1m").forEach { (sec, label) ->
+                    listOf(
+                        0 to R.string.settings_timeout_off,
+                        15 to R.string.settings_timeout_15s,
+                        30 to R.string.settings_timeout_30s,
+                        60 to R.string.settings_timeout_1m,
+                    ).forEach { (sec, labelRes) ->
                         SecurityOptionChip(
-                            label = label,
+                            label = stringResource(labelRes),
                             selected = backgroundLockSeconds == sec,
                             modifier = Modifier.weight(1f),
                         ) { viewModel.updateBackgroundLock(sec) }
@@ -334,9 +381,9 @@ fun SettingsScreen(
                 }
                 Text(
                     text = if (backgroundLockSeconds == 0) {
-                        "Off: the vault stays unlocked when you leave the app or turn the screen off."
+                        stringResource(R.string.settings_background_lock_off_warning)
                     } else {
-                        "Locks after $backgroundLockSeconds s away or immediately when the screen turns off. Not applied while the file picker is open."
+                        stringResource(R.string.settings_background_lock_locks_after, backgroundLockSeconds)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (backgroundLockSeconds == 0) WarningAmber else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -354,7 +401,7 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Auto-Clear Clipboard", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.settings_auto_clear_clipboard), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
@@ -364,18 +411,22 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
-                    listOf(0 to "Off", 15 to "15s", 30 to "30s", 60 to "60s")
-                        .forEach { (sec, label) ->
-                            SecurityOptionChip(
-                                label = label,
-                                selected = clipboardSeconds == sec,
-                                modifier = Modifier.weight(1f),
-                            ) { viewModel.updateClipboardTimeout(sec) }
-                        }
+                    listOf(
+                        0 to R.string.settings_timeout_off,
+                        15 to R.string.settings_timeout_15s,
+                        30 to R.string.settings_timeout_30s,
+                        60 to R.string.settings_timeout_60s,
+                    ).forEach { (sec, labelRes) ->
+                        SecurityOptionChip(
+                            label = stringResource(labelRes),
+                            selected = clipboardSeconds == sec,
+                            modifier = Modifier.weight(1f),
+                        ) { viewModel.updateClipboardTimeout(sec) }
+                    }
                 }
                 if (clipboardSeconds == 0) {
                     Text(
-                        text = "Off: copied secrets stay on the clipboard until you copy something else.",
+                        text = stringResource(R.string.settings_clipboard_off_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = WarningAmber,
                         modifier = Modifier.padding(top = 8.dp)
@@ -394,8 +445,8 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.Fingerprint, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
-                            Text("Fast Biometric Unlock", style = MaterialTheme.typography.bodyMedium)
-                            Text("Quickly unlock with device biometrics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.settings_biometric_title), style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.settings_biometric_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     val biometricEnabled by viewModel.biometricEnabled.collectAsState()
@@ -426,15 +477,15 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Change Master Password", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.settings_change_master_password), style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "Records stay encrypted · recovery kit keeps working",
+                            stringResource(R.string.settings_change_master_password_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Text(
-                        text = "Change",
+                        text = stringResource(R.string.settings_action_change),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -459,15 +510,15 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Lock Vault Now", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.settings_lock_vault_now), style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "Lock immediately and clear copied secrets",
+                            stringResource(R.string.settings_lock_vault_now_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Text(
-                        text = "Lock",
+                        text = stringResource(R.string.settings_action_lock),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -480,7 +531,7 @@ fun SettingsScreen(
         // Tools & Recovery
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "RECOVERY & BACKUP",
+                text = stringResource(R.string.settings_section_recovery).uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp
@@ -494,7 +545,7 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Working…",
+                    text = stringResource(R.string.settings_working),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -525,8 +576,8 @@ fun SettingsScreen(
                     Icon(imageVector = Icons.Default.Key, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("View 12-Word Recovery Kit", fontWeight = FontWeight.SemiBold)
-                        Text("Decrypt and view your emergency recovery phrase", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.settings_view_recovery_kit), fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.settings_view_recovery_kit_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -553,11 +604,15 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            if (rotatingKit) "Generating New Recovery Kit…" else "Generate New Recovery Kit",
+                            if (rotatingKit) {
+                                stringResource(R.string.settings_rotate_kit_busy)
+                            } else {
+                                stringResource(R.string.settings_rotate_kit)
+                            },
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            "Replace the old phrase with a fresh 128-bit BIP-39 kit (records/key unchanged)",
+                            stringResource(R.string.settings_rotate_kit_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -579,8 +634,8 @@ fun SettingsScreen(
                     Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Export Encrypted Vault Backup", fontWeight = FontWeight.SemiBold)
-                        Text("Generate AES-256-GCM encrypted JSON backup envelope", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.settings_export_backup), fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.settings_export_backup_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -601,8 +656,8 @@ fun SettingsScreen(
                     Icon(imageVector = Icons.Default.Upload, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Restore / Import Encrypted Backup", fontWeight = FontWeight.SemiBold)
-                        Text("Import records from a VaultZero encrypted JSON backup", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.settings_import_backup), fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.settings_import_backup_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -620,8 +675,8 @@ fun SettingsScreen(
                     Icon(imageVector = Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Cryptographic Specifications", fontWeight = FontWeight.SemiBold)
-                        Text("AES-256-GCM, PBKDF2-HMAC-SHA256, Zero Telemetry", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.settings_specs_title), fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.settings_specs_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -631,7 +686,7 @@ fun SettingsScreen(
 
         // Danger Zone
         Text(
-            text = "DANGER ZONE",
+            text = stringResource(R.string.settings_section_danger).uppercase(),
             style = MaterialTheme.typography.labelMedium,
             color = DangerRed,
             letterSpacing = 1.sp
@@ -648,13 +703,17 @@ fun SettingsScreen(
         ) {
             Icon(imageVector = Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Reset & Erase Vault Completely")
+            Text(stringResource(R.string.settings_reset_vault))
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "VaultZero v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE}) • 100% FOSS Air-Gapped Build",
+            text = stringResource(
+                R.string.settings_version_footer,
+                BuildConfig.VERSION_NAME,
+                BuildConfig.VERSION_CODE,
+            ),
             fontFamily = JetBrainsMonoFamily,
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
@@ -667,13 +726,10 @@ fun SettingsScreen(
     if (showRotateKitConfirm) {
         AlertDialog(
             onDismissRequest = { if (!rotatingKit) showRotateKitConfirm = false },
-            title = { Text("Replace Recovery Kit?") },
+            title = { Text(stringResource(R.string.settings_rotate_kit_dialog_title)) },
             text = {
                 Text(
-                    "A new 12-word phrase will be generated and stored in this vault. Your current " +
-                        "phrase will stop unlocking this vault and any backups that depend on it. The " +
-                        "vault key, records and master password are unchanged. Export a fresh backup " +
-                        "after saving the new kit.",
+                    stringResource(R.string.settings_rotate_kit_dialog_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -694,11 +750,11 @@ fun SettingsScreen(
                         contentColor = Color.Black
                     )
                 ) {
-                    Text("Generate New Kit", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_rotate_kit_confirm), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRotateKitConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showRotateKitConfirm = false }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -707,12 +763,11 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { newRecoveryKit = null },
             modifier = Modifier.testTag("new_recovery_kit_dialog"),
-            title = { Text("New Emergency Recovery Kit") },
+            title = { Text(stringResource(R.string.settings_new_kit_dialog_title)) },
             text = {
                 Column {
                     Text(
-                        "Write these 12 words down and store them offline. The previous kit no " +
-                            "longer restores this vault. This is the only time the new phrase is shown.",
+                        stringResource(R.string.settings_new_kit_dialog_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -737,7 +792,7 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.copySecurely("Recovery Kit", phrase, true)
+                        viewModel.copySecurely(recoveryKitClipLabel, phrase, true)
                         newRecoveryKit = null
                     },
                     modifier = Modifier.testTag("copy_new_recovery_kit_button"),
@@ -746,11 +801,11 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
-                    Text("Copy & Close")
+                    Text(stringResource(R.string.settings_copy_and_close))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { newRecoveryKit = null }) { Text("Dismiss") }
+                TextButton(onClick = { newRecoveryKit = null }) { Text(stringResource(R.string.settings_dismiss)) }
             }
         )
     }
@@ -758,8 +813,8 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Erase Vault Completely?") },
-            text = { Text("All encrypted records, keys, and master passwords will be irrecoverably wiped from this device. Are you sure you wish to continue?") },
+            title = { Text(stringResource(R.string.settings_reset_dialog_title)) },
+            text = { Text(stringResource(R.string.settings_reset_dialog_body)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -768,11 +823,11 @@ fun SettingsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
                 ) {
-                    Text("Wipe Everything")
+                    Text(stringResource(R.string.settings_reset_dialog_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showResetDialog = false }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -781,11 +836,11 @@ fun SettingsScreen(
         val currentPhrase = remember { viewModel.recoveryPhrase }
         AlertDialog(
             onDismissRequest = { showRecoveryDialog = false },
-            title = { Text("Emergency Recovery Kit") },
+            title = { Text(stringResource(R.string.settings_recovery_dialog_title)) },
             text = {
                 Column {
                     Text(
-                        text = "12-word seed phrase for master key recovery (decrypted in memory):",
+                        text = stringResource(R.string.settings_recovery_dialog_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -797,7 +852,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = currentPhrase.ifEmpty { "Unavailable (Vault locked)" },
+                            text = currentPhrase.ifEmpty { stringResource(R.string.settings_recovery_unavailable) },
                             fontFamily = JetBrainsMonoFamily,
                             fontWeight = FontWeight.Bold,
                             color = WarningAmber,
@@ -811,17 +866,17 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         if (currentPhrase.isNotEmpty()) {
-                            viewModel.copySecurely("Recovery Kit", currentPhrase, true)
+                            viewModel.copySecurely(recoveryKitClipLabel, currentPhrase, true)
                         }
                         showRecoveryDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
-                    Text("Copy & Close")
+                    Text(stringResource(R.string.settings_copy_and_close))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRecoveryDialog = false }) { Text("Dismiss") }
+                TextButton(onClick = { showRecoveryDialog = false }) { Text(stringResource(R.string.settings_dismiss)) }
             }
         )
     }
@@ -829,7 +884,7 @@ fun SettingsScreen(
     backupStatus?.let { status ->
         AlertDialog(
             onDismissRequest = { backupStatus = null },
-            title = { Text("Backup") },
+            title = { Text(stringResource(R.string.settings_backup_dialog_title)) },
             text = {
                 Text(
                     text = status,
@@ -838,7 +893,7 @@ fun SettingsScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = { backupStatus = null }) { Text("OK") }
+                TextButton(onClick = { backupStatus = null }) { Text(stringResource(R.string.common_ok)) }
             }
         )
     }
@@ -847,11 +902,14 @@ fun SettingsScreen(
         var backupPassword by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showImportDialog = false },
-            title = { Text("Import Encrypted Backup") },
+            title = { Text(stringResource(R.string.settings_import_dialog_title)) },
             text = {
                 Column {
                     Text(
-                        text = "${pendingImportName ?: "Backup file"} is ready to import. Enter the source vault's Master Password or its 12-word Recovery Phrase when the file was created by a different vault; leave it blank for a backup of this vault (unlock with biometrics first to avoid typing). Phrase-only backups always require their recovery phrase.",
+                        text = stringResource(
+                            R.string.settings_import_dialog_body,
+                            pendingImportName ?: stringResource(R.string.settings_import_backup_file_default),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -859,7 +917,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = backupPassword,
                         onValueChange = { backupPassword = it },
-                        label = { Text("Master Password or 12-Word Recovery Phrase") },
+                        label = { Text(stringResource(R.string.settings_import_credential_label)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -879,11 +937,11 @@ fun SettingsScreen(
                     enabled = pendingImportJson != null,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
-                    Text("Decrypt & Import")
+                    Text(stringResource(R.string.settings_import_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showImportDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showImportDialog = false }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -891,19 +949,43 @@ fun SettingsScreen(
     importOutcome?.let { outcome ->
         AlertDialog(
             onDismissRequest = { viewModel.dismissImportOutcome() },
-            title = { Text("Import complete") },
+            title = { Text(stringResource(R.string.settings_import_complete_title)) },
             text = {
                 Column {
                     Text(
-                        text = outcome.summary,
+                        text = if (outcome.imported + outcome.updated == 0) {
+                            stringResource(R.string.settings_import_nothing_new)
+                        } else {
+                            stringResource(R.string.settings_import_verified)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Spacer(modifier = Modifier.height(10.dp))
+                    val newEntriesLine = pluralStringResource(
+                        R.plurals.settings_import_new_entries,
+                        outcome.imported,
+                        outcome.imported,
+                    )
+                    val updatedLine = pluralStringResource(
+                        R.plurals.settings_import_updated,
+                        outcome.updated,
+                        outcome.updated,
+                    )
+                    val duplicatesLine = pluralStringResource(
+                        R.plurals.settings_import_duplicates_skipped,
+                        outcome.duplicatesSkipped,
+                        outcome.duplicatesSkipped,
+                    )
+                    val unreadableLine = pluralStringResource(
+                        R.plurals.settings_import_unreadable_skipped,
+                        outcome.skippedInvalid,
+                        outcome.skippedInvalid,
+                    )
                     val rows = buildList {
-                        if (outcome.imported > 0) add("New entries: ${outcome.imported}")
-                        if (outcome.updated > 0) add("Updated: ${outcome.updated}")
-                        if (outcome.duplicatesSkipped > 0) add("Duplicates skipped: ${outcome.duplicatesSkipped}")
-                        if (outcome.skippedInvalid > 0) add("Unreadable records skipped: ${outcome.skippedInvalid}")
+                        if (outcome.imported > 0) add(newEntriesLine)
+                        if (outcome.updated > 0) add(updatedLine)
+                        if (outcome.duplicatesSkipped > 0) add(duplicatesLine)
+                        if (outcome.skippedInvalid > 0) add(unreadableLine)
                     }
                     rows.forEach { line ->
                         Text(
@@ -914,14 +996,14 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "The backup was verified before any record was written.",
+                        text = stringResource(R.string.settings_import_verified_note),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = { viewModel.dismissImportOutcome() }) { Text("OK") }
+                TextButton(onClick = { viewModel.dismissImportOutcome() }) { Text(stringResource(R.string.common_ok)) }
             }
         )
     }
@@ -929,11 +1011,11 @@ fun SettingsScreen(
     if (showExportDialog) {
         AlertDialog(
             onDismissRequest = { showExportDialog = false },
-            title = { Text("Export Encrypted Backup") },
+            title = { Text(stringResource(R.string.settings_export_dialog_title)) },
             text = {
                 Column {
                     Text(
-                        text = "How should this backup be unlockable?",
+                        text = stringResource(R.string.settings_export_dialog_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -944,7 +1026,12 @@ fun SettingsScreen(
                             .joinToString(" · ") { "${it.value} ${it.key.lowercase()}" }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Preview: ${vaultItems.size} encrypted ${if (vaultItems.size == 1) "entry" else "entries"} ($summary)",
+                            text = pluralStringResource(
+                                R.plurals.settings_export_preview,
+                                vaultItems.size,
+                                vaultItems.size,
+                                summary,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -961,9 +1048,9 @@ fun SettingsScreen(
                         RadioButton(selected = !exportPhraseOnly, onClick = { exportPhraseOnly = false })
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
-                            Text("Master password or recovery phrase", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.settings_export_option_standard), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                "Restore with either credential · cross-device friendly",
+                                stringResource(R.string.settings_export_option_standard_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -980,9 +1067,9 @@ fun SettingsScreen(
                         RadioButton(selected = exportPhraseOnly, onClick = { exportPhraseOnly = true })
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
-                            Text("12-word recovery phrase only", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.settings_export_option_phrase_only), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                "Password envelope is stripped; only that phrase opens it",
+                                stringResource(R.string.settings_export_option_phrase_only_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -990,7 +1077,7 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Biometrics unlock this vault locally; they cannot decrypt a foreign backup. The recovery phrase is the portable credential.",
+                        text = stringResource(R.string.settings_export_biometrics_note),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1001,7 +1088,7 @@ fun SettingsScreen(
                     onClick = {
                         val stamp = java.text.SimpleDateFormat(
                             "yyyyMMdd-HHmm",
-                            java.util.Locale.US,
+                            java.util.Locale.forLanguageTag(languageTag),
                         ).format(java.util.Date())
                         pendingExportPhraseOnly = exportPhraseOnly
                         showExportDialog = false
@@ -1010,11 +1097,11 @@ fun SettingsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
-                    Text("Choose file")
+                    Text(stringResource(R.string.settings_export_choose_file))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showExportDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showExportDialog = false }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -1022,19 +1109,25 @@ fun SettingsScreen(
     importPrompt?.let { prompt ->
         AlertDialog(
             onDismissRequest = { viewModel.cancelPartialImport() },
-            title = { Text("Backup needs attention") },
+            title = { Text(stringResource(R.string.settings_import_prompt_title)) },
             text = {
                 Column {
                     Text(
-                        text = prompt.message,
+                        text = pluralStringResource(
+                            R.plurals.settings_import_unreadable_prompt,
+                            prompt.unreadableRecords,
+                            prompt.unreadableRecords,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "${prompt.unreadableRecords} unreadable " +
-                            (if (prompt.unreadableRecords == 1) "record will be skipped. " else "records will be skipped. ") +
-                            "The readable records can still be imported; the file itself is not modified.",
+                        text = pluralStringResource(
+                            R.plurals.settings_import_unreadable_prompt,
+                            prompt.unreadableRecords,
+                            prompt.unreadableRecords,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = WarningAmber
                     )
@@ -1045,11 +1138,11 @@ fun SettingsScreen(
                     onClick = { viewModel.confirmPartialImport() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
-                    Text("Import readable records")
+                    Text(stringResource(R.string.settings_import_readable))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.cancelPartialImport() }) { Text("Cancel") }
+                TextButton(onClick = { viewModel.cancelPartialImport() }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -1060,11 +1153,11 @@ fun SettingsScreen(
         var confirmPw by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showChangePasswordDialog = false },
-            title = { Text("Change Master Password") },
+            title = { Text(stringResource(R.string.settings_change_master_password)) },
             text = {
                 Column {
                     Text(
-                        text = "Your records are encrypted with the vault key, not the password, so they are not re-encrypted. The vault key is re-wrapped with the new password; your 12-word recovery kit remains valid.",
+                        text = stringResource(R.string.settings_change_password_dialog_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1072,7 +1165,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = currentPw,
                         onValueChange = { currentPw = it },
-                        label = { Text("Current Master Password") },
+                        label = { Text(stringResource(R.string.settings_current_master_password)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -1081,7 +1174,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = newPw,
                         onValueChange = { newPw = it },
-                        label = { Text("New Master Password (min 8)") },
+                        label = { Text(stringResource(R.string.settings_new_master_password)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -1090,7 +1183,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = confirmPw,
                         onValueChange = { confirmPw = it },
-                        label = { Text("Confirm New Password") },
+                        label = { Text(stringResource(R.string.settings_confirm_new_password)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -1107,11 +1200,11 @@ fun SettingsScreen(
                     enabled = currentPw.isNotBlank() && newPw.isNotBlank() && confirmPw.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) {
-                    Text("Change Password")
+                    Text(stringResource(R.string.settings_change_password_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showChangePasswordDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showChangePasswordDialog = false }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }
@@ -1119,25 +1212,32 @@ fun SettingsScreen(
     if (showSpecsDialog) {
         AlertDialog(
             onDismissRequest = { showSpecsDialog = false },
-            title = { Text("VaultZero Architecture") },
+            title = { Text(stringResource(R.string.settings_specs_dialog_title)) },
             text = {
                 Column {
                     Text(
-                        text = "• Cipher: AES-256-GCM authenticated encryption (128-bit authentication tag, unique 12-byte IV per record, per-record GCM AAD binding).\n\n" +
-                                "• Zero Metadata Leakage: Record titles, categories, tags, and payloads are encrypted together inside AES-256-GCM; SQLite columns store redacted placeholders.\n\n" +
-                                "• Key Derivation & Recovery: PBKDF2WithHmacSHA256 (600,000 rounds), 128-bit CSPRNG salt, HMAC-SHA256 verifiers, and SHA-256 checksummed 12-word recovery mnemonic.\n\n" +
-                                "• Client-Side Zero-Knowledge: Zero network permissions, zero remote servers, StrongBox/TEE Keystore, FLAG_SECURE + recents-screenshot suppression, and backups that leave only through a Storage Access Framework document you pick.",
+                        text = stringResource(R.string.settings_specs_dialog_body),
                         style = MaterialTheme.typography.bodySmall,
                         lineHeight = 20.sp
                     )
                 }
             },
             confirmButton = {
-                Button(onClick = { showSpecsDialog = false }) { Text("Close") }
+                Button(onClick = { showSpecsDialog = false }) { Text(stringResource(R.string.common_close)) }
             }
         )
     }
 }
+
+/** Localized display name for the persisted theme mode. */
+@Composable
+private fun themeLabel(mode: ThemeMode): String = stringResource(
+    when (mode) {
+        ThemeMode.SYSTEM -> R.string.settings_theme_system
+        ThemeMode.LIGHT -> R.string.settings_theme_light
+        ThemeMode.DARK -> R.string.settings_theme_dark
+    }
+)
 
 /** One UI pill chip used for the security timeout options. */
 @Composable

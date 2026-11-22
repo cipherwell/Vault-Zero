@@ -44,12 +44,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.crypto.VaultCrypto
 import com.example.model.ApiSecretPayload
 import com.example.model.CardPayload
@@ -61,6 +63,7 @@ import com.example.model.VaultItem
 import com.example.model.VaultType
 import com.example.ui.components.StrengthMeter
 import com.example.ui.components.VaultTypeIcon
+import com.example.ui.i18n.localizedSingularName
 import com.example.ui.theme.CyberEmerald
 
 @Composable
@@ -165,6 +168,16 @@ fun ItemEditorDialog(
         if (hasUnsavedChanges) showDiscardConfirm = true else onDismiss()
     }
 
+    // Resolved in composition so the save lambda below can use them without calling
+    // composables from a non-composable callback.
+    val defaultTitleLogin = stringResource(R.string.item_default_title_login)
+    val defaultTitleCard = stringResource(R.string.item_default_title_card)
+    val defaultTitleApi = stringResource(R.string.item_default_title_api)
+    val defaultTitleCrypto = stringResource(R.string.item_default_title_crypto)
+    val defaultTitleNote = stringResource(R.string.item_default_title_note)
+    val defaultTitleIdentity = stringResource(R.string.item_default_title_identity)
+    val defaultCategory = stringResource(R.string.item_default_category)
+
     Dialog(
         onDismissRequest = { requestClose() },
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -197,19 +210,26 @@ fun ItemEditorDialog(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = if (item.id.isEmpty()) "New ${item.type.displayName}" else "Edit Entry",
+                                text = if (item.id.isEmpty()) {
+                                    stringResource(R.string.item_editor_title_new, item.type.localizedSingularName())
+                                } else {
+                                    stringResource(R.string.item_editor_title_edit)
+                                },
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Encrypted client-side with AES-256-GCM",
+                                text = stringResource(R.string.item_editor_subtitle_encrypted),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                     IconButton(onClick = { requestClose() }) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close editor")
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.item_a11y_close_editor)
+                        )
                     }
                 }
 
@@ -219,8 +239,8 @@ fun ItemEditorDialog(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title / Label") },
-                    placeholder = { Text("e.g. GitHub, AWS Prod, Personal Card") },
+                    label = { Text(stringResource(R.string.item_field_title)) },
+                    placeholder = { Text(stringResource(R.string.item_placeholder_title)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("editor_title_input").focusRequester(titleFocus),
                     shape = RoundedCornerShape(18.dp)
@@ -231,8 +251,8 @@ fun ItemEditorDialog(
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text("Category / Tag") },
-                    placeholder = { Text("e.g. Work, Finance, Personal") },
+                    label = { Text(stringResource(R.string.item_field_category)) },
+                    placeholder = { Text(stringResource(R.string.item_placeholder_category)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp)
@@ -246,7 +266,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = username,
                             onValueChange = { username = it },
-                            label = { Text("Username or Email") },
+                            label = { Text(stringResource(R.string.item_field_username_or_email)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth().testTag("editor_username_input"),
                             shape = RoundedCornerShape(18.dp)
@@ -257,7 +277,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
-                            label = { Text("Password") },
+                            label = { Text(stringResource(R.string.item_field_password)) },
                             singleLine = true,
                             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
@@ -267,14 +287,18 @@ fun ItemEditorDialog(
                                     }) {
                                         Icon(
                                             imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = "Generate strong password",
+                                            contentDescription = stringResource(R.string.item_a11y_generate_password),
                                             tint = CyberEmerald
                                         )
                                     }
                                     IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                         Icon(
                                             imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                            contentDescription = if (isPasswordVisible) "Hide" else "Show"
+                                            contentDescription = if (isPasswordVisible) {
+                                                stringResource(R.string.a11y_hide_password)
+                                            } else {
+                                                stringResource(R.string.a11y_show_password)
+                                            }
                                         )
                                     }
                                 }
@@ -293,8 +317,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = totpSecret,
                             onValueChange = { totpSecret = it },
-                            label = { Text("2FA Authenticator Secret (Optional Base32)") },
-                            placeholder = { Text("e.g. JBSWY3DPEHPK3PXP") },
+                            label = { Text(stringResource(R.string.item_field_totp_secret)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_totp)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth().testTag("editor_totp_input").focusRequester(totpFocus),
                             shape = RoundedCornerShape(18.dp)
@@ -305,8 +329,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = url,
                             onValueChange = { url = it },
-                            label = { Text("Website URL (Optional)") },
-                            placeholder = { Text("https://example.com") },
+                            label = { Text(stringResource(R.string.item_field_website_url_optional)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_url)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -317,7 +341,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = notes,
                             onValueChange = { notes = it },
-                            label = { Text("Private Notes (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_private_notes_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
                             minLines = 2
@@ -328,7 +352,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = cardholderName,
                             onValueChange = { cardholderName = it },
-                            label = { Text("Cardholder Name") },
+                            label = { Text(stringResource(R.string.item_field_cardholder_name)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -337,8 +361,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = cardNumber,
                             onValueChange = { cardNumber = it },
-                            label = { Text("Card Number") },
-                            placeholder = { Text("4532 8812 9014 3829") },
+                            label = { Text(stringResource(R.string.item_field_card_number)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_card_number)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -348,7 +372,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = expMonth,
                                 onValueChange = { expMonth = it },
-                                label = { Text("Month (MM)") },
+                                label = { Text(stringResource(R.string.item_field_expiry_month)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -356,7 +380,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = expYear,
                                 onValueChange = { expYear = it },
-                                label = { Text("Year (YY)") },
+                                label = { Text(stringResource(R.string.item_field_expiry_year)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -364,7 +388,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = cvv,
                                 onValueChange = { cvv = it },
-                                label = { Text("CVV") },
+                                label = { Text(stringResource(R.string.item_field_cvv)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -375,7 +399,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = pin,
                                 onValueChange = { pin = it },
-                                label = { Text("ATM PIN (Optional)") },
+                                label = { Text(stringResource(R.string.item_field_atm_pin_optional)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -383,7 +407,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = brand,
                                 onValueChange = { brand = it },
-                                label = { Text("Card Network / Brand") },
+                                label = { Text(stringResource(R.string.item_field_card_network_brand)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -393,7 +417,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = cardNotes,
                             onValueChange = { cardNotes = it },
-                            label = { Text("Card Notes (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_card_notes_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
                         )
@@ -403,8 +427,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = serviceName,
                             onValueChange = { serviceName = it },
-                            label = { Text("Provider / Platform") },
-                            placeholder = { Text("e.g. OpenAI, Stripe, AWS") },
+                            label = { Text(stringResource(R.string.item_field_provider)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_provider)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -413,7 +437,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = apiKey,
                             onValueChange = { apiKey = it },
-                            label = { Text("API Key / Client ID") },
+                            label = { Text(stringResource(R.string.item_field_api_key_client_id)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -422,7 +446,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = secretToken,
                             onValueChange = { secretToken = it },
-                            label = { Text("Secret Token / Private Key") },
+                            label = { Text(stringResource(R.string.item_field_secret_token_private_key)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -431,8 +455,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = environment,
                             onValueChange = { environment = it },
-                            label = { Text("Environment") },
-                            placeholder = { Text("Production / Staging / Dev") },
+                            label = { Text(stringResource(R.string.item_field_environment)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_environment)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -441,7 +465,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = scopes,
                             onValueChange = { scopes = it },
-                            label = { Text("Scopes / Permissions (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_scopes_permissions_optional)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -450,7 +474,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = endpointUrl,
                             onValueChange = { endpointUrl = it },
-                            label = { Text("Endpoint URL (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_endpoint_url_optional)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -459,7 +483,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = apiNotes,
                             onValueChange = { apiNotes = it },
-                            label = { Text("Notes (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_notes_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
                         )
@@ -469,8 +493,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = walletName,
                             onValueChange = { walletName = it },
-                            label = { Text("Wallet Name") },
-                            placeholder = { Text("e.g. Ledger Cold Vault") },
+                            label = { Text(stringResource(R.string.item_field_wallet_name)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_wallet_name)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -479,8 +503,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = network,
                             onValueChange = { network = it },
-                            label = { Text("Blockchain Network") },
-                            placeholder = { Text("Ethereum, Solana, Bitcoin") },
+                            label = { Text(stringResource(R.string.item_field_blockchain_network)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_network)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -489,7 +513,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = publicAddress,
                             onValueChange = { publicAddress = it },
-                            label = { Text("Public Address") },
+                            label = { Text(stringResource(R.string.item_field_public_address)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -498,7 +522,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = seedPhrase,
                             onValueChange = { seedPhrase = it },
-                            label = { Text("Seed Phrase (12 or 24 words)") },
+                            label = { Text(stringResource(R.string.item_field_seed_phrase)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
                             minLines = 2
@@ -507,7 +531,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = privateKey,
                             onValueChange = { privateKey = it },
-                            label = { Text("Private Key (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_private_key_optional)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -516,7 +540,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = derivationPath,
                             onValueChange = { derivationPath = it },
-                            label = { Text("Derivation Path (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_derivation_path_optional)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -525,7 +549,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = cryptoNotes,
                             onValueChange = { cryptoNotes = it },
-                            label = { Text("Notes (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_notes_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
                         )
@@ -535,7 +559,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = noteContent,
                             onValueChange = { noteContent = it },
-                            label = { Text("Secure Note (AES-256 Encrypted)") },
+                            label = { Text(stringResource(R.string.item_field_secure_note)) },
                             modifier = Modifier.fillMaxWidth().testTag("editor_note_input"),
                             shape = RoundedCornerShape(18.dp),
                             minLines = 6
@@ -546,7 +570,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = fullName,
                             onValueChange = { fullName = it },
-                            label = { Text("Full Legal Name") },
+                            label = { Text(stringResource(R.string.item_field_full_legal_name)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -555,8 +579,8 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = idType,
                             onValueChange = { idType = it },
-                            label = { Text("Document Type") },
-                            placeholder = { Text("Passport, National ID, Driver's License") },
+                            label = { Text(stringResource(R.string.item_field_document_type)) },
+                            placeholder = { Text(stringResource(R.string.item_placeholder_document_type)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -565,7 +589,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = idNumber,
                             onValueChange = { idNumber = it },
-                            label = { Text("Document / License Number") },
+                            label = { Text(stringResource(R.string.item_field_document_number)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
@@ -575,7 +599,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = birthDate,
                                 onValueChange = { birthDate = it },
-                                label = { Text("Birth Date (Optional)") },
+                                label = { Text(stringResource(R.string.item_field_birth_date_optional)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -583,7 +607,7 @@ fun ItemEditorDialog(
                             OutlinedTextField(
                                 value = expiryDate,
                                 onValueChange = { expiryDate = it },
-                                label = { Text("Expiry Date (Optional)") },
+                                label = { Text(stringResource(R.string.item_field_expiry_date_optional)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(18.dp)
@@ -593,7 +617,7 @@ fun ItemEditorDialog(
                         OutlinedTextField(
                             value = idNotes,
                             onValueChange = { idNotes = it },
-                            label = { Text("Notes (Optional)") },
+                            label = { Text(stringResource(R.string.item_field_notes_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp)
                         )
@@ -612,19 +636,19 @@ fun ItemEditorDialog(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(18.dp)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.common_cancel))
                     }
 
                     Button(
                         onClick = {
                             if (title.isBlank()) {
                                 title = when (item.type) {
-                                    VaultType.LOGIN -> username.ifEmpty { "New Login" }
-                                    VaultType.CARD -> brand.ifEmpty { "Payment Card" }
-                                    VaultType.API_SECRET -> serviceName.ifEmpty { "API Key" }
-                                    VaultType.CRYPTO_WALLET -> walletName.ifEmpty { "Crypto Wallet" }
-                                    VaultType.NOTE -> "Secure Note"
-                                    VaultType.IDENTITY -> fullName.ifEmpty { "Identity Document" }
+                                    VaultType.LOGIN -> username.ifEmpty { defaultTitleLogin }
+                                    VaultType.CARD -> brand.ifEmpty { defaultTitleCard }
+                                    VaultType.API_SECRET -> serviceName.ifEmpty { defaultTitleApi }
+                                    VaultType.CRYPTO_WALLET -> walletName.ifEmpty { defaultTitleCrypto }
+                                    VaultType.NOTE -> defaultTitleNote
+                                    VaultType.IDENTITY -> fullName.ifEmpty { defaultTitleIdentity }
                                 }
                             }
 
@@ -639,7 +663,7 @@ fun ItemEditorDialog(
 
                             val updatedItem = item.copy(
                                 title = title,
-                                category = category.ifEmpty { "Personal" },
+                                category = category.ifEmpty { defaultCategory },
                                 payload = newPayload,
                                 updatedAt = System.currentTimeMillis()
                             )
@@ -651,7 +675,7 @@ fun ItemEditorDialog(
                     ) {
                         Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Save Encrypted", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.item_save_encrypted), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -661,10 +685,10 @@ fun ItemEditorDialog(
     if (showDiscardConfirm) {
         AlertDialog(
             onDismissRequest = { showDiscardConfirm = false },
-            title = { Text("Discard changes?") },
+            title = { Text(stringResource(R.string.item_discard_title)) },
             text = {
                 Text(
-                    "You have unsaved edits in this entry. Closing now will lose them.",
+                    stringResource(R.string.item_discard_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -674,11 +698,13 @@ fun ItemEditorDialog(
                     showDiscardConfirm = false
                     onDismiss()
                 }) {
-                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.item_discard_confirm), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDiscardConfirm = false }) { Text("Keep editing") }
+                TextButton(onClick = { showDiscardConfirm = false }) {
+                    Text(stringResource(R.string.item_keep_editing))
+                }
             }
         )
     }

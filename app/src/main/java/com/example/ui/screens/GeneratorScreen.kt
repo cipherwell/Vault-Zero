@@ -50,9 +50,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.VaultType
 import com.example.ui.GeneratorConfig
 import com.example.ui.VaultViewModel
@@ -72,6 +75,10 @@ fun GeneratorScreen(
     val strength by viewModel.passwordStrength.collectAsState()
     val history by viewModel.generatorHistory.collectAsState()
 
+    // Hoisted because copySecurely runs from non-composable click handlers.
+    val passwordClipboardLabel = stringResource(R.string.gen_clipboard_password)
+    val generatedClipboardLabel = stringResource(R.string.gen_clipboard_generated)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -79,12 +86,12 @@ fun GeneratorScreen(
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         Text(
-            text = "Password Generator",
+            text = stringResource(R.string.gen_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Strong, unique credentials generated locally with a CSPRNG",
+            text = stringResource(R.string.gen_subtitle),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -110,7 +117,7 @@ fun GeneratorScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "GENERATED CREDENTIAL",
+                        text = stringResource(R.string.gen_result_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -125,7 +132,7 @@ fun GeneratorScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Regenerate",
+                            contentDescription = stringResource(R.string.gen_regenerate),
                             tint = CyberEmerald,
                             modifier = Modifier.size(18.dp)
                         )
@@ -156,14 +163,14 @@ fun GeneratorScreen(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            viewModel.copySecurely("Password", password, isSensitive = true)
+                            viewModel.copySecurely(passwordClipboardLabel, password, isSensitive = true)
                         },
                         modifier = Modifier.weight(1f).testTag("copy_generated_button"),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Copy")
+                        Text(stringResource(R.string.common_copy))
                     }
 
                     Button(
@@ -176,7 +183,7 @@ fun GeneratorScreen(
                     ) {
                         Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Save to Vault", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.gen_save_to_vault), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -192,7 +199,7 @@ fun GeneratorScreen(
             FilterChip(
                 selected = !config.isPassphraseMode,
                 onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = false)) },
-                label = { Text("Password", fontSize = 13.sp) },
+                label = { Text(stringResource(R.string.gen_mode_password), fontSize = 13.sp) },
                 shape = CircleShape,
                 border = null,
                 modifier = Modifier.weight(1f),
@@ -207,7 +214,7 @@ fun GeneratorScreen(
             FilterChip(
                 selected = config.isPassphraseMode,
                 onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = true)) },
-                label = { Text("Passphrase", fontSize = 13.sp) },
+                label = { Text(stringResource(R.string.gen_mode_passphrase), fontSize = 13.sp) },
                 shape = CircleShape,
                 border = null,
                 modifier = Modifier.weight(1f),
@@ -243,12 +250,12 @@ fun GeneratorScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Password Length",
+                            text = stringResource(R.string.gen_password_length),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "${config.length} chars",
+                            text = pluralStringResource(R.plurals.gen_chars_count, config.length, config.length),
                             fontFamily = JetBrainsMonoFamily,
                             fontWeight = FontWeight.Bold,
                             color = CyberEmerald
@@ -272,27 +279,27 @@ fun GeneratorScreen(
 
                     // Toggles
                     GeneratorToggleRow(
-                        title = "Uppercase Letters (A-Z)",
+                        title = stringResource(R.string.gen_opt_uppercase),
                         checked = config.includeUpper,
                         onCheckedChange = { viewModel.updateGeneratorConfig(config.copy(includeUpper = it)) }
                     )
                     GeneratorToggleRow(
-                        title = "Lowercase Letters (a-z)",
+                        title = stringResource(R.string.gen_opt_lowercase),
                         checked = config.includeLower,
                         onCheckedChange = { viewModel.updateGeneratorConfig(config.copy(includeLower = it)) }
                     )
                     GeneratorToggleRow(
-                        title = "Numbers (0-9)",
+                        title = stringResource(R.string.gen_opt_numbers),
                         checked = config.includeDigits,
                         onCheckedChange = { viewModel.updateGeneratorConfig(config.copy(includeDigits = it)) }
                     )
                     GeneratorToggleRow(
-                        title = "Special Symbols (!@#$)",
+                        title = stringResource(R.string.gen_opt_symbols),
                         checked = config.includeSymbols,
                         onCheckedChange = { viewModel.updateGeneratorConfig(config.copy(includeSymbols = it)) }
                     )
                     GeneratorToggleRow(
-                        title = "Avoid Ambiguous (1, l, 0, O)",
+                        title = stringResource(R.string.gen_opt_avoid_ambiguous),
                         checked = config.avoidAmbiguous,
                         onCheckedChange = { viewModel.updateGeneratorConfig(config.copy(avoidAmbiguous = it)) }
                     )
@@ -304,12 +311,12 @@ fun GeneratorScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Word Count",
+                            text = stringResource(R.string.gen_word_count),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "${config.passphraseWords} words",
+                            text = pluralStringResource(R.plurals.gen_words_count, config.passphraseWords, config.passphraseWords),
                             fontFamily = JetBrainsMonoFamily,
                             fontWeight = FontWeight.Bold,
                             color = CyberEmerald
@@ -331,13 +338,18 @@ fun GeneratorScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Separator",
+                        text = stringResource(R.string.gen_separator),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("-" to "-", "." to ".", "_" to "_", " " to "space").forEach { (sep, label) ->
+                        listOf(
+                            "-" to "-",
+                            "." to ".",
+                            "_" to "_",
+                            " " to stringResource(R.string.gen_separator_space)
+                        ).forEach { (sep, label) ->
                             FilterChip(
                                 selected = config.passphraseSeparator == sep,
                                 onClick = {
@@ -352,7 +364,7 @@ fun GeneratorScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     GeneratorToggleRow(
-                        title = "Capitalise Words",
+                        title = stringResource(R.string.gen_opt_capitalise),
                         checked = config.passphraseCapitalise,
                         onCheckedChange = {
                             viewModel.updateGeneratorConfig(config.copy(passphraseCapitalise = it))
@@ -361,7 +373,7 @@ fun GeneratorScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Passphrases trade symbols for word entropy. Use a unique passphrase per account and store it here.",
+                        text = stringResource(R.string.gen_passphrase_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -388,18 +400,18 @@ fun GeneratorScreen(
                     ) {
                         Column {
                             Text(
-                                text = "SESSION HISTORY",
+                                text = stringResource(R.string.gen_history_title),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "In memory only · cleared when the vault locks",
+                                text = stringResource(R.string.gen_history_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         TextButton(onClick = { viewModel.clearGeneratorHistory() }) {
-                            Text("Clear", fontSize = 12.sp)
+                            Text(stringResource(R.string.common_clear), fontSize = 12.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -409,24 +421,37 @@ fun GeneratorScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
+                                val relativeTimestamp = relativeTime(entry.createdAtMillis)
                                 Text(
-                                    text = if (entry.isPassphrase) "Passphrase · ${entry.length} chars" else "Password · ${entry.length} chars",
+                                    text = if (entry.isPassphrase) {
+                                        pluralStringResource(
+                                            R.plurals.gen_history_passphrase,
+                                            entry.length,
+                                            entry.length
+                                        )
+                                    } else {
+                                        pluralStringResource(
+                                            R.plurals.gen_history_password,
+                                            entry.length,
+                                            entry.length
+                                        )
+                                    },
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Text(
-                                    text = "••••••••••  ${relativeTime(entry.createdAtMillis)}",
+                                    text = "••••••••••  $relativeTimestamp",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             IconButton(
                                 onClick = {
-                                    viewModel.copySecurely("Generated credential", entry.value, isSensitive = true)
+                                    viewModel.copySecurely(generatedClipboardLabel, entry.value, isSensitive = true)
                                 }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copy generated credential",
+                                    contentDescription = stringResource(R.string.gen_a11y_copy_generated),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -439,12 +464,19 @@ fun GeneratorScreen(
     }
 }
 
+@Composable
 private fun relativeTime(createdAtMillis: Long): String {
     val diffSeconds = ((System.currentTimeMillis() - createdAtMillis) / 1000).coerceAtLeast(0)
     return when {
-        diffSeconds < 45 -> "just now"
-        diffSeconds < 60 * 60 -> "${diffSeconds / 60} min ago"
-        else -> "${diffSeconds / 3600} h ago"
+        diffSeconds < 45 -> stringResource(R.string.gen_time_just_now)
+        diffSeconds < 60 * 60 -> {
+            val minutes = (diffSeconds / 60).toInt()
+            pluralStringResource(R.plurals.gen_time_minutes_ago, minutes, minutes)
+        }
+        else -> {
+            val hours = (diffSeconds / 3600).toInt()
+            pluralStringResource(R.plurals.gen_time_hours_ago, hours, hours)
+        }
     }
 }
 

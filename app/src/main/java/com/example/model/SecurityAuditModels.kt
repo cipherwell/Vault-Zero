@@ -18,8 +18,11 @@ data class Vulnerability(
     val itemTitle: String,
     val type: VulnerabilityType,
     val severity: Severity,
+    /** English description, kept for logs/tests; the UI renders a localized template instead. */
     val description: String,
-    val recommendation: String
+    val recommendation: String,
+    /** Values for the localized description template, in template order. */
+    val descriptionArgs: List<Any> = emptyList(),
 )
 
 data class AuditReport(

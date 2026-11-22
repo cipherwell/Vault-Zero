@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vault list (VaultListScreen.kt) and 2FA dashboard (TotpDashboardDialog.kt).
+     Keep keys identical to values-es-rUS/strings_vault.xml. -->
+<resources>
+    <!-- Vault list: header and selection bar -->
+    <string name="vault_title">Vault</string>
+    <plurals name="vault_item_count">
+        <item quantity="one">%1$d item · AES-256 · unlocked</item>
+        <item quantity="other">%1$d items · AES-256 · unlocked</item>
+    </plurals>
+    <string name="vault_exit_selection">Exit selection</string>
+    <plurals name="vault_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="vault_mark_favorite">Mark selected as favourite</string>
+    <string name="vault_delete_selected">Delete selected</string>
+    <plurals name="vault_delete_selected_title">
+        <item quantity="one">Delete %1$d selected?</item>
+        <item quantity="other">Delete %1$d selected?</item>
+    </plurals>
+    <string name="vault_bulk_delete_body">These encrypted records are removed from this device permanently. This cannot be undone.</string>
+
+    <!-- Vault list: actions and menus -->
+    <string name="vault_add_item">Add item</string>
+    <string name="vault_sort_and_view_options">Sort and view options</string>
+    <string name="vault_sort_favorites_first">Favorites first</string>
+    <string name="vault_sort_title">Title A–Z</string>
+    <string name="vault_sort_recent">Recently updated</string>
+    <string name="vault_sort_recently_used">Recently used</string>
+    <string name="vault_group_by_type">Group by type</string>
+    <string name="vault_2fa_codes">2FA codes</string>
+    <string name="vault_select_items">Select items</string>
+    <string name="vault_clear_search">Clear search</string>
+    <string name="vault_filter_all">All</string>
+    <string name="vault_favorites">Favorites</string>
+
+    <!-- Vault list: empty states -->
+    <string name="vault_empty_search_title">No matches for \"%1$s\"</string>
+    <string name="vault_empty_favorites_title">No favorites yet</string>
+    <string name="vault_empty_vault_title">Your vault is empty</string>
+    <string name="vault_empty_type_login">No logins yet</string>
+    <string name="vault_empty_type_card">No cards yet</string>
+    <string name="vault_empty_type_api_secret">No API secrets yet</string>
+    <string name="vault_empty_type_crypto_wallet">No crypto wallets yet</string>
+    <string name="vault_empty_type_note">No secure notes yet</string>
+    <string name="vault_empty_type_identity">No identities yet</string>
+    <string name="vault_empty_search_body">Try a different term, or use type:login, is:weak or tag:work.</string>
+    <string name="vault_empty_favorites_body">Tap the heart on any item to pin it here.</string>
+    <string name="vault_empty_type_body">Add an item of this type with the + button.</string>
+    <string name="vault_empty_vault_body">Tap the + button below to securely store your logins, cards, and secrets.</string>
+    <string name="vault_clear_filters">Clear filters</string>
+    <string name="vault_open_generator">Generator</string>
+
+    <!-- Vault list rows: accessibility and clipboard labels -->
+    <string name="vault_2fa_code">2FA code</string>
+    <string name="vault_copy_2fa_code">Copy 2FA code</string>
+    <string name="vault_copy_2fa_code_for">Copy 2FA code for %1$s</string>
+    <string name="vault_selected_check">Selected</string>
+    <string name="vault_favorite_icon">Favorite</string>
+    <string name="vault_encrypted_note">Encrypted note</string>
+    <string name="vault_field_password">Password</string>
+    <string name="vault_field_card_number">Card number</string>
+    <string name="vault_field_api_key">API key</string>
+    <string name="vault_field_public_address">Public address</string>
+    <string name="vault_field_note">Note</string>
+    <string name="vault_field_id_number">ID number</string>
+
+    <!-- New item type picker -->
+    <string name="vault_new_item">New item</string>
+    <string name="vault_choose_type_body">Choose the type of record to encrypt.</string>
+    <string name="vault_type_desc_login">Websites, apps, usernames &amp; 2FA keys</string>
+    <string name="vault_type_desc_card">Credit &amp; debit cards, CVV &amp; PINs</string>
+    <string name="vault_type_desc_api_secret">API keys, access tokens &amp; backend secrets</string>
+    <string name="vault_type_desc_crypto_wallet">Seed phrases, private keys &amp; wallets</string>
+    <string name="vault_type_desc_note">Encrypted notes &amp; private text</string>
+    <string name="vault_type_desc_identity">Passports, IDs &amp; legal documents</string>
+
+    <!-- 2FA dashboard -->
+    <string name="totp_title">2FA codes</string>
+    <plurals name="totp_live_count">
+        <item quantity="one">%1$d live code · refreshes every 30s</item>
+        <item quantity="other">%1$d live codes · refreshes every 30s</item>
+    </plurals>
+    <string name="totp_close_codes">Close 2FA codes</string>
+    <string name="totp_empty">No logins have a 2FA secret yet. Add one from an item\'s editor to see live codes here.</string>
+    <string name="totp_copy_code_for">Copy 2FA code for %1$s</string>
+</resources>

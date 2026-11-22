@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Español (Estados Unidos): generador de contraseñas, auditoría de seguridad y componentes compartidos. -->
+<resources>
+    <!-- Generador de contraseñas -->
+    <string name="gen_title">Generador de contraseñas</string>
+    <string name="gen_subtitle">Credenciales seguras y únicas generadas localmente con un CSPRNG</string>
+    <string name="gen_result_label">CREDENCIAL GENERADA</string>
+    <string name="gen_regenerate">Regenerar</string>
+    <string name="gen_clipboard_password">Contraseña</string>
+    <string name="gen_clipboard_generated">Credencial generada</string>
+    <string name="gen_save_to_vault">Guardar en la bóveda</string>
+    <string name="gen_mode_password">Contraseña</string>
+    <string name="gen_mode_passphrase">Frase de contraseña</string>
+    <string name="gen_password_length">Longitud de la contraseña</string>
+    <plurals name="gen_chars_count">
+        <item quantity="one">%1$d carácter</item>
+        <item quantity="other">%1$d caracteres</item>
+    <item quantity="many">%1$d caracteres</item>
+    </plurals>
+    <string name="gen_opt_uppercase">Letras mayúsculas (A-Z)</string>
+    <string name="gen_opt_lowercase">Letras minúsculas (a-z)</string>
+    <string name="gen_opt_numbers">Números (0-9)</string>
+    <string name="gen_opt_symbols">Símbolos especiales (!@#$)</string>
+    <string name="gen_opt_avoid_ambiguous">Evitar caracteres ambiguos (1, l, 0, O)</string>
+    <string name="gen_word_count">Cantidad de palabras</string>
+    <plurals name="gen_words_count">
+        <item quantity="one">%1$d palabra</item>
+        <item quantity="other">%1$d palabras</item>
+    <item quantity="many">%1$d palabras</item>
+    </plurals>
+    <string name="gen_separator">Separador</string>
+    <string name="gen_separator_space">espacio</string>
+    <string name="gen_opt_capitalise">Capitalizar palabras</string>
+    <string name="gen_passphrase_hint">Las frases de contraseña cambian símbolos por entropía de palabras. Usa una frase de contraseña única por cuenta y guárdala aquí.</string>
+    <string name="gen_history_title">HISTORIAL DE LA SESIÓN</string>
+    <string name="gen_history_subtitle">Solo en memoria · se borra cuando la bóveda se bloquea</string>
+    <plurals name="gen_history_passphrase">
+        <item quantity="one">Frase de contraseña · %1$d carácter</item>
+        <item quantity="other">Frase de contraseña · %1$d caracteres</item>
+    <item quantity="many">Frase de contraseña · %1$d caracteres</item>
+    </plurals>
+    <plurals name="gen_history_password">
+        <item quantity="one">Contraseña · %1$d carácter</item>
+        <item quantity="other">Contraseña · %1$d caracteres</item>
+    <item quantity="many">Contraseña · %1$d caracteres</item>
+    </plurals>
+    <string name="gen_time_just_now">hace un momento</string>
+    <plurals name="gen_time_minutes_ago">
+        <item quantity="one">hace %1$d min</item>
+        <item quantity="other">hace %1$d min</item>
+    <item quantity="many">hace %1$d min</item>
+    </plurals>
+    <plurals name="gen_time_hours_ago">
+        <item quantity="one">hace %1$d h</item>
+        <item quantity="other">hace %1$d h</item>
+    <item quantity="many">hace %1$d h</item>
+    </plurals>
+    <string name="gen_a11y_copy_generated">Copiar credencial generada</string>
+
+    <!-- Auditoría de seguridad -->
+    <string name="audit_title">Auditoría de seguridad</string>
+    <string name="audit_subtitle">Revisión local de la seguridad, la reutilización, la antigüedad y la configuración de 2FA de tus contraseñas</string>
+    <string name="audit_grade">Calificación %1$s</string>
+    <string name="audit_no_issues">No se encontraron problemas en los inicios de sesión que guardaste.</string>
+    <plurals name="audit_issues_found">
+        <item quantity="one">Se encontró %1$d problema de seguridad en tus credenciales.</item>
+        <item quantity="other">Se encontraron %1$d problemas de seguridad en tus credenciales.</item>
+    <item quantity="many">Se encontraron %1$d problemas de seguridad en tus credenciales.</item>
+    </plurals>
+    <string name="audit_score_label">PUNTUACIÓN</string>
+    <string name="audit_metric_weak">Débiles</string>
+    <string name="audit_metric_reused">Reutilizadas</string>
+    <string name="audit_metric_stale">Antiguas</string>
+    <string name="audit_metric_2fa_error">Error de 2FA</string>
+    <string name="audit_section_status">ESTADO</string>
+    <string name="audit_section_action_items">ACCIONES PENDIENTES (%1$d)</string>
+    <string name="audit_posture_ok_title">Postura de seguridad óptima</string>
+    <string name="audit_posture_ok_body">No se detectaron contraseñas débiles, reutilizadas ni antiguas. ¡Sigue con esos buenos hábitos de seguridad!</string>
+    <string name="audit_fix">SOLUCIONAR</string>
+
+    <!-- Componentes compartidos -->
+    <string name="comp_totp_code_label">CÓDIGO 2FA</string>
+    <string name="comp_copy_2fa_code">Copiar código 2FA</string>
+    <string name="comp_reveal">Mostrar</string>
+    <string name="comp_hide">Ocultar</string>
+    <string name="comp_zk_badge">AES-256-GCM · CONOCIMIENTO CERO</string>
+</resources>

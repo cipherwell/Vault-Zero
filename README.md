@@ -6,7 +6,7 @@
 
 **Offline, zero-knowledge password manager and encrypted vault for Android.**
 
-AES-256-GCM · Argon2id (64 MiB, t=3) · BIP-39 128-bit recovery kits · hardware biometrics · no network permission · no accounts · no telemetry
+AES-256-GCM · Argon2id (64 MiB, t=3) · English/Spanish · BIP-39 128-bit recovery kits · hardware biometrics · no network permission · no accounts · no telemetry
 
 🌐 [cipherwell.github.io/Vault-Zero](https://cipherwell.github.io/Vault-Zero/) · 📦 [GitHub Releases](https://github.com/cipherwell/Vault-Zero/releases) · 📚 [Documentation](docs/README.md)
 
@@ -33,7 +33,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** production release **v1.6.0** (`versionCode 8`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
+> **Status:** production release **v1.7.0** (`versionCode 9`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -76,6 +76,9 @@ More in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 - **Argon2id** (RFC 9106: 64 MiB, 3 iterations, 1 lane) with 128-bit random salts for every new key
   envelope. Vaults and backups still using PBKDF2-HMAC-SHA256 (600,000) open normally and are
   transparently migrated to Argon2id on the next successful unlock.
+- **Bilingual English (US) / Spanish (US):** every screen, dialog and error is translated, with the
+  language switch available on the lock screen before the first vault exists and in Settings. The
+  choice applies instantly and is stored outside the vault data.
 - **BIP-39 128-bit recovery kit** (2048-word standard, unique words); change master password without re-encrypting records; rotate an exposed kit without changing the vault.
 - Hardware-backed biometric unlock through Android Keystore + `BiometricPrompt.CryptoObject` — **per-use** authentication, invalidated when biometrics are re-enrolled. The prompt auto-appears on app open when enabled.
 - Configurable auto-lock, background lock (screen-off locks immediately; SAF picker exempt), clipboard auto-clear, `FLAG_SECURE`, Recent-Apps preview blocked.
@@ -113,11 +116,11 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest production release: **[GitHub Releases → v1.6.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest production release: **[GitHub Releases → v1.7.0](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.6.0.apk` (sideload) | 1,894,353 B | `c12234e22711b18c6b05fb311f68989cc4d0e9bb7325389b704f710ced95436d` |
+| `VaultZero-v1.7.0.apk` (sideload) | 2,151,605 B | `5038b7b49eee5d818f3265a0b4c2238f78ae3ecd70ce825c6b6482f039324a01` |
 
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Español (Estados Unidos): lista de la bóveda y panel de 2FA.
+     Keep keys identical to values/strings_vault.xml. -->
+<resources>
+    <!-- Lista de la bóveda: encabezado y barra de selección -->
+    <string name="vault_title">Bóveda</string>
+    <plurals name="vault_item_count">
+        <item quantity="one">%1$d entrada · AES-256 · desbloqueada</item>
+        <item quantity="other">%1$d entradas · AES-256 · desbloqueada</item>
+    <item quantity="many">%1$d entradas · AES-256 · desbloqueada</item>
+    </plurals>
+    <string name="vault_exit_selection">Salir de la selección</string>
+    <plurals name="vault_selected_count">
+        <item quantity="one">%1$d seleccionada</item>
+        <item quantity="other">%1$d seleccionadas</item>
+    <item quantity="many">%1$d seleccionadas</item>
+    </plurals>
+    <string name="vault_mark_favorite">Marcar las seleccionadas como favoritas</string>
+    <string name="vault_delete_selected">Eliminar seleccionadas</string>
+    <plurals name="vault_delete_selected_title">
+        <item quantity="one">¿Eliminar %1$d seleccionada?</item>
+        <item quantity="other">¿Eliminar %1$d seleccionadas?</item>
+    <item quantity="many">¿Eliminar %1$d seleccionadas?</item>
+    </plurals>
+    <string name="vault_bulk_delete_body">Estas entradas cifradas se eliminan de este dispositivo de forma permanente. Esta acción no se puede deshacer.</string>
+
+    <!-- Lista de la bóveda: acciones y menús -->
+    <string name="vault_add_item">Agregar entrada</string>
+    <string name="vault_sort_and_view_options">Opciones de orden y vista</string>
+    <string name="vault_sort_favorites_first">Favoritos primero</string>
+    <string name="vault_sort_title">Título A–Z</string>
+    <string name="vault_sort_recent">Actualizados recientemente</string>
+    <string name="vault_sort_recently_used">Usados recientemente</string>
+    <string name="vault_group_by_type">Agrupar por tipo</string>
+    <string name="vault_2fa_codes">Códigos 2FA</string>
+    <string name="vault_select_items">Seleccionar entradas</string>
+    <string name="vault_clear_search">Borrar búsqueda</string>
+    <string name="vault_filter_all">Todos</string>
+    <string name="vault_favorites">Favoritos</string>
+
+    <!-- Lista de la bóveda: estados vacíos -->
+    <string name="vault_empty_search_title">No hay coincidencias para \"%1$s\"</string>
+    <string name="vault_empty_favorites_title">Aún no hay favoritos</string>
+    <string name="vault_empty_vault_title">Tu bóveda está vacía</string>
+    <string name="vault_empty_type_login">Aún no hay inicios de sesión</string>
+    <string name="vault_empty_type_card">Aún no hay tarjetas</string>
+    <string name="vault_empty_type_api_secret">Aún no hay secretos de API</string>
+    <string name="vault_empty_type_crypto_wallet">Aún no hay billeteras cripto</string>
+    <string name="vault_empty_type_note">Aún no hay notas seguras</string>
+    <string name="vault_empty_type_identity">Aún no hay identidades</string>
+    <string name="vault_empty_search_body">Prueba con otro término o usa type:login, is:weak o tag:work.</string>
+    <string name="vault_empty_favorites_body">Toca el corazón de cualquier entrada para fijarla aquí.</string>
+    <string name="vault_empty_type_body">Agrega una entrada de este tipo con el botón +.</string>
+    <string name="vault_empty_vault_body">Toca el botón + para guardar tus inicios de sesión, tarjetas y secretos de forma segura.</string>
+    <string name="vault_clear_filters">Borrar filtros</string>
+    <string name="vault_open_generator">Generador</string>
+
+    <!-- Filas de la bóveda: accesibilidad y etiquetas del portapapeles -->
+    <string name="vault_2fa_code">Código 2FA</string>
+    <string name="vault_copy_2fa_code">Copiar código 2FA</string>
+    <string name="vault_copy_2fa_code_for">Copiar código 2FA de %1$s</string>
+    <string name="vault_selected_check">Seleccionado</string>
+    <string name="vault_favorite_icon">Favorito</string>
+    <string name="vault_encrypted_note">Nota cifrada</string>
+    <string name="vault_field_password">Contraseña</string>
+    <string name="vault_field_card_number">Número de tarjeta</string>
+    <string name="vault_field_api_key">Clave de API</string>
+    <string name="vault_field_public_address">Dirección pública</string>
+    <string name="vault_field_note">Nota</string>
+    <string name="vault_field_id_number">Número de identificación</string>
+
+    <!-- Selector de tipo de entrada nueva -->
+    <string name="vault_new_item">Nueva entrada</string>
+    <string name="vault_choose_type_body">Elige el tipo de registro que quieres cifrar.</string>
+    <string name="vault_type_desc_login">Sitios web, aplicaciones, usuarios y claves 2FA</string>
+    <string name="vault_type_desc_card">Tarjetas de crédito y débito, CVV y PIN</string>
+    <string name="vault_type_desc_api_secret">Claves de API, tokens de acceso y secretos de backend</string>
+    <string name="vault_type_desc_crypto_wallet">Frases semilla, claves privadas y billeteras</string>
+    <string name="vault_type_desc_note">Notas cifradas y texto privado</string>
+    <string name="vault_type_desc_identity">Pasaportes, identificaciones y documentos legales</string>
+
+    <!-- Panel de 2FA -->
+    <string name="totp_title">Códigos 2FA</string>
+    <plurals name="totp_live_count">
+        <item quantity="one">%1$d código activo · se actualiza cada 30 s</item>
+        <item quantity="other">%1$d códigos activos · se actualizan cada 30 s</item>
+    <item quantity="many">%1$d códigos activos · se actualizan cada 30 s</item>
+    </plurals>
+    <string name="totp_close_codes">Cerrar códigos 2FA</string>
+    <string name="totp_empty">Ningún inicio de sesión tiene un secreto 2FA todavía. Agrega uno desde el editor de una entrada para ver los códigos activos aquí.</string>
+    <string name="totp_copy_code_for">Copiar código 2FA de %1$s</string>
+</resources>

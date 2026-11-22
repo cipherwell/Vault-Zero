@@ -1,0 +1,6 @@
+VaultZero v1.7.0:
+• Fully bilingual: English (US) and Spanish (US), every screen, dialog and error
+• Language switch on the lock/setup screen — understandable before you create a vault
+• Language switch in Settings, applied instantly without locking the vault
+• Per-app language entry for Android 13+ system settings
+• 128 JVM tests + on-device language checks; lint clean

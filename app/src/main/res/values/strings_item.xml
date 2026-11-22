@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item detail sheet and item editor strings (English, default).
+     Spanish (US) translations live in values-es-rUS/strings_item.xml. -->
+<resources>
+    <!-- Item detail: field labels (reused as clipboard labels where the wording is identical) -->
+    <string name="item_field_username_email">Username / Email</string>
+    <string name="item_field_password">Password</string>
+    <string name="item_field_website_url">Website URL</string>
+    <string name="item_field_notes">Notes</string>
+    <string name="item_field_cardholder">Cardholder</string>
+    <string name="item_field_card_number">Card Number</string>
+    <string name="item_field_expires">Expires</string>
+    <string name="item_field_cvv">CVV</string>
+    <string name="item_field_atm_pin">ATM PIN</string>
+    <string name="item_field_card_brand">Card Brand</string>
+    <string name="item_field_service_provider">Service / Provider</string>
+    <string name="item_field_api_key">API Key</string>
+    <string name="item_field_secret_token">Secret Token</string>
+    <string name="item_field_environment">Environment</string>
+    <string name="item_field_scopes">Scopes</string>
+    <string name="item_field_endpoint_url">Endpoint URL</string>
+    <string name="item_field_wallet_name">Wallet Name</string>
+    <string name="item_field_network">Network</string>
+    <string name="item_field_public_address">Public Address</string>
+    <string name="item_field_seed_recovery_phrase">Seed / Recovery Phrase</string>
+    <string name="item_field_private_key">Private Key</string>
+    <string name="item_field_derivation_path">Derivation Path</string>
+    <string name="item_field_secure_note_content">Secure Note Content</string>
+    <string name="item_field_full_name">Full Name</string>
+    <string name="item_field_id_type_number">%1$s Number</string>
+    <string name="item_field_birth_date">Birth Date</string>
+    <string name="item_field_expiry_date">Expiry Date</string>
+
+    <!-- Clipboard confirmation labels (only where the copy label differs from the field label) -->
+    <string name="item_copy_username">Username</string>
+    <string name="item_copy_2fa_code">2FA Code</string>
+    <string name="item_copy_expiry">Expiry</string>
+    <string name="item_copy_pin">PIN</string>
+    <string name="item_copy_brand">Brand</string>
+    <string name="item_copy_service">Service</string>
+    <string name="item_copy_seed_phrase">Seed Phrase</string>
+    <string name="item_copy_note">Note</string>
+    <string name="item_copy_id_number">ID Number</string>
+
+    <!-- Item detail: delete confirmation -->
+    <string name="item_delete_title">Delete \'%1$s\'?</string>
+    <string name="item_delete_message">This encrypted item will be permanently removed from your vault. This cannot be undone.</string>
+    <string name="item_delete_permanently">Delete Permanently</string>
+
+    <!-- Item editor: header and accessibility -->
+    <string name="item_editor_title_new">New %1$s</string>
+    <string name="item_editor_title_edit">Edit Entry</string>
+    <string name="item_editor_subtitle_encrypted">Encrypted client-side with AES-256-GCM</string>
+    <string name="item_a11y_close_editor">Close editor</string>
+    <string name="item_a11y_generate_password">Generate strong password</string>
+
+    <!-- Item editor: common fields -->
+    <string name="item_field_title">Title / Label</string>
+    <string name="item_placeholder_title">e.g. GitHub, AWS Prod, Personal Card</string>
+    <string name="item_field_category">Category / Tag</string>
+    <string name="item_placeholder_category">e.g. Work, Finance, Personal</string>
+
+    <!-- Item editor: login fields -->
+    <string name="item_field_username_or_email">Username or Email</string>
+    <string name="item_field_totp_secret">2FA Authenticator Secret (Optional Base32)</string>
+    <string name="item_placeholder_totp">e.g. JBSWY3DPEHPK3PXP</string>
+    <string name="item_field_website_url_optional">Website URL (Optional)</string>
+    <string name="item_placeholder_url">https://example.com</string>
+    <string name="item_field_private_notes_optional">Private Notes (Optional)</string>
+
+    <!-- Item editor: card fields -->
+    <string name="item_field_cardholder_name">Cardholder Name</string>
+    <string name="item_placeholder_card_number">4532 8812 9014 3829</string>
+    <string name="item_field_expiry_month">Month (MM)</string>
+    <string name="item_field_expiry_year">Year (YY)</string>
+    <string name="item_field_atm_pin_optional">ATM PIN (Optional)</string>
+    <string name="item_field_card_network_brand">Card Network / Brand</string>
+    <string name="item_field_card_notes_optional">Card Notes (Optional)</string>
+
+    <!-- Item editor: API secret fields -->
+    <string name="item_field_provider">Provider / Platform</string>
+    <string name="item_placeholder_provider">e.g. OpenAI, Stripe, AWS</string>
+    <string name="item_field_api_key_client_id">API Key / Client ID</string>
+    <string name="item_field_secret_token_private_key">Secret Token / Private Key</string>
+    <string name="item_placeholder_environment">Production / Staging / Dev</string>
+    <string name="item_field_scopes_permissions_optional">Scopes / Permissions (Optional)</string>
+    <string name="item_field_endpoint_url_optional">Endpoint URL (Optional)</string>
+    <string name="item_field_notes_optional">Notes (Optional)</string>
+
+    <!-- Item editor: crypto wallet fields -->
+    <string name="item_placeholder_wallet_name">e.g. Ledger Cold Vault</string>
+    <string name="item_field_blockchain_network">Blockchain Network</string>
+    <string name="item_placeholder_network">Ethereum, Solana, Bitcoin</string>
+    <string name="item_field_seed_phrase">Seed Phrase (12 or 24 words)</string>
+    <string name="item_field_private_key_optional">Private Key (Optional)</string>
+    <string name="item_field_derivation_path_optional">Derivation Path (Optional)</string>
+
+    <!-- Item editor: secure note fields -->
+    <string name="item_field_secure_note">Secure Note (AES-256 Encrypted)</string>
+
+    <!-- Item editor: identity fields -->
+    <string name="item_field_full_legal_name">Full Legal Name</string>
+    <string name="item_field_document_type">Document Type</string>
+    <string name="item_placeholder_document_type">Passport, National ID, Driver\'s License</string>
+    <string name="item_field_document_number">Document / License Number</string>
+    <string name="item_field_birth_date_optional">Birth Date (Optional)</string>
+    <string name="item_field_expiry_date_optional">Expiry Date (Optional)</string>
+
+    <!-- Item editor: default values written into a new entry -->
+    <string name="item_default_title_login">New Login</string>
+    <string name="item_default_title_card">Payment Card</string>
+    <string name="item_default_title_api">API Key</string>
+    <string name="item_default_title_crypto">Crypto Wallet</string>
+    <string name="item_default_title_note">Secure Note</string>
+    <string name="item_default_title_identity">Identity Document</string>
+    <string name="item_default_category">Personal</string>
+
+    <!-- Item editor: actions and unsaved-changes guard -->
+    <string name="item_save_encrypted">Save Encrypted</string>
+    <string name="item_discard_title">Discard changes?</string>
+    <string name="item_discard_message">You have unsaved edits in this entry. Closing now will lose them.</string>
+    <string name="item_discard_confirm">Discard</string>
+    <string name="item_keep_editing">Keep editing</string>
+</resources>
