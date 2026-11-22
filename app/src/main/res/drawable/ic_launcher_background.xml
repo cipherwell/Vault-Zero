@@ -21,11 +21,11 @@
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="radial"
-                android:centerX="19"
+                android:centerX="21"
                 android:centerY="15"
-                android:gradientRadius="84"
-                android:startColor="#1AFFFFFF"
-                android:centerColor="#06FFFFFF"
+                android:gradientRadius="86"
+                android:startColor="#29FFFFFF"
+                android:centerColor="#08FFFFFF"
                 android:endColor="#00FFFFFF" />
         </aapt:attr>
     </path>

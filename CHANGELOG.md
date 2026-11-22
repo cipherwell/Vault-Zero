@@ -3,6 +3,16 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.6] — 2026-11-21
+
+### Changed
+- **The key icon gets personality.** Same V-bow / Z-tip structure, now treated like a product logo:
+  a flat offset shadow for depth, a cyan **V** in the bow, two sparkles, and tighter proportions.
+  All geometry is scaled into the 66 dp safe circle so no launcher mask clips the sparkles.
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.5] — 2026-11-21
 
 ### Changed

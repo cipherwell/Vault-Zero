@@ -1,0 +1,5 @@
+VaultZero v1.7.6:
+• The key icon gets depth: flat two-tone shadow, cyan V, sparkles
+• Same V-bow / Z-tip structure, polished like a product logo
+• Adaptive + monochrome layers, every density
+• No functional or cryptographic changes

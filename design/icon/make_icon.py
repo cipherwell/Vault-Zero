@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Generate VaultZero's icon: a key whose bow is a V and whose tip is a Z.
+"""Generate VaultZero's icon: a living key — V bow, Z tip, flat two-tone depth.
 
-A classic key silhouette carries the initials:
-  - the bow (the part you hold) is a round loop with a **V-shaped opening**
-  - the bit/tip is drawn as a **Z**
+Design language (Google-product flat): one bold silhouette, a flat offset
+shadow for depth, a single accent colour (cyan V) and a sparkle for energy.
+The key is tilted 6° so it reads as an object rather than a glyph.
 
-Everything is vector geometry on Android's 108dp adaptive canvas, kept inside
-the 66dp safe circle, with a separate monochrome layer for themed icons. The
-same source emits the adaptive layers, legacy squircle/round renders and the
-512px store artwork.
+The initials are the structure: the bow is a loop with a V-shaped opening and
+the bit is a Z. All geometry stays inside Android's 66dp safe circle; the
+monochrome layer keeps the V as a real hole so themed icons still read.
 """
 from pathlib import Path
 
@@ -18,20 +17,22 @@ DESIGN = ROOT / "design/icon"
 
 BG_START = "#2F6BFF"
 BG_END = "#0A2366"
-GLYPH = "#FFFFFF"
+INK = "#FFFFFF"
+SHADOW = "#0B2F7A"
+ACCENT = "#6FE3FF"
+TILT = 0.0
+SCALE = 0.92
 
-# --- geometry (fits y=21..86.5, x=39..69 inside the 66dp safe circle) -----
-BOW_C = (54.0, 36.0)
-BOW_R = 15.0
-V_HOLE = ((46.0, 28.0), (62.0, 28.0), (54.0, 45.0))
-SHAFT_TOP = 50.0
-SHAFT_BOTTOM = 68.0
-SHAFT_W = 9.0
-Z_TOP = 68.0
-Z_BOTTOM = 83.0
-Z_LEFT = 41.0
-Z_RIGHT = 67.0
-Z_W = 7.0
+BOW_C = (54.0, 35.0)
+BOW_R = 13.0
+V_HOLE = ((47.0, 28.0), (61.0, 28.0), (54.0, 43.0))
+SHAFT = (54.0, 45.0, 54.0, 70.0)
+SHAFT_W = 8.0
+Z_PTS = ((38.0, 70.0), (70.0, 70.0), (38.0, 83.5), (70.0, 83.5))
+Z_W = 6.5
+OFFSET = (1.2, 1.7)
+SPARKLE_BIG = (65.5, 27.5, 4.0)
+SPARKLE_SMALL = (72.5, 35.0, 2.3)
 
 
 def bow_path() -> str:
@@ -44,43 +45,73 @@ def bow_path() -> str:
     return f"{circle} {hole}"
 
 
+def v_triangle_path() -> str:
+    (x0, y0), (x1, y1), (x2, y2) = V_HOLE
+    return f"M{x0},{y0} L{x1},{y1} L{x2},{y2} Z"
+
+
 def shaft_path() -> str:
-    return f"M{BOW_C[0]},{SHAFT_TOP} L{BOW_C[0]},{SHAFT_BOTTOM}"
+    return f"M{SHAFT[0]},{SHAFT[1]} L{SHAFT[2]},{SHAFT[3]}"
 
 
 def z_path() -> str:
-    return (f"M{Z_LEFT},{Z_TOP} L{Z_RIGHT},{Z_TOP} "
-            f"L{Z_LEFT},{Z_BOTTOM} L{Z_RIGHT},{Z_BOTTOM}")
+    (x0, y0), (x1, y1), (x2, y2), (x3, y3) = Z_PTS
+    return f"M{x0},{y0} L{x1},{y1} L{x2},{y2} L{x3},{y3}"
 
 
-# --- Android vector layers -------------------------------------------------
-def vector_glyph(comment: str, monochrome: bool = False) -> str:
-    color = GLYPH
-    body = f"""    <path
-        android:fillColor="{color}"
-        android:fillType="evenOdd"
-        android:pathData="{bow_path()}" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="{color}"
-        android:strokeWidth="{SHAFT_W}"
-        android:strokeLineCap="round"
-        android:pathData="{shaft_path()}" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="{color}"
-        android:strokeWidth="{Z_W}"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="{z_path()}" />"""
+def sparkle_path(cx: float, cy: float, r: float, k: float = 0.22) -> str:
+    return (f"M{cx},{cy - r} C{cx + k * r},{cy - k * r} {cx + k * r},{cy - k * r} {cx + r},{cy} "
+            f"C{cx + k * r},{cy + k * r} {cx + k * r},{cy + k * r} {cx},{cy + r} "
+            f"C{cx - k * r},{cy + k * r} {cx - k * r},{cy + k * r} {cx - r},{cy} "
+            f"C{cx - k * r},{cy - k * r} {cx - k * r},{cy - k * r} {cx},{cy - r} Z")
+
+
+def _key_paths(color: str) -> str:
+    return (
+        f'        <path android:fillColor="{color}" android:fillType="evenOdd" '
+        f'android:pathData="{bow_path()}" />\n'
+        f'        <path android:fillColor="#00000000" android:strokeColor="{color}" '
+        f'android:strokeWidth="{SHAFT_W}" android:strokeLineCap="round" '
+        f'android:pathData="{shaft_path()}" />\n'
+        f'        <path android:fillColor="#00000000" android:strokeColor="{color}" '
+        f'android:strokeWidth="{Z_W}" android:strokeLineCap="round" '
+        f'android:strokeLineJoin="round" android:pathData="{z_path()}" />'
+    )
+
+
+def vector_foreground() -> str:
     return f"""<?xml version="1.0" encoding="utf-8"?>
-<!-- {comment}. Key: V-shaped bow opening, Z-shaped tip, inside the 66dp safe zone. -->
+<!-- Living key: V bow, Z tip, flat offset shadow, cyan V and sparkles. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-{body}
+    <group android:rotation="{TILT}" android:scaleX="{SCALE}" android:scaleY="{SCALE}" android:pivotX="54" android:pivotY="54">
+    <group android:translateX="{OFFSET[0]}" android:translateY="{OFFSET[1]}">
+{_key_paths(SHADOW)}
+    </group>
+{_key_paths(INK)}
+    <path android:fillColor="{ACCENT}" android:pathData="{v_triangle_path()}" />
+    <path android:fillColor="{INK}" android:pathData="{sparkle_path(*SPARKLE_BIG)}" />
+    <path android:fillColor="{ACCENT}" android:pathData="{sparkle_path(*SPARKLE_SMALL)}" />
+    </group>
+</vector>
+"""
+
+
+def vector_monochrome() -> str:
+    return f"""<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon monochrome: key silhouette with the V as a real hole. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:rotation="{TILT}" android:scaleX="{SCALE}" android:scaleY="{SCALE}" android:pivotX="54" android:pivotY="54">
+{_key_paths(INK)}
+    <path android:fillColor="{INK}" android:pathData="{sparkle_path(*SPARKLE_BIG)}" />
+    </group>
 </vector>
 """
 
@@ -109,11 +140,11 @@ def vector_background() -> str:
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="radial"
-                android:centerX="19"
+                android:centerX="21"
                 android:centerY="15"
-                android:gradientRadius="84"
-                android:startColor="#1AFFFFFF"
-                android:centerColor="#06FFFFFF"
+                android:gradientRadius="86"
+                android:startColor="#29FFFFFF"
+                android:centerColor="#08FFFFFF"
                 android:endColor="#00FFFFFF" />
         </aapt:attr>
     </path>
@@ -126,20 +157,35 @@ def adaptive() -> str:
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <!-- Android 13+ themed icons: single-colour silhouette. -->
     <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>
 """
 
 
-# --- SVG renders -----------------------------------------------------------
-def glyph_svg() -> str:
-    return f"""    <path d="{bow_path()}" fill="{GLYPH}" fill-rule="evenodd"/>
-    <path d="{shaft_path()}" fill="none" stroke="{GLYPH}" stroke-width="{SHAFT_W}" stroke-linecap="round"/>
-    <path d="{z_path()}" fill="none" stroke="{GLYPH}" stroke-width="{Z_W}" stroke-linecap="round" stroke-linejoin="round"/>"""
+def glyph_svg(monochrome: bool = False) -> str:
+    parts = [f'<g transform="translate({OFFSET[0]},{OFFSET[1]})" fill="{SHADOW}" stroke="{SHADOW}">'
+             f'<path d="{bow_path()}" fill-rule="evenodd" stroke="none"/>'
+             f'<path d="{shaft_path()}" fill="none" stroke-width="{SHAFT_W}" stroke-linecap="round"/>'
+             f'<path d="{z_path()}" fill="none" stroke-width="{Z_W}" stroke-linecap="round" stroke-linejoin="round"/>'
+             f'</g>']
+    if monochrome:
+        parts = []
+    parts.append(
+        f'<g fill="{INK}" stroke="{INK}">'
+        f'<path d="{bow_path()}" fill-rule="evenodd" stroke="none"/>'
+        f'<path d="{shaft_path()}" fill="none" stroke-width="{SHAFT_W}" stroke-linecap="round"/>'
+        f'<path d="{z_path()}" fill="none" stroke-width="{Z_W}" stroke-linecap="round" stroke-linejoin="round"/>'
+        "</g>"
+    )
+    if not monochrome:
+        parts.append(f'<path d="{v_triangle_path()}" fill="{ACCENT}"/>')
+    parts.append(f'<path d="{sparkle_path(*SPARKLE_BIG)}" fill="{INK}"/>')
+    if not monochrome:
+        parts.append(f'<path d="{sparkle_path(*SPARKLE_SMALL)}" fill="{ACCENT}"/>')
+    return "\n".join(parts)
 
 
-def svg(shape: str) -> str:
+def svg(shape: str, monochrome: bool = False) -> str:
     clip = {
         "square": '<rect x="0" y="0" width="108" height="108" rx="24" ry="24"/>',
         "round": '<circle cx="54" cy="54" r="54"/>',
@@ -152,9 +198,9 @@ def svg(shape: str) -> str:
       <stop offset="0" stop-color="{BG_START}"/>
       <stop offset="1" stop-color="{BG_END}"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.18" cy="0.14" r="0.8">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.10"/>
-      <stop offset="0.6" stop-color="#fff" stop-opacity="0.03"/>
+    <radialGradient id="glow" cx="0.19" cy="0.14" r="0.86">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.16"/>
+      <stop offset="0.55" stop-color="#fff" stop-opacity="0.04"/>
       <stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
     <clipPath id="mask">{clip}</clipPath>
@@ -162,7 +208,9 @@ def svg(shape: str) -> str:
   <g clip-path="url(#mask)">
     <rect width="108" height="108" fill="url(#bg)"/>
     <rect width="108" height="108" fill="url(#glow)"/>
-{glyph_svg()}
+    <g transform="translate(4.32,4.32) scale({SCALE})">
+{glyph_svg(monochrome)}
+    </g>
   </g>
 </svg>
 """
@@ -174,10 +222,8 @@ def main() -> None:
     DESIGN.mkdir(parents=True, exist_ok=True)
 
     (RES / "drawable/ic_launcher_background.xml").write_text(vector_background())
-    (RES / "drawable/ic_launcher_foreground.xml").write_text(
-        vector_glyph("Launcher foreground"))
-    (RES / "drawable/ic_launcher_monochrome.xml").write_text(
-        vector_glyph("Themed-icon monochrome layer", monochrome=True))
+    (RES / "drawable/ic_launcher_foreground.xml").write_text(vector_foreground())
+    (RES / "drawable/ic_launcher_monochrome.xml").write_text(vector_monochrome())
     (RES / "mipmap-anydpi-v26/ic_launcher.xml").write_text(adaptive())
     (RES / "mipmap-anydpi-v26/ic_launcher_round.xml").write_text(adaptive())
 
@@ -185,9 +231,9 @@ def main() -> None:
         (DESIGN / f"vaultzero-icon-{shape}.svg").write_text(svg(shape))
     (DESIGN / "vaultzero-icon-glyph.svg").write_text(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">\n'
-        f'{glyph_svg().replace(GLYPH, "#000000")}\n</svg>'
+        f'{glyph_svg(monochrome=True)}\n</svg>'
     )
-    print("wrote key vector layers and SVGs")
+    print("wrote living-key vector layers and SVGs")
 
 
 if __name__ == "__main__":
