@@ -35,3 +35,13 @@ shipped app blocks screenshots. All sample data (Gmail, GitHub, `example.com`) i
 ## License
 
 The guides are part of the VaultZero repository and share its MIT license.
+
+## Social media images
+
+Facebook-ready carousels (1080 × 1350, 8 slides) and square 1080 × 1080 summaries, in English and
+Spanish, with copy-ready captions and ZIPs:
+
+- [`social/facebook-en/`](social/facebook-en) · [`social/facebook-es/`](social/facebook-es)
+- [`social/square/`](social/square)
+- [`social/FACEBOOK-POST.md`](social/FACEBOOK-POST.md)
+- [`social/vaultzero-facebook-en.zip`](social/vaultzero-facebook-en.zip) · [`social/vaultzero-facebook-es.zip`](social/vaultzero-facebook-es.zip)

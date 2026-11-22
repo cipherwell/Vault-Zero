@@ -1,0 +1,6 @@
+Your passwords, cards and 2FA codes — encrypted on your phone. No account. No cloud. No internet permission.
+
+VaultZero is an open-source Android vault, audited before beta. Swipe to see how it works, what it can honestly protect against, and how to try it. 🔐
+
+Links in the first comment.
+#VaultZero #Privacy #PasswordManager #OpenSource #Android #InfoSec #ZeroKnowledge

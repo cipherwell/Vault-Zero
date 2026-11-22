@@ -1,0 +1,6 @@
+Tus contraseñas, tarjetas y códigos 2FA, cifrados en tu teléfono. Sin cuenta. Sin nube. Sin permiso de internet.
+
+VaultZero es una bóveda Android de código abierto, auditada antes de la beta. Desliza para ver cómo funciona, de qué puede protegerte de verdad y cómo probarla. 🔐
+
+Enlaces en el primer comentario.
+#VaultZero #Privacidad #GestorDeContraseñas #CódigoAbierto #Android #Seguridad #ZeroKnowledge
