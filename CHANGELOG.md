@@ -3,6 +3,20 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.14] — 2026-11-22
+
+### Documentation
+- **Bilingual user guide** (`docs/guide/`): English and Spanish Markdown + A4 PDFs, covering every
+  feature in plain language, how the security works, an honest comparison with cloud managers, what
+  the app cannot protect against, backups/migration, installation and the audit summary. Includes a
+  social share kit.
+- **Corrected in-app cryptographic specifications.** The Settings dialog still described PBKDF2
+  600,000 rounds as the current KDF; it now states Argon2id (64 MiB, t=3, p=1) with PBKDF2 described
+  as the legacy envelope format, plus the per-record AAD binding and BIP-39 recovery phrase.
+
+### Notes
+- No functional or cryptographic changes; only the specification strings (EN/ES) and documentation.
+
 ## [1.7.13] — 2026-11-21
 
 ### Security

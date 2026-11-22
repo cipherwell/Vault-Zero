@@ -54,7 +54,7 @@
     <string name="settings_import_backup">Restaurar / importar copia de seguridad cifrada</string>
     <string name="settings_import_backup_desc">Importa registros desde una copia de seguridad JSON cifrada de VaultZero</string>
     <string name="settings_specs_title">Especificaciones criptográficas</string>
-    <string name="settings_specs_summary">AES-256-GCM, PBKDF2-HMAC-SHA256, cero telemetría</string>
+    <string name="settings_specs_summary">AES-256-GCM · Argon2id · Cero telemetría</string>
 
     <!-- Zona de peligro -->
     <string name="settings_section_danger">Zona de peligro</string>
@@ -121,7 +121,7 @@
 
     <!-- Ficha de especificaciones criptográficas -->
     <string name="settings_specs_dialog_title">Arquitectura de VaultZero</string>
-    <string name="settings_specs_dialog_body">• Cifrado: cifrado autenticado AES-256-GCM (etiqueta de autenticación de 128 bits, IV único de 12 bytes por registro, enlace AAD de GCM por registro).\n\n• Cero filtración de metadatos: los títulos, las categorías, las etiquetas y las cargas útiles de los registros se cifran juntos dentro de AES-256-GCM; las columnas de SQLite almacenan marcadores de posición redactados.\n\n• Derivación de claves y recuperación: PBKDF2WithHmacSHA256 (600,000 rondas), sal CSPRNG de 128 bits, verificadores HMAC-SHA256 y frase mnemónica de recuperación de 12 palabras con suma de comprobación SHA-256.\n\n• Conocimiento cero del lado del cliente: cero permisos de red, cero servidores remotos, Keystore StrongBox/TEE, FLAG_SECURE + supresión de capturas en recientes, y copias de seguridad que solo salen mediante un documento de Storage Access Framework que tú eliges.</string>
+    <string name="settings_specs_dialog_body">• Cifrado: AES-256-GCM con autenticación (etiqueta de 128 bits, IV único de 12 bytes por registro y AAD de GCM por registro).\n\n• Derivación de claves: Argon2id (RFC 9106) con 64 MiB de memoria, 3 iteraciones y 1 carril, más una sal aleatoria por bóveda. Los sobres antiguos con PBKDF2-HMAC-SHA256 (600.000 rondas) se migran a Argon2id al desbloquear.\n\n• Recuperación: frase BIP-39 de 12 palabras (128 bits de entropía, con suma de verificación), verificadores HMAC-SHA256 y ningún material de recuperación en texto plano en el disco.\n\n• Metadatos: los títulos, categorías, etiquetas y el contenido de los registros se cifran juntos con AES-256-GCM; las columnas de SQLite guardan marcadores redactados (el tipo de elemento y las fechas quedan como metadatos no secretos).\n\n• Conocimiento cero en el cliente: sin permiso de red, sin servidores, biometría respaldada por Keystore, FLAG_SECURE + supresión de capturas en Recientes, y copias de seguridad que solo salen mediante un documento del Storage Access Framework que tú eliges.</string>
 
     <!-- Cadenas con conteo -->
     <plurals name="settings_import_new_entries">

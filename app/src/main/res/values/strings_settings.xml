@@ -54,7 +54,7 @@
     <string name="settings_import_backup">Restore / Import Encrypted Backup</string>
     <string name="settings_import_backup_desc">Import records from a VaultZero encrypted JSON backup</string>
     <string name="settings_specs_title">Cryptographic Specifications</string>
-    <string name="settings_specs_summary">AES-256-GCM, PBKDF2-HMAC-SHA256, Zero Telemetry</string>
+    <string name="settings_specs_summary">AES-256-GCM · Argon2id · Zero telemetry</string>
 
     <!-- Danger zone -->
     <string name="settings_section_danger">Danger zone</string>
@@ -121,7 +121,7 @@
 
     <!-- Cryptographic spec sheet -->
     <string name="settings_specs_dialog_title">VaultZero Architecture</string>
-    <string name="settings_specs_dialog_body">• Cipher: AES-256-GCM authenticated encryption (128-bit authentication tag, unique 12-byte IV per record, per-record GCM AAD binding).\n\n• Zero Metadata Leakage: Record titles, categories, tags, and payloads are encrypted together inside AES-256-GCM; SQLite columns store redacted placeholders.\n\n• Key Derivation &amp; Recovery: PBKDF2WithHmacSHA256 (600,000 rounds), 128-bit CSPRNG salt, HMAC-SHA256 verifiers, and SHA-256 checksummed 12-word recovery mnemonic.\n\n• Client-Side Zero-Knowledge: Zero network permissions, zero remote servers, StrongBox/TEE Keystore, FLAG_SECURE + recents-screenshot suppression, and backups that leave only through a Storage Access Framework document you pick.</string>
+    <string name="settings_specs_dialog_body">• Cipher: AES-256-GCM authenticated encryption (128-bit authentication tag, a unique 12-byte IV per record, per-record GCM AAD binding).\n\n• Key derivation: Argon2id (RFC 9106) with 64 MiB memory, 3 iterations and 1 lane, plus a random per-vault salt. Older PBKDF2-HMAC-SHA256 (600,000 rounds) envelopes are migrated to Argon2id on unlock.\n\n• Recovery: 12-word BIP-39 phrase (128-bit entropy, checksummed), HMAC-SHA256 key verifiers, no plaintext recovery material on disk.\n\n• Metadata: record titles, categories, tags and payloads are encrypted together inside AES-256-GCM; SQLite columns hold redacted placeholders (item type and timestamps remain as non-secret metadata).\n\n• Client-side zero-knowledge: no network permission, no servers, Keystore-backed biometrics, FLAG_SECURE + recents screenshot suppression, and backups that leave only through a Storage Access Framework document you pick.</string>
 
     <!-- Counted strings -->
     <plurals name="settings_import_new_entries">

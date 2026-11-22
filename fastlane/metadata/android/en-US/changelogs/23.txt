@@ -1,0 +1,4 @@
+VaultZero v1.7.14:
+• New bilingual user guide (English & Spanish PDF)
+• Corrected in-app cryptographic specifications (Argon2id)
+• No functional or cryptographic changes
