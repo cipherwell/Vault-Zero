@@ -205,8 +205,8 @@ def build(lang: str, target: Path) -> None:
       <h2 style="font-size:62px">{t['cover_h1']}</h2></div></div>
     <p class="lead" style="font-size:34px">{t['cover_lead']}</p>
     <div class="chips">{"".join(f'<span class="chip">{c}</span>' for c in t['chips'])}</div>
-    <p class="lead" style="font-size:30px;opacity:.85">No account · No cloud · No internet permission<br>Open source · Audited before beta</p>
-    <div class="footer"><span>VaultZero</span><span>github.com/cipherwell/Vault-Zero</span></div>
+    <p class="lead" style="font-size:30px;opacity:.85">Open source · Audited before beta</p>
+    <div class="footer" style="background:none"><span>VaultZero</span><span>github.com/cipherwell/Vault-Zero</span></div>
     </section></body></html>""" if not es else f"""<!doctype html><html><head><meta charset="utf-8"><style>{CSS}
     html,body{{width:1080px;height:1080px}} .slide{{height:1080px;padding:70px 76px}}
     </style></head><body><section class="slide dark">
@@ -216,8 +216,8 @@ def build(lang: str, target: Path) -> None:
       <h2 style="font-size:62px">{t['cover_h1']}</h2></div></div>
     <p class="lead" style="font-size:34px">{t['cover_lead']}</p>
     <div class="chips">{"".join(f'<span class="chip">{c}</span>' for c in t['chips'])}</div>
-    <p class="lead" style="font-size:30px;opacity:.85">Sin cuenta · Sin nube · Sin permiso de internet<br>Código abierto · Auditada antes de la beta</p>
-    <div class="footer"><span>VaultZero</span><span>github.com/cipherwell/Vault-Zero</span></div>
+    <p class="lead" style="font-size:30px;opacity:.85">Código abierto · Auditada antes de la beta</p>
+    <div class="footer" style="background:none"><span>VaultZero</span><span>github.com/cipherwell/Vault-Zero</span></div>
     </section></body></html>"""
     sq_html = OUT / ("square-es.html" if es else "square-en.html")
     sq_html.write_text(square, encoding="utf-8")
