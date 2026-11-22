@@ -38,11 +38,14 @@ Google Play or an account.
 - **Main F-Droid repository:** VaultZero is prepared (`fdroid/com.cipherwell.vaultzero.yml`,
   reproducible builds) and can be submitted after the three-month public-history window
   (earliest ~21 January 2027). F-Droid builds the app itself from source with its own key.
-- **Self-hosted F-Droid repository (optional):** `fdroid/README.md` documents how to publish this
-  repo's own signed index (for example on GitHub Pages) so testers can add the repo URL to
-  F-Droid/Neo Store/Droid-ify and receive updates signed by the Cipherwell key, with zero Google
-  infrastructure. If we do this, the repo URL and its signing certificate will be published in the
-  release notes.
+- **Self-hosted F-Droid repository (live now, for testers):**
+  `https://cipherwell.github.io/Vault-Zero/fdroid/repo`
+
+  Add it in F-Droid / Neo Store / Droid-ify → Settings → Repositories, and confirm the signing
+  fingerprint `BC:CC:45:55:E6:94:84:E3:14:06:32:BA:07:0E:25:63:95:C9:65:F6:EF:FA:FD:74:06:0B:E7:6A:09:82:F9:49`.
+  This is a signed F-Droid index published from this repository (see `fdroid-repo/README.md`), so
+  testers get **automatic update prompts** for the signed APKs without Google or a store account.
+  Only the current version is served there; the full history stays on GitHub Releases.
 
 ## Why no Play Store
 

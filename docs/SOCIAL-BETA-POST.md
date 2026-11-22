@@ -20,7 +20,8 @@ Guardrails baked into these drafts (keep them if you edit):
 >
 > I'm opening a **small beta** on Android. Test-data only — this is pre-audit software.
 > APK + hashes: https://github.com/cipherwell/Vault-Zero/releases/latest
-> Not on Google Play, by design. Automatic updates via Obtainium, or manual APK installs.
+> Not on Google Play, by design. Automatic updates: add the self-hosted F-Droid repo
+> https://cipherwell.github.io/Vault-Zero/fdroid/repo (or Obtainium, or manual APK installs).
 > Guide: https://github.com/cipherwell/Vault-Zero/blob/main/docs/BETA.md
 >
 > Built in the open, MIT. Feedback very welcome. 🐾

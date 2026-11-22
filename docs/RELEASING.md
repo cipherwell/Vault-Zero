@@ -140,6 +140,18 @@ request to `fdroiddata` (see [fdroid/README.md](../fdroid/README.md)). F-Droid r
 with its own key; the recipe removes `debug.keystore` from the source scan. `AutoUpdateMode` uses
 tags, so every release needs a matching tag.
 
+### Self-hosted beta repo (testers)
+After publishing the GitHub release, refresh the signed F-Droid repository on Pages:
+
+```bash
+scripts/update-fdroid-repo.sh app/build/outputs/apk/release/app-release.apk <versionName> <versionCode>
+# bump CurrentVersion / CurrentVersionCode in fdroid-repo/metadata/com.cipherwell.vaultzero.yml
+git add docs/fdroid/repo fdroid-repo/metadata && git commit -m "fdroid repo: publish v<version>" && git push
+```
+
+Tester URL: `https://cipherwell.github.io/Vault-Zero/fdroid/repo` (repo key fingerprint in
+`fdroid-repo/README.md`).
+
 ## 6. Never
 
 - Commit keystores, `keystore.env`, APK/AAB binaries, or passwords.

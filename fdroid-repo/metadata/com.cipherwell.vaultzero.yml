@@ -1,0 +1,31 @@
+Categories:
+- Security
+License: MIT
+AuthorName: Cipherwell
+AuthorEmail: cipherwell@proton.me
+WebSite: https://cipherwell.github.io/Vault-Zero/
+SourceCode: https://github.com/cipherwell/Vault-Zero
+IssueTracker: https://github.com/cipherwell/Vault-Zero/issues
+Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.1.md
+AutoName: VaultZero
+Summary: Offline zero-knowledge password manager
+Description: |
+  VaultZero is an offline, zero-knowledge password manager. The APK has no
+  INTERNET permission, no account, no analytics and no crash reporting.
+
+  Records are encrypted with AES-256-GCM (bound to id and type via AAD); the vault
+  master key is wrapped with Argon2id (64 MiB, t=3) password and recovery-phrase
+  envelopes, with transparent migration from older PBKDF2 vaults. Recovery uses
+  BIP-39 12-word kits; backups are encrypted, verified, duplicate-safe files
+  written through the Android Storage Access Framework.
+
+  This repository is the Cipherwell beta channel. Every build here is signed with
+  the same VaultZero upload key; updates install over the previous version.
+
+  English and Spanish (US) UI, MIT licence.
+RepoType: git
+Repo: https://github.com/cipherwell/Vault-Zero.git
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.7.1
+CurrentVersionCode: 10

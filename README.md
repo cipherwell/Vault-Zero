@@ -124,6 +124,10 @@ Latest release: **[GitHub Releases → v1.7.1](https://github.com/cipherwell/Vau
 
 Beta tester? Read [docs/BETA.md](docs/BETA.md) first — test data only, and how to verify the APK.
 
+Prefer store-like updates without Google? Add the self-hosted F-Droid repository
+`https://cipherwell.github.io/Vault-Zero/fdroid/repo` in F-Droid/Neo Store/Droid-ify (fingerprint
+`BC:CC:45:55:…:F9:49`, details in [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md)).
+
 Signing certificate (production upload key, APK Signature Scheme v2):
 `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
