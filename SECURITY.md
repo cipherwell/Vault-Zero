@@ -116,3 +116,7 @@ aapt2 dump permissions app-release.apk | grep -E 'INTERNET|ACCESS_NETWORK_STATE'
 - Keep the OS and device security patches current; disable USB debugging when not developing.
 - Treat exported backups as sensitive ciphertext and keep them offline.
 - Enable biometric unlock only on a device you trust; it is a convenience, not a second factor.
+
+## Security audits
+
+- [Final pre-beta audit & penetration test](docs/security/AUDIT-2026-11-21.md) — MASVS 2.1, 21 Nov 2026.

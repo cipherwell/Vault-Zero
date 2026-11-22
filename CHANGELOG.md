@@ -3,6 +3,22 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.13] — 2026-11-21
+
+### Security
+- **Bounded backup reads.** `BackupFileIo.readText` now stops at the 8 MB ceiling instead of calling
+  `readBytes()` and checking afterwards; a malicious or oversized document can no longer OOM the app
+  (`OutOfMemoryError` is not caught by `catch (Exception)`).
+- **Guarded backup JSON parsing.** A 20k-deep backup threw `StackOverflowError` from `org.json`,
+  which escaped the import's `catch (Exception)` and killed the process. `BackupJson.parse` now
+  pre-scans nesting depth (64, string-aware) and maps any overflow to `VaultError.INVALID_JSON`.
+- Added `security-audit/` (MASVS 2.1 kit: methodology, checklists, scripts, fuzz corpus generator,
+  report renderer) and the full audit report at `docs/security/AUDIT-2026-11-21.md`.
+- 6 new regression tests for the import attack surface.
+
+### Notes
+- No cryptographic or data-format changes. Both issues were DoS-only; no data exposure.
+
 ## [1.7.12] — 2026-11-21
 
 ### Fixed

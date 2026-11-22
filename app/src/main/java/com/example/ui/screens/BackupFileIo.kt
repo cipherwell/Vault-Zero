@@ -6,6 +6,8 @@ import android.provider.OpenableColumns
 import com.example.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 /**
  * The only data path in or out of the vault's sealed storage.
@@ -37,13 +39,34 @@ object BackupFileIo {
     suspend fun readText(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openInputStream(uri)?.use { input ->
-                val bytes = input.readBytes()
-                if (bytes.size > MAX_BACKUP_BYTES) return@withContext null
+                val bytes = readBounded(input, MAX_BACKUP_BYTES) ?: return@withContext null
                 String(bytes, Charsets.UTF_8)
             }
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * Reads at most [maxBytes] from [input]. The previous implementation called
+     * `readBytes()` and compared afterwards: a content provider that streams more
+     * than the limit (or an enormous user file) allocated everything first and
+     * could OOM the process, which `catch (Exception)` cannot catch.
+     *
+     * Visible for the robustness tests.
+     */
+    internal fun readBounded(input: InputStream, maxBytes: Long): ByteArray? {
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(64 * 1024)
+        var total = 0L
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) break
+            total += read
+            if (total > maxBytes) return null
+            out.write(buffer, 0, read)
+        }
+        return out.toByteArray()
     }
 
     /**

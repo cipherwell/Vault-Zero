@@ -1,0 +1,5 @@
+VaultZero v1.7.13:
+• Security: bounded backup import reads (OOM fix)
+• Security: deep-JSON guard (stack-overflow fix)
+• Full pre-beta audit report in docs/security
+• No cryptographic or data-format changes

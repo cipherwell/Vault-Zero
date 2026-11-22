@@ -246,11 +246,7 @@ class VaultRepository(
             )
         }
 
-        val backup = try {
-            JSONObject(jsonString)
-        } catch (e: Exception) {
-            throw VaultException(VaultError.INVALID_JSON, "file is not valid JSON")
-        }
+        val backup = BackupJson.parse(jsonString)
         if (backup.optString("format", "") != BACKUP_FORMAT) {
             throw VaultException(VaultError.NOT_A_VAULT_BACKUP, "not a VaultZero encrypted backup envelope")
         }
@@ -260,9 +256,11 @@ class VaultRepository(
             throw VaultException(VaultError.BACKUP_EMPTY, "backup contains no entries")
         }
 
-        // The KDF specs travel inside an untrusted file. decode() rejects malformed or
-        // out-of-range parameters, so a crafted backup can neither weaken the credential
-        // KDF nor turn the restore into a CPU/memory denial of service.
+        // The KDF specs travel inside an untrusted file. decode() rejects malformed,
+        // out-of-range and DoS-sized parameters. A spec above the hard minimum but below
+        // the current default (e.g. argon2id:8192:1:1) is still accepted for restoring old
+        // backups: the envelope keeps that cost until the first successful unlock migrates
+        // both envelopes to KdfSpec.CURRENT.
         val recoveryKdf = parseBackupKdf(backup, "kdfRecoverySpec", "recovery-phrase")
         val sourcePasswordKdf = parseBackupKdf(backup, "kdfPasswordSpec", "password")
 
@@ -894,11 +892,7 @@ class VaultRepository(
         skipInvalidRecords: Boolean = false,
     ): BackupImportReport = withContext(Dispatchers.Default) {
         val activeKey = activeSecretKey ?: throw VaultStateException(VaultError.VAULT_LOCKED, "Vault is locked")
-        val backupJson = try {
-            JSONObject(jsonString)
-        } catch (e: Exception) {
-            throw VaultException(VaultError.INVALID_JSON, "file is not valid JSON")
-        }
+        val backupJson = BackupJson.parse(jsonString)
         val format = backupJson.optString("format", "")
         if (format != BACKUP_FORMAT) {
             throw VaultException(VaultError.NOT_A_VAULT_BACKUP, "not a VaultZero encrypted backup envelope")
