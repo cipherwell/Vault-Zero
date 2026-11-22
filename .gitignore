@@ -22,3 +22,6 @@ debug.keystore
 /.build-outputs
 /public
 debug.keystore
+
+# Self-hosted F-Droid repo: the signed APKs are the served artifacts
+!docs/fdroid/repo/*.apk
