@@ -6,6 +6,12 @@
     <string name="lock_setup_title">Initialize Master Password</string>
     <string name="lock_setup_body">Your Master Password derives the local AES-256-GCM encryption key. It is never transmitted and cannot be reset without your emergency recovery kit.</string>
     <string name="lock_master_password">Master Password</string>
+    <string name="setup_generate_password">Generate strong password</string>
+    <string name="setup_generated_title">Your generated master password</string>
+    <string name="setup_generated_body">Save it now: this is the key to your vault. If you forget it, your 12-word Recovery Kit is the only way back.</string>
+    <string name="setup_generate_copy">Copy</string>
+    <string name="setup_generate_copied">Copied</string>
+    <string name="setup_generate_saved">I saved it</string>
     <string name="lock_confirm_password">Confirm Master Password</string>
     <string name="lock_new_master_password">New Master Password</string>
     <string name="lock_confirm_new_password">Confirm New Master Password</string>

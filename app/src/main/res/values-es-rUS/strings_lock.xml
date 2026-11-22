@@ -6,6 +6,12 @@
     <string name="lock_setup_title">Inicializa la contraseña maestra</string>
     <string name="lock_setup_body">Tu contraseña maestra deriva la clave de cifrado AES-256-GCM local. Nunca se transmite y no se puede restablecer sin tu kit de recuperación de emergencia.</string>
     <string name="lock_master_password">Contraseña maestra</string>
+    <string name="setup_generate_password">Generar contraseña fuerte</string>
+    <string name="setup_generated_title">Tu contraseña maestra generada</string>
+    <string name="setup_generated_body">Guárdala ahora: es la llave de tu bóveda. Si la olvidas, tu kit de recuperación de 12 palabras es la única forma de volver.</string>
+    <string name="setup_generate_copy">Copiar</string>
+    <string name="setup_generate_copied">Copiada</string>
+    <string name="setup_generate_saved">Ya la guardé</string>
     <string name="lock_confirm_password">Confirma la contraseña maestra</string>
     <string name="lock_new_master_password">Nueva contraseña maestra</string>
     <string name="lock_confirm_new_password">Confirma la nueva contraseña maestra</string>

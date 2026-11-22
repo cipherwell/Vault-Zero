@@ -3,6 +3,18 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.15] — 2026-11-22
+
+### Added
+- **Generate a master password during setup.** A sparkle button inside the Master Password field
+  creates a 20-character password with the device CSPRNG, fills both fields, reveals it, and opens a
+  "save it now" dialog with a copy button and the recovery-kit warning. Tap **I saved it** to hide the
+  fields again. Available in English and Spanish.
+
+### Notes
+- No cryptographic changes: the generated password still derives the key exactly like a typed one.
+- 137 JVM/Robolectric tests / 0 failures, lint 0 errors.
+
 ## [1.7.14] — 2026-11-22
 
 ### Documentation

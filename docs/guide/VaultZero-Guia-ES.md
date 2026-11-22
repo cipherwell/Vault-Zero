@@ -1,6 +1,6 @@
 # VaultZero — tu bóveda privada
 
-**Guía del usuario beta · v1.7.14 · noviembre de 2026**
+**Guía del usuario beta · v1.7.15 · noviembre de 2026**
 
 VaultZero es una bóveda de contraseñas para Android que funciona **sin conexión**. Guarda tus
 inicios de sesión, tarjetas, notas y códigos de recuperación cifrados en tu teléfono, **sin cuenta, sin

@@ -1,0 +1,5 @@
+VaultZero v1.7.15:
+• Generate a strong master password during setup
+• Save-it-now dialog with copy and recovery-kit warning
+• English & Spanish
+• No cryptographic changes

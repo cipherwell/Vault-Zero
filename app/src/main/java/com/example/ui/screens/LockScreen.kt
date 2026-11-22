@@ -22,6 +22,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.os.PersistableBundle
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
@@ -193,6 +197,8 @@ private fun SetupMasterKeyScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var generatedPassword by remember { mutableStateOf<String?>(null) }
+    var generatedCopied by remember { mutableStateOf(false) }
 
     val strength = remember(password) { VaultCrypto.calculateStrength(password) }
 
@@ -318,14 +324,40 @@ private fun SetupMasterKeyScreen(
                     enabled = !isAuthenticating,
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                            Icon(
-                                imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = stringResource(
-                                    if (isPasswordVisible) R.string.a11y_hide_password
-                                    else R.string.a11y_show_password
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = {
+                                    val generated = VaultCrypto.generatePassword(
+                                        length = 20,
+                                        includeUpper = true,
+                                        includeLower = true,
+                                        includeDigits = true,
+                                        includeSymbols = true,
+                                        avoidAmbiguous = true,
+                                    )
+                                    password = generated
+                                    confirmPassword = generated
+                                    isPasswordVisible = true
+                                    generatedCopied = false
+                                    generatedPassword = generated
+                                    onClearError()
+                                },
+                                modifier = Modifier.testTag("generate_master_password_button"),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = stringResource(R.string.setup_generate_password),
                                 )
-                            )
+                            }
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = stringResource(
+                                        if (isPasswordVisible) R.string.a11y_hide_password
+                                        else R.string.a11y_show_password
+                                    )
+                                )
+                            }
                         }
                     },
                     keyboardOptions = KeyboardOptions(
@@ -336,6 +368,69 @@ private fun SetupMasterKeyScreen(
                     modifier = Modifier.fillMaxWidth().testTag("setup_password_input"),
                     shape = RoundedCornerShape(12.dp)
                 )
+
+                generatedPassword?.let { generated ->
+                    AlertDialog(
+                        onDismissRequest = { generatedPassword = null },
+                        title = { Text(stringResource(R.string.setup_generated_title)) },
+                        text = {
+                            Column {
+                                Text(
+                                    text = generated,
+                                    fontFamily = JetBrainsMonoFamily,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = stringResource(R.string.setup_generated_body),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    val clip = ClipData.newPlainText(
+                                        context.getString(R.string.lock_master_password),
+                                        generated,
+                                    )
+                                    runCatching {
+                                        clip.description.extras = PersistableBundle().apply {
+                                            putBoolean("android.content.extra.IS_SENSITIVE", true)
+                                        }
+                                    }
+                                    context.getSystemService(ClipboardManager::class.java)
+                                        ?.setPrimaryClip(clip)
+                                    generatedCopied = true
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (generatedCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    stringResource(
+                                        if (generatedCopied) R.string.setup_generate_copied
+                                        else R.string.setup_generate_copy
+                                    )
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                generatedPassword = null
+                                // Once the user confirms they saved it, stop showing it in the fields.
+                                isPasswordVisible = false
+                            }) {
+                                Text(stringResource(R.string.setup_generate_saved))
+                            }
+                        },
+                    )
+                }
 
                 if (password.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
