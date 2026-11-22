@@ -55,6 +55,12 @@ class VaultRepository(
     val isUnlocked: Boolean
         get() = activeSecretKey != null
 
+    /** A vault was created but the user has not yet confirmed saving its Recovery Kit. */
+    val isSetupKitPending: Boolean
+        get() = prefs.setupKitPending
+
+    fun markSetupKitConfirmed() = prefs.markSetupKitConfirmed()
+
     val keyFingerprint: String
         get() = prefs.keyFingerprint
 
@@ -199,6 +205,7 @@ class VaultRepository(
             keyFingerprint = fingerprint,
             passwordKdf = kdf,
             recoveryKdf = kdf,
+            markSetupPending = true,
         )
 
         activeSecretKey = vmk

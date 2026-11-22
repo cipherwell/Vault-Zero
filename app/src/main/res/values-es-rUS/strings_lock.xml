@@ -59,4 +59,5 @@
     <string name="lock_reset_title">¿Borrar esta bóveda?</string>
     <string name="lock_reset_body">Esto elimina permanentemente todos los registros, claves y el registro biométrico de este dispositivo. No se puede deshacer. Hazlo solo si perdiste la contraseña maestra y el kit de recuperación de 12 palabras; si no, usa el kit para recuperarla. Una vez borrada, los datos desaparecen para siempre.</string>
     <string name="lock_reset_confirm">Borrar todo</string>
+    <string name="setup_incomplete_banner">La creación se interrumpió antes de guardar tu kit de recuperación. Desbloquea para verlo de nuevo.</string>
 </resources>

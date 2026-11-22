@@ -72,6 +72,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -113,6 +114,7 @@ fun LockScreen(
     val authError by viewModel.authError.collectAsState()
     val newRecoveryPhrase by viewModel.newRecoveryPhrase.collectAsState()
     val isAuthenticating by viewModel.isAuthenticating.collectAsState()
+    val setupIncomplete by viewModel.setupIncomplete.collectAsState()
 
     Box(
         modifier = modifier
@@ -169,6 +171,7 @@ fun LockScreen(
                     authError = authError,
                     isAuthenticating = isAuthenticating,
                     isBiometricEnabled = viewModel.isBiometricEnabled,
+                    setupIncomplete = setupIncomplete,
                     onUnlock = { viewModel.unlockVault(it) },
                     onBiometric = { viewModel.requestBiometricUnlock() },
                     onClearError = { viewModel.clearAuthError() },
@@ -211,6 +214,7 @@ private fun SetupMasterKeyScreen(
     var usedGeneratedPassword by remember { mutableStateOf(false) }
     var enableBiometrics by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     val biometricsAvailable = remember {
         BiometricManager.from(context)
             .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
@@ -506,11 +510,8 @@ private fun SetupMasterKeyScreen(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (!isAuthenticating && password.isNotEmpty() && confirmPassword.isNotEmpty()) {
-                                onSetup(password, confirmPassword, enableBiometrics && biometricsAvailable)
-                            }
-                        }
+                        // Creating a vault is irreversible; require the explicit button, not IME Done.
+                        onDone = { focusManager.clearFocus() }
                     ),
                     modifier = Modifier.fillMaxWidth().testTag("setup_confirm_input"),
                     shape = RoundedCornerShape(12.dp)
@@ -1043,6 +1044,7 @@ private fun UnlockVaultScreen(
     authError: UiText?,
     isAuthenticating: Boolean,
     isBiometricEnabled: Boolean,
+    setupIncomplete: Boolean,
     onUnlock: (String) -> Unit,
     onBiometric: () -> Unit,
     onClearError: () -> Unit,
@@ -1123,6 +1125,31 @@ private fun UnlockVaultScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        if (setupIncomplete) {
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(WarningAmber.copy(alpha = 0.12f))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = WarningAmber,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.setup_incomplete_banner),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarningAmber,
+                )
+            }
+        }
 
         VaultCard(
             shape = RoundedCornerShape(26.dp),

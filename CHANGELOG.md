@@ -3,6 +3,22 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.20] — 2026-11-22
+
+### Fixed
+- **Interrupted setup no longer loses the Recovery Kit.** The “kit not yet confirmed” state is written
+  atomically with the vault. If the app is killed, locked or restarted before the user confirms the
+  kit, the next unlock shows an amber notice and **re-displays the same kit** before entering the
+  vault. Confirming it clears the pending state.
+- **Stale auto-lock can no longer lock the setup wizard.** Auto-lock is ignored unless the vault is
+  unlocked, `clearVault()` cancels its timer, and a reset cannot leave a timer that fires into setup.
+- **IME “Done” no longer creates a vault.** The confirm field only hides the keyboard; vault creation
+  requires the explicit **Create Secure Vault** button.
+
+### Tests
+- 138 JVM/Robolectric tests / 0 failures, including a regression test that the pending kit is set at
+  setup, decryptable with the active VMK, and cleared only after confirmation.
+
 ## [1.7.19] — 2026-11-22
 
 ### Changed

@@ -1,6 +1,6 @@
 # VaultZero — your private vault
 
-**Beta user guide · v1.7.19 · November 2026**
+**Beta user guide · v1.7.20 · November 2026**
 
 VaultZero is an offline password vault for Android. It keeps your logins, cards, notes and
 recovery codes encrypted on your phone — with **no account, no cloud and no internet permission**.
@@ -53,7 +53,7 @@ Recovery Kit** when you first set it up. Keep it offline and safe.
 ## 2. The 60-second version
 
 1. **Install** VaultZero from GitHub Releases, Obtainium or the project's F-Droid repository.
-2. **Create a vault:** choose a long Master Password (12+ characters is a good target) and confirm it. In a hurry? Tap the **sparkle icon** inside the password field to generate a strong 20-character password, then confirm you saved it.
+2. **Create a vault:** choose a long Master Password (12+ characters is a good target) and confirm it. If the app is interrupted before you save the Recovery Kit, unlock with your Master Password and the same kit is shown again before you enter the vault. In a hurry? Tap the **sparkle icon** inside the password field to generate a strong 20-character password, then confirm you saved it.
 3. **Save the Recovery Kit:** write the 12 words on paper, in order. Do not photograph it or store it
    in another password app. Keep two copies in two safe places.
 4. **Open the vault** (you can enable biometric unlock during setup) and add your first login with the **+** button.

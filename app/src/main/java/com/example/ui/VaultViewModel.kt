@@ -179,6 +179,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _newRecoveryPhrase = MutableStateFlow<String?>(null)
     val newRecoveryPhrase: StateFlow<String?> = _newRecoveryPhrase.asStateFlow()
 
+    /** Created vault exists, but the user has not confirmed saving the Recovery Kit yet. */
+    private val _setupIncomplete = MutableStateFlow(false)
+    val setupIncomplete: StateFlow<Boolean> = _setupIncomplete.asStateFlow()
+
     private val _clipboardStatus = MutableStateFlow<UiText?>(null)
     val clipboardStatus: StateFlow<UiText?> = _clipboardStatus.asStateFlow()
 
@@ -270,6 +274,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             _lockState.value = VaultLockState.LOCKED
         }
+        _setupIncomplete.value = repository.isSetupKitPending
 
         _themeMode.value = ThemeMode.fromStorage(repository.themeMode())
         // A legacy (non-auth-gated) wrap or a key invalidated by re-enrolment
@@ -430,6 +435,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 val (phrase, vmkHex) = repository.setupMasterPassword(cleanPassword)
 
                 pendingBiometricEnrollment = enableBiometricsAfterSetup
+                _setupIncomplete.value = true
                 _newRecoveryPhrase.value = phrase
                 _authError.value = null
             } catch (e: Exception) {
@@ -441,6 +447,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun completeSetupAndEnterVault() {
+        repository.markSetupKitConfirmed()
+        _setupIncomplete.value = false
         _newRecoveryPhrase.value = null
         _lockState.value = VaultLockState.UNLOCKED
         _authError.value = null
@@ -449,6 +457,27 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             pendingBiometricEnrollment = false
             requestBiometricEnrollment()
         }
+    }
+
+    /**
+     * Enter the vault, unless setup was interrupted before the Recovery Kit was confirmed.
+     * In that case the kit is decrypted with the now-unlocked VMK and shown again, so the
+     * user cannot end up with a vault whose only kit was lost with the process.
+     */
+    private fun enterAfterUnlock() {
+        if (repository.isSetupKitPending) {
+            val phrase = repository.getDecryptedRecoveryPhrase()
+            if (phrase.isNotBlank()) {
+                _newRecoveryPhrase.value = phrase
+                _setupIncomplete.value = true
+                _lockState.value = VaultLockState.NEEDS_SETUP
+                _authError.value = null
+                return
+            }
+        }
+        _lockState.value = VaultLockState.UNLOCKED
+        _authError.value = null
+        resetAutoLockTimer()
     }
 
     /**
@@ -522,10 +551,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val success = repository.unlock(password)
                 if (success) {
-
-                    _lockState.value = VaultLockState.UNLOCKED
-                    _authError.value = null
-                    resetAutoLockTimer()
+                    enterAfterUnlock()
                 } else {
                     val newLockoutSec = repository.getRemainingLockoutSeconds()
                     if (newLockoutSec > 0) {
@@ -567,9 +593,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 if (vmkHex != null) {
                     val success = repository.unlockWithVmkHex(vmkHex)
                     if (success) {
-                        _lockState.value = VaultLockState.UNLOCKED
-                        _authError.value = null
-                        resetAutoLockTimer()
+                        enterAfterUnlock()
                         return@launch
                     }
                 }
@@ -618,7 +642,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val success = repository.recoverWithPhrase(cleanPhrase, cleanNewPass)
                 if (success) {
-
+                    repository.markSetupKitConfirmed()
+                    _setupIncomplete.value = false
                     _lockState.value = VaultLockState.UNLOCKED
                     _authError.value = null
                     resetAutoLockTimer()
@@ -639,6 +664,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun lockVault(autoLocked: Boolean = false) {
+        // A stale auto-lock job must never lock the setup wizard or the recovery-kit screen.
+        if (autoLocked && _lockState.value != VaultLockState.UNLOCKED) return
         repository.lock()
         clearSelection()
         generatorHistoryStore.clear()
@@ -914,6 +941,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearVault() {
+        autoLockJob?.cancel()
+        pendingBiometricEnrollment = false
+        _setupIncomplete.value = false
+        _newRecoveryPhrase.value = null
         viewModelScope.launch {
             BiometricKeyManager.clearBiometricKey(getApplication())
             clearSensitiveClipboardIfOwned()

@@ -59,4 +59,5 @@
     <string name="lock_reset_title">Erase this vault?</string>
     <string name="lock_reset_body">This permanently deletes every record, key and biometric enrolment on this device. It cannot be undone. Only do this if you have lost both the Master Password and the 12-word Recovery Kit — otherwise use the kit to recover. Once erased, the data is gone forever.</string>
     <string name="lock_reset_confirm">Erase everything</string>
+    <string name="setup_incomplete_banner">Setup was interrupted before you saved your Recovery Kit. Unlock to see it again.</string>
 </resources>

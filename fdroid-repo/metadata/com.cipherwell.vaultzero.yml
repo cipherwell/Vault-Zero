@@ -6,7 +6,7 @@ AuthorEmail: cipherwell@proton.me
 WebSite: https://cipherwell.github.io/Vault-Zero/
 SourceCode: https://github.com/cipherwell/Vault-Zero
 IssueTracker: https://github.com/cipherwell/Vault-Zero/issues
-Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.19.md
+Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.20.md
 AutoName: VaultZero
 Summary: Offline zero-knowledge password manager
 Description: |
@@ -27,5 +27,5 @@ RepoType: git
 Repo: https://github.com/cipherwell/Vault-Zero.git
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.7.19
-CurrentVersionCode: 28
+CurrentVersion: 1.7.20
+CurrentVersionCode: 29

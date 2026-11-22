@@ -77,6 +77,18 @@ class VaultRepositorySetupRestoreTest {
         prefs.resetAll()
     }
 
+    @Test
+    fun `setup keeps the kit pending until the user confirms it`() = runTest {
+        assertTrue("a fresh setup must be marked pending", sourceRepo.isSetupKitPending)
+        assertEquals(
+            "the pending kit must be decryptable with the active VMK",
+            recoveryPhrase,
+            sourceRepo.getDecryptedRecoveryPhrase(),
+        )
+        sourceRepo.markSetupKitConfirmed()
+        assertFalse("confirming the kit clears the pending flag", sourceRepo.isSetupKitPending)
+    }
+
     private fun login(id: String, title: String, secret: String) = VaultItem(
         id = id,
         title = title,

@@ -158,8 +158,10 @@ class VaultPreferences(
         keyFingerprint: String,
         passwordKdf: KdfSpec = KdfSpec.CURRENT,
         recoveryKdf: KdfSpec = KdfSpec.CURRENT,
+        markSetupPending: Boolean = false,
     ) {
         prefs.edit(commit = true) {
+            if (markSetupPending) putBoolean("setup_kit_pending", true)
             putString("master_password_hash", passwordHash)
             putString("master_salt_b64", saltBase64)
             putString("recovery_salt_b64", recoverySaltBase64)
@@ -220,6 +222,15 @@ class VaultPreferences(
             putString(KEY_RECOVERY_KDF, kdf.encode())
             remove(KEY_LEGACY_ITERATIONS)
         }
+    }
+
+    /** True while a freshly created vault has not had its Recovery Kit confirmed by the user. */
+    var setupKitPending: Boolean
+        get() = prefs.getBoolean("setup_kit_pending", false)
+        private set(value) = prefs.edit(commit = true) { putBoolean("setup_kit_pending", value) }
+
+    fun markSetupKitConfirmed() {
+        setupKitPending = false
     }
 
     fun resetAll() {

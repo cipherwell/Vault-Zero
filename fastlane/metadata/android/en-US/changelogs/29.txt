@@ -1,0 +1,4 @@
+VaultZero v1.7.20:
+• Fix: interrupted setup re-shows your Recovery Kit instead of losing it
+• Fix: auto-lock can no longer interrupt the setup wizard
+• Safer: keyboard Done no longer creates the vault; use the Create button
