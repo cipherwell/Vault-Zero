@@ -21,6 +21,11 @@ intentionally removed during the identity migration.
 - No cryptographic changes. The diagnostics payload is built from a pure, unit-tested function and
   is only generated when the user taps the button.
 
+### Verified on a physical Pixel 9 Pro XL (Android 17)
+- 15/15 instrumentation tests pass, including the four biometric key-binding tests that need an
+  enrolled fingerprint (unavailable on the test emulator).
+- Unlock cost: Argon2id 64 MiB/t=3 1.17-1.46 s vs PBKDF2 600k 2.25-2.31 s on the same device.
+
 ## [1.7.0] — 2026-11-21
 
 ### Added

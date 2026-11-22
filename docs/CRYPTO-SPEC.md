@@ -54,6 +54,20 @@ records and recovery envelope are untouched.
 6. Atomically persist: password verifier, password salt, recovery salt, wrapped VMKs, encrypted
    recovery phrase, recovery verifier, fingerprint, iterations.
 
+## Measured unlock cost
+
+Same password, same build, measured end-to-end (KDF only, from the device test harness):
+
+| Device / runtime | Argon2id 64 MiB, t=3 | PBKDF2-SHA256 600k (previous) |
+| --- | ---: | ---: |
+| Pixel 9 Pro XL, Android 17 (Tensor G4) — warm | **1.17–1.18 s** | 2.25–2.31 s |
+| Pixel 9 Pro XL, Android 17 — first call (cold) | 1.46 s | — |
+| API 34 x86_64 emulator (ART, host CPU) | 0.68–0.83 s | 2.81–3.06 s |
+
+Argon2id is stronger than the PBKDF2 work factor it replaces **and** roughly 2x faster on a flagship
+phone. On older/low-end hardware expect several seconds for the first unlock of a session; biometric
+unlock avoids the KDF entirely. The migration is one-time per vault, not per unlock cost change.
+
 ## Record encryption
 
 The record plaintext is a JSON envelope (`_vz_meta_v2`) containing `id`, `type`, `title`,

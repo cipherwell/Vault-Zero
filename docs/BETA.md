@@ -30,7 +30,8 @@ us, not anyone.
 | --- | --- |
 | Distribution | APK from GitHub Releases; **no auto-update**. You must install each new build manually. Play Store / F-Droid are not available yet. |
 | Reporting | No crash reporting or telemetry (by design). Testers can't screenshot inside the app because `FLAG_SECURE` is on; use **Settings → Copy diagnostics** plus another phone/camera for pictures. |
-| Device coverage | Tested on Android 14/17 emulator + Pixel 9 Pro XL; older Android versions (7–13) and some OEM skins may behave differently. |
+| Device coverage | Tested on Android 14/17 emulator + Pixel 9 Pro XL (Android 17), where all 15 instrumentation tests pass including biometrics. Older Android versions (7–13) and some OEM skins may behave differently. |
+| Unlock speed | Argon2id takes ~1.2 s on a flagship (Pixel 9 Pro XL) and up to a few seconds on older devices; biometric unlock skips the KDF. |
 | Spanish | Translation is complete but not yet reviewed by a native speaker; wording can change. |
 | Biometrics | Requires an enrolled fingerprint/face on the device; some OEMs report biometric state differently. |
 | Migration | The app moved package ID in 1.5.0 (`com.aistudio.vaultzero.secvlt` → `com.cipherwell.vaultzero`). Data moves through an encrypted backup + recovery phrase, not an in-place update. |
