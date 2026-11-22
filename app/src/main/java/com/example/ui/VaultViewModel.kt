@@ -222,6 +222,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _clockTicker = MutableStateFlow(System.currentTimeMillis())
     val clockTicker: StateFlow<Long> = _clockTicker.asStateFlow()
 
+    private var pendingBiometricEnrollment = false
     private var clipboardJob: Job? = null
     private var autoLockJob: Job? = null
     private var statusDismissJob: Job? = null
@@ -407,7 +408,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _authError.value = null
     }
 
-    fun setupMasterPassword(password: String, confirm: String) {
+    fun setupMasterPassword(
+        password: String,
+        confirm: String,
+        enableBiometricsAfterSetup: Boolean = false,
+    ) {
         val cleanPassword = password.trim()
         val cleanConfirm = confirm.trim()
         if (cleanPassword.length < 8) {
@@ -424,6 +429,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val (phrase, vmkHex) = repository.setupMasterPassword(cleanPassword)
 
+                pendingBiometricEnrollment = enableBiometricsAfterSetup
                 _newRecoveryPhrase.value = phrase
                 _authError.value = null
             } catch (e: Exception) {
@@ -439,6 +445,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _lockState.value = VaultLockState.UNLOCKED
         _authError.value = null
         resetAutoLockTimer()
+        if (pendingBiometricEnrollment) {
+            pendingBiometricEnrollment = false
+            requestBiometricEnrollment()
+        }
     }
 
     /**

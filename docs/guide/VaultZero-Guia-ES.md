@@ -1,6 +1,6 @@
 # VaultZero — tu bóveda privada
 
-**Guía del usuario beta · v1.7.15 · noviembre de 2026**
+**Guía del usuario beta · v1.7.16 · noviembre de 2026**
 
 VaultZero es una bóveda de contraseñas para Android que funciona **sin conexión**. Guarda tus
 inicios de sesión, tarjetas, notas y códigos de recuperación cifrados en tu teléfono, **sin cuenta, sin
@@ -58,8 +58,8 @@ recuperación de 12 palabras** al configurarla. Guárdalo sin conexión y en un 
    confírmala.
 3. **Guarda el kit de recuperación:** escribe las 12 palabras en papel, en orden. No lo fotografíes ni
    lo guardes en otra app de contraseñas. Ten dos copias en dos lugares seguros.
-4. **Abre la bóveda** y agrega tu primer inicio de sesión con el botón **+**.
-5. **Activa el bloqueo automático** y, si quieres, el **desbloqueo biométrico** en Ajustes.
+4. **Abre la bóveda** (puedes activar el desbloqueo biométrico durante la creación) y agrega tu primer inicio de sesión con el botón **+**.
+5. **Activa el bloqueo automático** y, si quieres, el **desbloqueo biométrico** ahí mismo, en la pantalla de creación (o luego en Ajustes).
 
 Eso es todo. El resto de la guía es detalle.
 
@@ -210,7 +210,7 @@ Al crear la bóveda, la app muestra una frase de 12 palabras:
 ![Bóveda bloqueada: contraseña maestra o biometría](assets/es/08-lock.png)
 
 - Escribe la contraseña maestra y toca **Desbloquear bóveda**.
-- Si activaste el **desbloqueo biométrico**, toca el botón de huella o rostro.
+- Si activaste el **desbloqueo biométrico**, el sistema lo pide **automáticamente cada vez que abres la app** (y tras el bloqueo automático); también puedes tocar el botón de huella o rostro.
 - Tras varios intentos incorrectos, la app hace una pausa breve.
 - La biometría solo abre la copia de la clave de la bóveda que está envuelta por el hardware seguro
   del teléfono (Keystore). Si agregas o quitas una huella en los ajustes de Android, esa clave se

@@ -3,6 +3,23 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.16] — 2026-11-22
+
+### Added
+- **Biometric unlock can be enabled while creating the vault.** A switch on the setup screen (with a
+  clear hint when the phone has no fingerprint/face enrolled) asks for the biometric prompt right
+  after the recovery kit is saved and the vault opens.
+- **Automatic biometric prompt on every open.** When biometrics are enabled, returning to the app (or
+  an auto-lock while it is open) shows the system prompt again instead of waiting for a tap.
+
+### Changed
+- **Stronger save warning for the generated master password.** The dialog now requires checking
+  "I saved this password in a safe place" before it can be dismissed, and an amber reminder stays on
+  the setup screen until the vault is created.
+
+### Notes
+- No cryptographic changes. 137 JVM tests / 0 failures, lint 0 errors.
+
 ## [1.7.15] — 2026-11-22
 
 ### Added

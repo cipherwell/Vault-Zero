@@ -1,6 +1,6 @@
 # VaultZero — your private vault
 
-**Beta user guide · v1.7.15 · November 2026**
+**Beta user guide · v1.7.16 · November 2026**
 
 VaultZero is an offline password vault for Android. It keeps your logins, cards, notes and
 recovery codes encrypted on your phone — with **no account, no cloud and no internet permission**.
@@ -56,8 +56,8 @@ Recovery Kit** when you first set it up. Keep it offline and safe.
 2. **Create a vault:** choose a long Master Password (12+ characters is a good target) and confirm it. In a hurry? Tap the **sparkle icon** inside the password field to generate a strong 20-character password, then confirm you saved it.
 3. **Save the Recovery Kit:** write the 12 words on paper, in order. Do not photograph it or store it
    in another password app. Keep two copies in two safe places.
-4. **Open the vault** and add your first login with the **+** button.
-5. **Turn on auto-lock** and, if you like, **biometric unlock** in Settings.
+4. **Open the vault** (you can enable biometric unlock during setup) and add your first login with the **+** button.
+5. **Turn on auto-lock** and, if you like, **biometric unlock** right there on the setup screen (or later in Settings).
 
 That's it. The rest of this guide is detail.
 
@@ -204,7 +204,7 @@ When the vault is created, the app shows a 12-word phrase:
 ![Locked vault: Master Password or biometrics](assets/08-lock.png)
 
 - Type the Master Password and tap **Unlock Vault**.
-- If **Fast Biometric Unlock** is enabled, tap the fingerprint/face button instead.
+- If **Fast Biometric Unlock** is enabled, the system prompt appears **automatically each time you open the app** (and after auto-lock); you can also tap the fingerprint/face button.
 - After several wrong attempts the app pauses for a short cooldown.
 - Biometrics only unlock the copy of the vault key wrapped by the phone's secure hardware
   (Keystore). If you add or remove a fingerprint in Android settings, that key is invalidated and you

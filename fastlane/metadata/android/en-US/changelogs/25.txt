@@ -1,0 +1,5 @@
+VaultZero v1.7.16:
+• Enable biometric unlock while creating the vault
+• Biometric prompt now appears automatically on every open
+• Generated master password requires a save confirmation
+• No cryptographic changes

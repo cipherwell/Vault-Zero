@@ -50,4 +50,9 @@
     <string name="lock_reset_unlock">Restablecer y desbloquear bóveda</string>
     <string name="lock_back_to_unlock">Volver al desbloqueo con contraseña</string>
     <string name="lock_recovery_phrase_clipboard">Frase de recuperación</string>
+    <string name="setup_biometric_toggle">Activar desbloqueo biométrico</string>
+    <string name="setup_biometric_toggle_desc">Usa huella o rostro para abrir la bóveda la próxima vez. Puedes cambiarlo después.</string>
+    <string name="setup_biometric_unavailable">Primero agrega una huella o rostro en los ajustes de Android.</string>
+    <string name="setup_generated_confirm">Guardé esta contraseña en un lugar seguro</string>
+    <string name="setup_generated_banner">Guarda bien esta contraseña. Si la pierdes, solo tu kit de recuperación de 12 palabras puede restaurar la bóveda.</string>
 </resources>

@@ -114,6 +114,7 @@ class MainActivity : FragmentActivity() {
     private var pickerActive = false
     private var pendingShortcutAction: ShortcutAction? = null
     private var autoBiometricPromptedForThisLock = false
+    private var biometricPromptInFlight = false
 
     /** Screen-off is a strong "stop looking at secrets" signal: lock immediately. */
     private val screenOffReceiver = object : BroadcastReceiver() {
@@ -194,6 +195,11 @@ class MainActivity : FragmentActivity() {
                             pendingShortcutAction = null
                             viewModel.handleShortcut(pending)
                         }
+                    } else if (state == VaultLockState.LOCKED &&
+                        lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                    ) {
+                        // Auto-lock while the app is open: offer biometrics immediately.
+                        maybeAutoPromptBiometric()
                     }
                 }
             }
@@ -309,6 +315,11 @@ class MainActivity : FragmentActivity() {
         // vault and strand the pending export/import.
         if (!pickerActive) backgroundedAtElapsed = SystemClock.elapsedRealtime()
         runCatching { unregisterReceiver(screenOffReceiver) }
+        // Re-arm the automatic prompt for the next time the app is opened. Skip it when
+        // the stop is caused by the biometric dialog itself, otherwise it would loop.
+        if (!biometricPromptInFlight) {
+            autoBiometricPromptedForThisLock = false
+        }
         super.onStop()
     }
 
@@ -395,6 +406,7 @@ class MainActivity : FragmentActivity() {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
+                    biometricPromptInFlight = false
                     val authenticated = result.cryptoObject?.cipher
                     when (purpose) {
                         BiometricPurpose.UNLOCK -> viewModel.onBiometricVerified(authenticated)
@@ -404,6 +416,7 @@ class MainActivity : FragmentActivity() {
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
+                    biometricPromptInFlight = false
                     if (errorCode != BiometricPrompt.ERROR_USER_CANCELED &&
                         errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
                         errorCode != BiometricPrompt.ERROR_CANCELED
@@ -418,6 +431,7 @@ class MainActivity : FragmentActivity() {
                 }
             }
         )
+        biometricPromptInFlight = true
         prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
     }
 

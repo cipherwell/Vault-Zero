@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import com.example.R
+import androidx.biometric.BiometricManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,6 +53,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -148,7 +152,7 @@ fun LockScreen(
                     SetupMasterKeyScreen(
                         authError = authError,
                         isAuthenticating = isAuthenticating,
-                        onSetup = { p, c -> viewModel.setupMasterPassword(p, c) },
+                        onSetup = { p, c, biometrics -> viewModel.setupMasterPassword(p, c, biometrics) },
                         onRestoreBackup = { json, phrase, newPassword, confirm ->
                             viewModel.restoreBackupAtSetup(json, phrase, newPassword, confirm)
                         },
@@ -190,7 +194,7 @@ fun LockScreen(
 private fun SetupMasterKeyScreen(
     authError: UiText?,
     isAuthenticating: Boolean,
-    onSetup: (String, String) -> Unit,
+    onSetup: (String, String, Boolean) -> Unit,
     onRestoreBackup: (String, String, String?, String) -> Unit,
     onClearError: () -> Unit
 ) {
@@ -199,6 +203,15 @@ private fun SetupMasterKeyScreen(
     var isPasswordVisible by remember { mutableStateOf(false) }
     var generatedPassword by remember { mutableStateOf<String?>(null) }
     var generatedCopied by remember { mutableStateOf(false) }
+    var generatedSaved by remember { mutableStateOf(false) }
+    var usedGeneratedPassword by remember { mutableStateOf(false) }
+    var enableBiometrics by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val biometricsAvailable = remember {
+        BiometricManager.from(context)
+            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+            BiometricManager.BIOMETRIC_SUCCESS
+    }
 
     val strength = remember(password) { VaultCrypto.calculateStrength(password) }
 
@@ -208,7 +221,6 @@ private fun SetupMasterKeyScreen(
     var restoreJson by remember { mutableStateOf<String?>(null) }
     var restoreFileName by remember { mutableStateOf("") }
     var restoreFileError by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     // Resolved here because the collector below runs outside a composition.
@@ -339,6 +351,8 @@ private fun SetupMasterKeyScreen(
                                     confirmPassword = generated
                                     isPasswordVisible = true
                                     generatedCopied = false
+                                    generatedSaved = false
+                                    usedGeneratedPassword = true
                                     generatedPassword = generated
                                     onClearError()
                                 },
@@ -387,6 +401,18 @@ private fun SetupMasterKeyScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = generatedSaved,
+                                        onCheckedChange = { generatedSaved = it },
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.setup_generated_confirm),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
                             }
                         },
                         confirmButton = {
@@ -421,11 +447,14 @@ private fun SetupMasterKeyScreen(
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = {
-                                generatedPassword = null
-                                // Once the user confirms they saved it, stop showing it in the fields.
-                                isPasswordVisible = false
-                            }) {
+                            TextButton(
+                                enabled = generatedSaved,
+                                onClick = {
+                                    generatedPassword = null
+                                    // Once the user confirms they saved it, stop showing it in the fields.
+                                    isPasswordVisible = false
+                                }
+                            ) {
                                 Text(stringResource(R.string.setup_generate_saved))
                             }
                         },
@@ -435,6 +464,24 @@ private fun SetupMasterKeyScreen(
                 if (password.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     StrengthMeter(strength = strength)
+                }
+
+                if (usedGeneratedPassword) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = WarningAmber,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.setup_generated_banner),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WarningAmber,
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -457,7 +504,7 @@ private fun SetupMasterKeyScreen(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             if (!isAuthenticating && password.isNotEmpty() && confirmPassword.isNotEmpty()) {
-                                onSetup(password, confirmPassword)
+                                onSetup(password, confirmPassword, enableBiometrics && biometricsAvailable)
                             }
                         }
                     ),
@@ -483,10 +530,47 @@ private fun SetupMasterKeyScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.setup_biometric_toggle),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            text = stringResource(R.string.setup_biometric_toggle_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = enableBiometrics && biometricsAvailable,
+                        onCheckedChange = { enableBiometrics = it },
+                        enabled = biometricsAvailable && !isAuthenticating,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    )
+                }
+                if (!biometricsAvailable) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = stringResource(R.string.setup_biometric_unavailable),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarningAmber,
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = { onSetup(password, confirmPassword) },
+                    onClick = { onSetup(password, confirmPassword, enableBiometrics && biometricsAvailable) },
                     enabled = !isAuthenticating && password.isNotEmpty() && confirmPassword.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
