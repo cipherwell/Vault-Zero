@@ -33,8 +33,8 @@
     <string name="lock_unlock_title">Desbloquear bóveda segura</string>
     <string name="lock_decrypting">Descifrando bóveda…</string>
     <string name="lock_unlock_button">Desbloquear bóveda</string>
-    <string name="lock_biometrics">Huella digital / Biometría</string>
-    <string name="lock_biometrics_disabled">Huella digital / Biometría (desactivada)</string>
+    <string name="lock_biometrics">Huella / Biometría</string>
+    <string name="lock_biometrics_disabled">Huella / Biometría (desactivada)</string>
     <string name="lock_forgot_password">¿Olvidaste tu contraseña maestra? Usa el kit de emergencia</string>
 
     <string name="lock_recovery_title">Recuperación de la bóveda</string>

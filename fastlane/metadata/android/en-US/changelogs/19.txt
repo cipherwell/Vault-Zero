@@ -1,0 +1,4 @@
+VaultZero v1.7.10:
+• Fix: Spanish biometric row no longer clips its switch
+• Lock-screen biometric button: adaptive height, shorter Spanish labels
+• No functional or cryptographic changes

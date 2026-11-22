@@ -3,6 +3,20 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.10] — 2026-11-21
+
+### Fixed
+- **Spanish biometric row clipped in Settings.** The Spanish description
+  ("Desbloquea rápidamente con la biometría del dispositivo") pushed the biometric switch past the
+  content edge (switch right edge 1048 px on a 1080 px screen, content ends at 1027 px). The text
+  column is now weighted, wraps to two lines and the switch always stays inside the row.
+- **Lock-screen biometric button hardened:** adaptive minimum height (48 dp), single line with
+  centred ellipsis fallback, and shorter Spanish labels (`Huella / Biometría`, 19 chars, was 27;
+  `Huella / Biometría (desactivada)`, 33, was 40).
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.9] — 2026-11-21
 
 ### Changed
