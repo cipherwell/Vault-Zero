@@ -1,116 +1,87 @@
 #!/usr/bin/env python3
-"""Generate VaultZero's icon geometry: Android vector layers + SVG sources.
+"""Generate VaultZero's icon: a key whose bow is a V and whose tip is a Z.
 
-The mark is a zero-shaped keyhole: a fitted ring (the zero of zero-knowledge)
-merged into a rounded stem. It is drawn inside Android's 66dp adaptive safe
-zone so no launcher mask can clip it, and the monochrome layer is a separate
-single-colour silhouette for themed icons.
+A classic key silhouette carries the initials:
+  - the bow (the part you hold) is a round loop with a **V-shaped opening**
+  - the bit/tip is drawn as a **Z**
+
+Everything is vector geometry on Android's 108dp adaptive canvas, kept inside
+the 66dp safe circle, with a separate monochrome layer for themed icons. The
+same source emits the adaptive layers, legacy squircle/round renders and the
+512px store artwork.
 """
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RES = ROOT / "app/src/main/res"
-DRAWABLE = RES / "drawable"
-MIPMAP_V26 = RES / "mipmap-anydpi-v26"
 DESIGN = ROOT / "design/icon"
 
-# --- geometry (108x108 adaptive canvas, safe zone = 66dp circle at 54,54) ---
-CX, CY = 54.0, 50.0
-OUTER_R = 26.0
-INNER_R = 16.5
-# Tapered keyhole neck: wide where it meets the ring's hole, narrower at the bottom.
-STEM_TOP_W = 13.0
-STEM_BOTTOM_W = 10.0
-STEM_TOP = 58.5
-STEM_BOTTOM = 83.5
-STEM_R = STEM_BOTTOM_W / 2
-
-# --- palette ---
-GRADIENT_START = "#2F6BFF"
-GRADIENT_END = "#0A2366"
+BG_START = "#2F6BFF"
+BG_END = "#0A2366"
 GLYPH = "#FFFFFF"
 
-
-def ring_path() -> str:
-    """Annulus drawn as two subpaths (even-odd) so the ring stays one clean shape."""
-    return (
-        f"M{CX - OUTER_R:.2f},{CY:.2f} "
-        f"a{OUTER_R},{OUTER_R} 0 1,0 {OUTER_R * 2},{0} "
-        f"a{OUTER_R},{OUTER_R} 0 1,0 {-OUTER_R * 2},{0} Z "
-        f"M{CX - INNER_R:.2f},{CY:.2f} "
-        f"a{INNER_R},{INNER_R} 0 1,1 {INNER_R * 2},{0} "
-        f"a{INNER_R},{INNER_R} 0 1,1 {-INNER_R * 2},{0} Z"
-    )
-
-
-def stem_path() -> str:
-    """Tapered, rounded-bottom keyhole neck merging into the ring's hole."""
-    top_left = CX - STEM_TOP_W / 2
-    top_right = CX + STEM_TOP_W / 2
-    bottom_left = CX - STEM_BOTTOM_W / 2
-    bottom_right = CX + STEM_BOTTOM_W / 2
-    bottom_arc_y = STEM_BOTTOM - STEM_R
-    return (
-        f"M{top_left:.2f},{STEM_TOP:.2f} "
-        f"L{top_right:.2f},{STEM_TOP:.2f} "
-        f"L{bottom_right:.2f},{bottom_arc_y:.2f} "
-        f"a{STEM_R},{STEM_R} 0 0,1 {-STEM_R},{STEM_R} "
-        f"a{STEM_R},{STEM_R} 0 0,1 {-STEM_R},{-STEM_R} "
-        f"L{bottom_left:.2f},{bottom_arc_y:.2f} Z"
-    )
+# --- geometry (fits y=21..86.5, x=39..69 inside the 66dp safe circle) -----
+BOW_C = (54.0, 36.0)
+BOW_R = 15.0
+V_HOLE = ((46.0, 28.0), (62.0, 28.0), (54.0, 45.0))
+SHAFT_TOP = 50.0
+SHAFT_BOTTOM = 68.0
+SHAFT_W = 9.0
+Z_TOP = 68.0
+Z_BOTTOM = 83.0
+Z_LEFT = 41.0
+Z_RIGHT = 67.0
+Z_W = 7.0
 
 
-def glyph_svg(fill: str) -> str:
-    return (
-        f'<path d="{ring_path()}" fill="{fill}" fill-rule="evenodd"/>\n'
-        f'  <path d="{stem_path()}" fill="{fill}"/>'
-    )
+def bow_path() -> str:
+    cx, cy = BOW_C
+    r = BOW_R
+    circle = (f"M{cx - r},{cy} a{r},{r} 0 1,0 {r * 2},0 "
+              f"a{r},{r} 0 1,0 {-r * 2},0 Z")
+    (x0, y0), (x1, y1), (x2, y2) = V_HOLE
+    hole = f"M{x0},{y0} L{x1},{y1} L{x2},{y2} Z"
+    return f"{circle} {hole}"
 
 
-def background_svg() -> str:
-    return (
-        '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">'
-        f'<stop offset="0" stop-color="{GRADIENT_START}"/>'
-        f'<stop offset="1" stop-color="{GRADIENT_END}"/>'
-        '</linearGradient>'
-        '<radialGradient id="glow" cx="0.18" cy="0.14" r="0.78">'
-        '<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.10"/>'
-        '<stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.04"/>'
-        '<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>'
-        "</radialGradient></defs>\n"
-        '  <rect width="108" height="108" fill="url(#bg)"/>\n'
-        '  <rect width="108" height="108" fill="url(#glow)"/>'
-    )
+def shaft_path() -> str:
+    return f"M{BOW_C[0]},{SHAFT_TOP} L{BOW_C[0]},{SHAFT_BOTTOM}"
 
 
-def masked_svg(shape: str) -> str:
-    """Legacy/store renders: `square` (squircle), `round` (circle), `full` (no mask)."""
-    if shape == "square":
-        clip = '<rect x="0" y="0" width="108" height="108" rx="24" ry="24"/>'
-    elif shape == "round":
-        clip = '<circle cx="54" cy="54" r="54"/>'
-    else:
-        clip = '<rect x="0" y="0" width="108" height="108"/>'
-    return f"""<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="{GRADIENT_START}"/>
-      <stop offset="1" stop-color="{GRADIENT_END}"/>
-    </linearGradient>
-    <clipPath id="mask">{clip}</clipPath>
-    <radialGradient id="glow" cx="0.18" cy="0.14" r="0.78">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.10"/>
-      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.04"/>
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <g clip-path="url(#mask)">
-    <rect width="108" height="108" fill="url(#bg)"/>
-    <rect width="108" height="108" fill="url(#glow)"/>
-    {glyph_svg(GLYPH)}
-  </g>
-</svg>
+def z_path() -> str:
+    return (f"M{Z_LEFT},{Z_TOP} L{Z_RIGHT},{Z_TOP} "
+            f"L{Z_LEFT},{Z_BOTTOM} L{Z_RIGHT},{Z_BOTTOM}")
+
+
+# --- Android vector layers -------------------------------------------------
+def vector_glyph(comment: str, monochrome: bool = False) -> str:
+    color = GLYPH
+    body = f"""    <path
+        android:fillColor="{color}"
+        android:fillType="evenOdd"
+        android:pathData="{bow_path()}" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="{color}"
+        android:strokeWidth="{SHAFT_W}"
+        android:strokeLineCap="round"
+        android:pathData="{shaft_path()}" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="{color}"
+        android:strokeWidth="{Z_W}"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="{z_path()}" />"""
+    return f"""<?xml version="1.0" encoding="utf-8"?>
+<!-- {comment}. Key: V-shaped bow opening, Z-shaped tip, inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+{body}
+</vector>
 """
 
 
@@ -130,11 +101,10 @@ def vector_background() -> str:
                 android:startY="0"
                 android:endX="108"
                 android:endY="108"
-                android:startColor="{GRADIENT_START}"
-                android:endColor="{GRADIENT_END}" />
+                android:startColor="{BG_START}"
+                android:endColor="{BG_END}" />
         </aapt:attr>
     </path>
-    <!-- Soft depth glow: keeps the mark from looking flat, invisible to themed icons. -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -151,58 +121,73 @@ def vector_background() -> str:
 """
 
 
-def vector_glyph(name: str) -> str:
-    return f"""<?xml version="1.0" encoding="utf-8"?>
-<!-- {name}: zero-shaped keyhole inside the 66dp adaptive safe zone. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="{GLYPH}"
-        android:fillType="evenOdd"
-        android:pathData="{ring_path()}" />
-    <path
-        android:fillColor="{GLYPH}"
-        android:pathData="{stem_path()}" />
-</vector>
-"""
-
-
-def adaptive(name: str) -> str:
-    return f"""<?xml version="1.0" encoding="utf-8"?>
+def adaptive() -> str:
+    return """<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <!-- Android 13+ themed icons: single-colour silhouette, no background. -->
+    <!-- Android 13+ themed icons: single-colour silhouette. -->
     <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>
 """
 
 
-def main() -> None:
-    DRAWABLE.mkdir(parents=True, exist_ok=True)
-    MIPMAP_V26.mkdir(parents=True, exist_ok=True)
-    DESIGN.mkdir(parents=True, exist_ok=True)
+# --- SVG renders -----------------------------------------------------------
+def glyph_svg() -> str:
+    return f"""    <path d="{bow_path()}" fill="{GLYPH}" fill-rule="evenodd"/>
+    <path d="{shaft_path()}" fill="none" stroke="{GLYPH}" stroke-width="{SHAFT_W}" stroke-linecap="round"/>
+    <path d="{z_path()}" fill="none" stroke="{GLYPH}" stroke-width="{Z_W}" stroke-linecap="round" stroke-linejoin="round"/>"""
 
-    (DRAWABLE / "ic_launcher_background.xml").write_text(vector_background())
-    (DRAWABLE / "ic_launcher_foreground.xml").write_text(vector_glyph("Launcher foreground"))
-    (DRAWABLE / "ic_launcher_monochrome.xml").write_text(vector_glyph("Themed-icon monochrome"))
-    (MIPMAP_V26 / "ic_launcher.xml").write_text(adaptive("square"))
-    (MIPMAP_V26 / "ic_launcher_round.xml").write_text(adaptive("round"))
 
-    (DESIGN / "vaultzero-icon-square.svg").write_text(masked_svg("square"))
-    (DESIGN / "vaultzero-icon-round.svg").write_text(masked_svg("round"))
-    (DESIGN / "vaultzero-icon-full.svg").write_text(masked_svg("full"))
-    (DESIGN / "vaultzero-icon-glyph.svg").write_text(
-        f"""<?xml version="1.0" encoding="UTF-8"?>
+def svg(shape: str) -> str:
+    clip = {
+        "square": '<rect x="0" y="0" width="108" height="108" rx="24" ry="24"/>',
+        "round": '<circle cx="54" cy="54" r="54"/>',
+        "full": '<rect x="0" y="0" width="108" height="108"/>',
+    }[shape]
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
-  {glyph_svg("#000000")}
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="{BG_START}"/>
+      <stop offset="1" stop-color="{BG_END}"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.14" r="0.8">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.10"/>
+      <stop offset="0.6" stop-color="#fff" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="mask">{clip}</clipPath>
+  </defs>
+  <g clip-path="url(#mask)">
+    <rect width="108" height="108" fill="url(#bg)"/>
+    <rect width="108" height="108" fill="url(#glow)"/>
+{glyph_svg()}
+  </g>
 </svg>
 """
+
+
+def main() -> None:
+    (RES / "drawable").mkdir(parents=True, exist_ok=True)
+    (RES / "mipmap-anydpi-v26").mkdir(parents=True, exist_ok=True)
+    DESIGN.mkdir(parents=True, exist_ok=True)
+
+    (RES / "drawable/ic_launcher_background.xml").write_text(vector_background())
+    (RES / "drawable/ic_launcher_foreground.xml").write_text(
+        vector_glyph("Launcher foreground"))
+    (RES / "drawable/ic_launcher_monochrome.xml").write_text(
+        vector_glyph("Themed-icon monochrome layer", monochrome=True))
+    (RES / "mipmap-anydpi-v26/ic_launcher.xml").write_text(adaptive())
+    (RES / "mipmap-anydpi-v26/ic_launcher_round.xml").write_text(adaptive())
+
+    for shape in ("square", "round", "full"):
+        (DESIGN / f"vaultzero-icon-{shape}.svg").write_text(svg(shape))
+    (DESIGN / "vaultzero-icon-glyph.svg").write_text(
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">\n'
+        f'{glyph_svg().replace(GLYPH, "#000000")}\n</svg>'
     )
-    print("wrote vector layers, adaptive icon XML and SVG sources")
+    print("wrote key vector layers and SVGs")
 
 
 if __name__ == "__main__":

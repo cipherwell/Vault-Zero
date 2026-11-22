@@ -1,0 +1,4 @@
+VaultZero v1.7.5:
+• New icon: a key whose bow is a V and whose tip is a Z
+• Adaptive layers + monochrome themed-icon layer, every density
+• No functional or cryptographic changes

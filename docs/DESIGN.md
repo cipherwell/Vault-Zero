@@ -41,22 +41,20 @@ chevrons. Title high, controls (floating pill nav, header actions) within thumb 
 **Motion:** short (~150–250 ms) fades/slides; the large `Vault` title collapses to 20 sp past a
 ~56 px scroll threshold while search/chips stay pinned; reveal/undo animations are brief.
 
-## App icon (v1.7.2)
+## App icon (v1.7.5)
 
-The mark is a **zero-shaped keyhole**: a fitted ring (the zero of zero-knowledge) merged into a
-rounded stem. Source: `design/icon/` (geometry script + SVGs + preview sheet).
+The mark is a **key whose initials are its geometry**: the bow (the part you hold) is a loop with a
+**V-shaped opening**, and the bit/tip is a **Z**. No lettering, no extra props — one silhouette that
+reads as a key at 48 dp and as V + Z up close. Source: `design/icon/`.
 
 | Spec | Value |
 | --- | --- |
 | Adaptive canvas | 108 × 108 dp; glyph inside the 66 dp safe circle |
 | Background | full-bleed linear gradient `#2F6BFF → #0A2366` (135°) + soft white corner glow |
-| Foreground | keyhole glyph, pure `#FFFFFF`, two paths (even-odd ring + stem) |
+| Foreground | white key: even-odd bow with V hole, 9 dp shaft, 7 dp Z bit |
 | Monochrome | separate `ic_launcher_monochrome` silhouette for Android 13+ themed icons |
 | Legacy | squircle (`ic_launcher`) and round (`ic_launcher_round`) PNGs, mdpi–xxxhdpi |
-| Store artwork | 512 px full-bleed icon, 1024 × 500 feature graphic |
-
-Why this shape: keyhole = vault, ring = zero-knowledge, no lettering or gradient-dependent detail,
-so it survives every launcher mask, icon pack, monochrome tint and 24 px render.
+| Store/social | 512 px full-bleed icon + rebuilt 1024 × 500 feature graphic |
 
 ## Screen inventory
 

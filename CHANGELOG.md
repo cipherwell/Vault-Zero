@@ -3,6 +3,17 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.5] — 2026-11-21
+
+### Changed
+- **New icon: a key whose bow is a V and whose tip is a Z.** One silhouette carries the initials —
+  the bow (the part you hold) is a loop with a V-shaped opening, the bit is drawn as a Z. Same
+  adaptive construction as before: 66 dp safe-zone foreground, separate monochrome layer, legacy
+  squircle/round PNGs, regenerated 512 px icon and feature graphic.
+
+### Notes
+- No functional or cryptographic changes. Supersedes the withdrawn 1.7.3 fingerprint concept.
+
 ## [1.7.4] — 2026-11-21
 
 ### Fixed
