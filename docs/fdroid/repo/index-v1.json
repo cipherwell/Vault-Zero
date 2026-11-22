@@ -1,6 +1,6 @@
 {
   "repo": {
-    "timestamp": 1795311637000,
+    "timestamp": 1795312824000,
     "version": 20002,
     "name": "VaultZero (Cipherwell beta channel)",
     "icon": "repo-icon.png",
@@ -18,18 +18,18 @@
       "categories": [
         "Security"
       ],
-      "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.1.md",
-      "suggestedVersionName": "1.7.1",
-      "suggestedVersionCode": "10",
+      "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.2.md",
+      "suggestedVersionName": "1.7.2",
+      "suggestedVersionCode": "11",
       "description": "VaultZero is an offline, zero-knowledge password manager. The APK has no\nINTERNET permission, no account, no analytics and no crash reporting.\n\nRecords are encrypted with AES-256-GCM (bound to id and type via AAD); the vault\nmaster key is wrapped with Argon2id (64 MiB, t=3) password and recovery-phrase\nenvelopes, with transparent migration from older PBKDF2 vaults. Recovery uses\nBIP-39 12-word kits; backups are encrypted, verified, duplicate-safe files\nwritten through the Android Storage Access Framework.\n\nThis repository is the Cipherwell beta channel. Every build here is signed with\nthe same VaultZero upload key; updates install over the previous version.\n\nEnglish and Spanish (US) UI, MIT licence.\n",
       "issueTracker": "https://github.com/cipherwell/Vault-Zero/issues",
       "license": "MIT",
       "sourceCode": "https://github.com/cipherwell/Vault-Zero",
       "summary": "Offline zero-knowledge password manager",
       "webSite": "https://cipherwell.github.io/Vault-Zero/",
-      "added": 1795311571000,
+      "added": 1795312824000,
       "packageName": "com.cipherwell.vaultzero",
-      "lastUpdated": 1795311571000,
+      "lastUpdated": 1795312824000,
       "localized": {
         "en-US": {
           "name": "VaultZero"
@@ -40,9 +40,9 @@
   "packages": {
     "com.cipherwell.vaultzero": [
       {
-        "added": 1795311571000,
-        "apkName": "VaultZero-1.7.1.apk",
-        "hash": "0324938dc2a1e11cabf1a22d5ef293ff57f4a3253c377d7b0f6da03f1d558eff",
+        "added": 1795312824000,
+        "apkName": "VaultZero-1.7.2.apk",
+        "hash": "79e62efa0a69ebe4bbb8bc084a8588efa6a26466b66e2d2adb87c8a2e8fcbeeb",
         "hashType": "sha256",
         "minSdkVersion": 24,
         "nativecode": [
@@ -54,7 +54,7 @@
         "packageName": "com.cipherwell.vaultzero",
         "sig": "e666ec642dcfe0390e6fec249e581f16",
         "signer": "6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7",
-        "size": 2153173,
+        "size": 2169289,
         "targetSdkVersion": 36,
         "uses-permission": [
           [
@@ -70,8 +70,8 @@
             null
           ]
         ],
-        "versionCode": 10,
-        "versionName": "1.7.1"
+        "versionCode": 11,
+        "versionName": "1.7.2"
       }
     ]
   }
