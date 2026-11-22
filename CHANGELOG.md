@@ -3,6 +3,16 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.4] — 2026-11-21
+
+### Fixed
+- **Reverted the launcher icon to the v1.7.2 keyhole.** The 1.7.3 fingerprint/zero mark read as a
+  spiral or target at launcher size, especially under circular masks. The icon is back to the
+  zero-shaped keyhole while a better fingerprint direction is designed.
+
+### Notes
+- No functional or cryptographic changes; icon assets are byte-identical to 1.7.2.
+
 ## [1.7.3] — 2026-11-21
 
 ### Changed

@@ -41,23 +41,22 @@ chevrons. Title high, controls (floating pill nav, header actions) within thumb 
 **Motion:** short (~150–250 ms) fades/slides; the large `Vault` title collapses to 20 sp past a
 ~56 px scroll threshold while search/chips stay pinned; reveal/undo animations are brief.
 
-## App icon (v1.7.3)
+## App icon (v1.7.2)
 
-The mark is a **zero holding a fingerprint**: the ring is the zero (zero-knowledge, the vault's
-initial), the whorl inside is biometrics. Source: `design/icon/` (geometry script + SVGs + preview
-sheet).
+The mark is a **zero-shaped keyhole**: a fitted ring (the zero of zero-knowledge) merged into a
+rounded stem. Source: `design/icon/` (geometry script + SVGs + preview sheet).
 
 | Spec | Value |
 | --- | --- |
 | Adaptive canvas | 108 × 108 dp; glyph inside the 66 dp safe circle |
 | Background | full-bleed linear gradient `#2F6BFF → #0A2366` (135°) + soft white corner glow |
-| Foreground | zero ring + two fingerprint ridges + core dot, pure `#FFFFFF` |
+| Foreground | keyhole glyph, pure `#FFFFFF`, two paths (even-odd ring + stem) |
 | Monochrome | separate `ic_launcher_monochrome` silhouette for Android 13+ themed icons |
 | Legacy | squircle (`ic_launcher`) and round (`ic_launcher_round`) PNGs, mdpi–xxxhdpi |
-| Store/social | 512 px full-bleed icon + **wordmark lockup** (`vaultzero-icon-lockup.svg`) where the name is legible |
+| Store artwork | 512 px full-bleed icon, 1024 × 500 feature graphic |
 
-The name lives in the lockup, feature graphic and store artwork — not inside the adaptive icon:
-text at 48 dp is unreadable and would break the safe zone.
+Why this shape: keyhole = vault, ring = zero-knowledge, no lettering or gradient-dependent detail,
+so it survives every launcher mask, icon pack, monochrome tint and 24 px render.
 
 ## Screen inventory
 

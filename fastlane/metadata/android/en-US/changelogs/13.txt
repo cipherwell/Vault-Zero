@@ -1,0 +1,4 @@
+VaultZero v1.7.4:
+• Icon reverted to the v1.7.2 keyhole mark
+• The 1.7.3 fingerprint mark read as a spiral at launcher size
+• No functional or cryptographic changes

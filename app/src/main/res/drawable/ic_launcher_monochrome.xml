@@ -1,29 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Themed-icon monochrome layer. Zero with a fingerprint whorl, inside the 66dp safe zone. -->
+<!-- Themed-icon monochrome: zero-shaped keyhole inside the 66dp adaptive safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="8.6"
-        android:strokeLineCap="round"
-        android:pathData="M27.80,50.00 a26.2,26.2 0 1,0 52.40,0 a26.2,26.2 0 1,0 -52.40,0" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="5.4"
-        android:strokeLineCap="round"
-        android:pathData="M41.96,36.28 A17.6,16.6 -8 1 1 35.24,50.35" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4.6"
-        android:strokeLineCap="round"
-        android:pathData="M51.62,40.83 A10.2,9.6 12 1 1 44.22,48.08" />
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M28.00,50.00 a26.0,26.0 0 1,0 52.0,0 a26.0,26.0 0 1,0 -52.0,0 Z M37.50,50.00 a16.5,16.5 0 1,1 33.0,0 a16.5,16.5 0 1,1 -33.0,0 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M51.50,50.60 a2.1,2.1 0 1,0 4.20,0 a2.1,2.1 0 1,0 -4.20,0" />
+        android:pathData="M47.50,58.50 L60.50,58.50 L59.00,78.50 a5.0,5.0 0 0,1 -5.0,5.0 a5.0,5.0 0 0,1 -5.0,-5.0 L49.00,78.50 Z" />
 </vector>
