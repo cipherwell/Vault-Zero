@@ -12,8 +12,8 @@ android {
     applicationId = "com.cipherwell.vaultzero"
     minSdk = 24
     targetSdk = 36
-    versionCode = 20
-    versionName = "1.7.11"
+    versionCode = 21
+    versionName = "1.7.12"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

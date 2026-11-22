@@ -11,17 +11,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 
 /**
  * The single card container used across the app.
  *
- * One UI's separation cue is a lifted surface, not heavy elevation: every card
- * gets a soft drop shadow in the light theme (where a shadow reads on #FAFAFA)
- * and a faint accent-tinted halo in the dark theme (where a black shadow would
- * vanish against #000000). Elevation stays low so the chrome never competes
- * with content; the hairline border remains the primary edge.
+ * One UI's separation cue is a lifted surface, not heavy elevation. Cards get a
+ * soft drop shadow in the light theme only (where it reads on #FAFAFA); the
+ * dark theme has no shadows at all, because on true black they are invisible at
+ * best and a compositing artefact at worst. The hairline border remains the
+ * primary edge in both themes.
  */
 @Composable
 fun VaultCard(
@@ -37,20 +38,39 @@ fun VaultCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    // A translucent card lets the shadow underneath show through and stamps the
+    // shadow layer's rectangular bounds across the surface. Composite the
+    // container onto the background so every card is opaque without changing
+    // how it looks.
+    // Dark cards are a single neutral grey, regardless of the near-black
+    // surface the caller asked for. Compositing a translucent or black
+    // container leaves the card indistinguishable from the ground (or picks up
+    // the backdrop's tint); One UI's separation cue is the lifted grey surface.
+    val darkContainer = MaterialTheme.colorScheme.surfaceContainerHigh
+    val opaqueColors = colors.copy(
+        containerColor = if (dark) {
+            darkContainer
+        } else {
+            colors.containerColor.compositeOver(MaterialTheme.colorScheme.background)
+        }
+    )
     Card(
-        modifier = modifier.vaultCardShadow(shape, dark),
+        // Dark mode has no shadows: on true black they are invisible at best and
+        // a compositing artefact at worst. Separation there comes from the lifted
+        // surface and the hairline border.
+        modifier = if (dark) modifier else modifier.vaultCardShadow(shape),
         shape = shape,
-        colors = colors,
+        colors = opaqueColors,
         border = border,
         content = content,
     )
 }
 
 @Composable
-private fun Modifier.vaultCardShadow(shape: Shape, dark: Boolean): Modifier = shadow(
-    elevation = if (dark) 9.dp else 10.dp,
+private fun Modifier.vaultCardShadow(shape: Shape): Modifier = shadow(
+    elevation = 10.dp,
     shape = shape,
-    clip = false,
-    ambientColor = if (dark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f),
-    spotColor = if (dark) Color.White.copy(alpha = 0.18f) else Color.Black.copy(alpha = 0.16f),
+    clip = true,
+    ambientColor = Color.Black.copy(alpha = 0.10f),
+    spotColor = Color.Black.copy(alpha = 0.16f),
 )

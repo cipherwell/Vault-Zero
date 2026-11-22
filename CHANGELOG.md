@@ -3,6 +3,31 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.12] — 2026-11-21
+
+### Fixed
+- **Dark mode no longer casts card shadows.** On true black they were invisible at best; the white
+  rim could also show through translucent cards and stamp the shadow layer's bounds as a grey
+  rectangle. Dark-mode separation is now the lifted surface plus the hairline border only.
+- **Card containers are always opaque.** `VaultCard` composites its container over the background,
+  so a translucent card can no longer pick up a blue/navy tint or a shadow bleed from behind it.
+
+### Notes
+- Light mode keeps its soft 10 dp shadow. No functional or cryptographic changes.
+
+## [1.7.12] — 2026-11-21
+
+### Fixed
+- **Dark cards are neutral grey (`#1C1C1E`) and opaque.** They no longer inherit a caller's
+  near-black or translucent container, which is what produced the navy tint on the lock screen.
+  `VaultCard` normalises every dark card to `surfaceContainerHigh`.
+- **Dark mode casts no card shadows.** On true black they were invisible at best; the white rim
+  could also show through translucent cards and stamp the shadow layer's bounds as a grey rectangle.
+
+### Notes
+- Light mode keeps its soft 10 dp shadow and its white/grey containers. No functional or
+  cryptographic changes.
+
 ## [1.7.11] — 2026-11-21
 
 ### Changed

@@ -1,0 +1,5 @@
+VaultZero v1.7.12:
+• Dark mode: no card shadows (they never read on black)
+• Cards are now opaque, fixing a grey/blue rectangle and tint
+• Light mode keeps its soft shadow
+• No functional or cryptographic changes
