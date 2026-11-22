@@ -6,7 +6,7 @@
         "size": 46934
       }
     },
-    "timestamp": 1795312824000,
+    "timestamp": 1795313473000,
     "categories": {
       "vaultzero-fdroid": null,
       "Security": {
@@ -19,13 +19,13 @@
   "packages": {
     "com.cipherwell.vaultzero": {
       "metadata": {
-        "added": 1795312824000,
+        "added": 1795313473000,
         "categories": [
           "Security"
         ],
-        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.2.md",
+        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.4.md",
         "issueTracker": "https://github.com/cipherwell/Vault-Zero/issues",
-        "lastUpdated": 1795312824000,
+        "lastUpdated": 1795313473000,
         "license": "MIT",
         "sourceCode": "https://github.com/cipherwell/Vault-Zero",
         "webSite": "https://cipherwell.github.io/Vault-Zero/",
@@ -40,11 +40,11 @@
       },
       "versions": {
         "0324938dc2a1e11cabf1a22d5ef293ff57f4a3253c377d7b0f6da03f1d558eff": null,
-        "79e62efa0a69ebe4bbb8bc084a8588efa6a26466b66e2d2adb87c8a2e8fcbeeb": {
-          "added": 1795312824000,
+        "4c05ab8ee705bf9cb1281718d68a09564b716fb10dfcb26dc547884ebe459869": {
+          "added": 1795313473000,
           "file": {
-            "name": "/VaultZero-1.7.2.apk",
-            "sha256": "79e62efa0a69ebe4bbb8bc084a8588efa6a26466b66e2d2adb87c8a2e8fcbeeb",
+            "name": "/VaultZero-1.7.4.apk",
+            "sha256": "4c05ab8ee705bf9cb1281718d68a09564b716fb10dfcb26dc547884ebe459869",
             "size": 2169289
           },
           "manifest": {
@@ -54,8 +54,8 @@
               "x86",
               "x86_64"
             ],
-            "versionName": "1.7.2",
-            "versionCode": 11,
+            "versionName": "1.7.4",
+            "versionCode": 13,
             "usesSdk": {
               "minSdkVersion": 24,
               "targetSdkVersion": 36
