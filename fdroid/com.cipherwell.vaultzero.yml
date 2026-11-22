@@ -16,6 +16,28 @@ Repo: https://github.com/cipherwell/Vault-Zero.git
 Binaries: https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.22/VaultZero-v1.7.22.apk
 
 Builds:
+  - versionName: 1.7.22
+    versionCode: 31
+    commit: e520ee0
+    subdir: app
+    gradle:
+      - yes
+
+# Previous versions; kept so older tags can be rebuilt from the same recipe.
+  - versionName: 1.7.21
+    versionCode: 30
+    commit: 5983859
+    subdir: app
+    gradle:
+      - yes
+
+  - versionName: 1.7.20
+    versionCode: 29
+    commit: 7bbc1e5
+    subdir: app
+    gradle:
+      - yes
+
   - versionName: 1.7.19
     versionCode: 28
     commit: f9ebf6d
