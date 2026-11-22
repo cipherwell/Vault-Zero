@@ -1,0 +1,5 @@
+VaultZero v1.7.3:
+• New icon: a zero holding a fingerprint (biometrics + zero-knowledge)
+• Adaptive layers, monochrome themed-icon layer, every density
+• Name lockup for store and social artwork
+• No functional or cryptographic changes

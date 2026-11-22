@@ -3,6 +3,20 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.3] — 2026-11-21
+
+### Changed
+- **New icon: a zero holding a fingerprint.** The ring is the zero (zero-knowledge); the whorl
+  inside (two ridges plus a core, gaps aligned on a lower-left delta) is biometrics. Same adaptive
+  construction as 1.7.2: safe-zone foreground, separate monochrome layer for themed icons, legacy
+  squircle/round PNGs, regenerated 512 px store icon and feature graphic.
+- Added a **wordmark lockup** (`design/icon/vaultzero-icon-lockup.svg`) for store and social
+  artwork. The app name is deliberately not drawn inside the adaptive icon: text at launcher size
+  is unreadable and would break the safe zone.
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.2] — 2026-11-21
 
 ### Changed

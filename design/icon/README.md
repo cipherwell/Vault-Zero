@@ -1,7 +1,7 @@
 # VaultZero icon source
 
-The launcher mark is a **zero-shaped keyhole**: a fitted ring (the zero of zero-knowledge) merged
-into a rounded, slightly tapered stem. It is generated from one geometry script so every asset stays
+The launcher mark is a **zero holding a fingerprint**: the ring is the zero (zero-knowledge), the
+whorl inside is biometrics. It is generated from one geometry script so every asset stays
 in sync.
 
 ## Files
@@ -13,6 +13,7 @@ in sync.
 | `vaultzero-icon-round.svg` | Circular legacy render (`ic_launcher_round`) |
 | `vaultzero-icon-full.svg` | Full-bleed square (512 px store artwork) |
 | `vaultzero-icon-glyph.svg` | Glyph-only silhouette (design reference / monochrome check) |
+| `vaultzero-icon-lockup.svg` | Mark + `VAULTZERO` wordmark for store/social artwork (not the launcher icon) |
 | `icon-preview-sheet.png` | Rendered review sheet: masks, density ladder, monochrome |
 
 ## Why it fits any launcher
