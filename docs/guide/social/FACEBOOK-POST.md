@@ -32,6 +32,7 @@ Enlaces en el primer comentario.
 ```
 Beta downloads: https://github.com/cipherwell/Vault-Zero/releases
 F-Droid repo: https://cipherwell.github.io/Vault-Zero/fdroid/repo
+F-Droid install steps (auto-updates): https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/social/FDROID-INSTALL.md
 Guide (PDF): https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guide-EN.pdf
 What beta means / test-data rules: https://github.com/cipherwell/Vault-Zero/blob/main/docs/BETA.md
 Audit summary: https://github.com/cipherwell/Vault-Zero/blob/main/docs/security/AUDIT-2026-11-21.md
@@ -42,6 +43,7 @@ Obtainium: add `https://github.com/cipherwell/Vault-Zero` and it will pick up ne
 ```
 Descargas beta: https://github.com/cipherwell/Vault-Zero/releases
 Repositorio F-Droid: https://cipherwell.github.io/Vault-Zero/fdroid/repo
+Pasos de instalación F-Droid (actualizaciones automáticas): https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/social/FDROID-INSTALL.md
 Guía (PDF): https://github.com/cipherwell/Vault-Zero/blob/main/docs/guide/VaultZero-Guia-ES.pdf
 Qué significa beta / reglas de datos de prueba: https://github.com/cipherwell/Vault-Zero/blob/main/docs/BETA.md
 Resumen de la auditoría: https://github.com/cipherwell/Vault-Zero/blob/main/docs/security/AUDIT-2026-11-21.md
