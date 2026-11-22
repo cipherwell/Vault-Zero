@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.Test
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -126,4 +127,25 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
   "ksp"(libs.androidx.room.compiler)
+}
+
+/**
+ * Robolectric normally downloads its Android SDK jar from Maven Central at test
+ * runtime. GitHub Actions egress occasionally fails that fetch, which fails every
+ * Robolectric class before a test runs. Resolve the exact jar through Gradle and
+ * point Robolectric at it in offline mode instead.
+ */
+val robolectricAndroidAll by configurations.creating
+dependencies {
+    robolectricAndroidAll("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
+}
+val robolectricDepsDir = layout.buildDirectory.dir("robolectric-deps")
+val prepareRobolectricDeps = tasks.register<Copy>("prepareRobolectricDeps") {
+    from(robolectricAndroidAll)
+    into(robolectricDepsDir)
+}
+tasks.withType<Test>().configureEach {
+    dependsOn(prepareRobolectricDeps)
+    systemProperty("robolectric.offline", "true")
+    systemProperty("robolectric.dependency.dir", robolectricDepsDir.get().asFile.absolutePath)
 }
