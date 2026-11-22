@@ -1,4 +1,8 @@
-# Google Play listing pack — VaultZero 1.1.0
+# Google Play listing pack — VaultZero 1.1.0 (ARCHIVED)
+
+> **Not used.** VaultZero does not ship through Google Play (privacy-first: no Play Services, no
+> Google-held signing key). Archived for reference only — see
+> [docs/DISTRIBUTION.md](../docs/DISTRIBUTION.md).
 
 Assets in this folder / fastlane:
 - `store/play-icon-512.png` — 512×512 32-bit PNG app icon

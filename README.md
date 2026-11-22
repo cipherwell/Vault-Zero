@@ -201,8 +201,8 @@ vault-zero-app/
 ├── docs/                      Documentation (start at docs/README.md)
 │   └── screenshots/           Curated screenshots (+ archive/)
 ├── releases/                  Release notes & checksums (binaries on GitHub Releases)
-├── store/                     Play Store listing pack & data-safety answers
-├── fastlane/                  F-Droid/Play metadata (listing, changelog, images)
+├── store/                     listing assets (F-Droid/fastlane; Play pack archived)
+├── fastlane/                  F-Droid metadata (listing, changelog, images)
 ├── fdroid/                    F-Droid build recipe
 ├── .github/                   Issue/PR templates, release workflow, Dependabot
 ├── SECURITY.md                Security policy, evidence and residual risks
@@ -228,14 +228,15 @@ Full annotated tree: [docs/REPO-MAP.md](docs/REPO-MAP.md).
 | [docs/BUILDING.md](docs/BUILDING.md) | Build, dev flags, device tests |
 | [docs/TESTING.md](docs/TESTING.md) | Test matrix, commands, manual QA |
 | [docs/AUDIT-2026-11-15-recovery-and-encryption.md](docs/AUDIT-2026-11-15-recovery-and-encryption.md) | Recovery-phrase/encryption audit and fixes |
-| [docs/RELEASING.md](docs/RELEASING.md) | Signing, versioning, Play/F-Droid/GitHub release |
+| [docs/RELEASING.md](docs/RELEASING.md) | Signing, versioning, GitHub/F-Droid release |
+| [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) | Install/update without Google: GitHub, Obtainium, F-Droid |
 | [docs/DESIGN.md](docs/DESIGN.md) | One UI-inspired design tokens & screens |
 | [docs/PENTEST-2026-11-15.md](docs/PENTEST-2026-11-15.md) | Self-directed security assessment |
 | [docs/FAQ.md](docs/FAQ.md) | Frequently asked questions |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common problems & fixes |
 | [docs/PRIVACY.md](docs/PRIVACY.md) | Privacy policy |
 | [releases/](releases/README.md) | Release notes, checksums, verification |
-| [store/](store/README.md) | Play Store listing assets & answers |
+| [store/](store/README.md) | Listing assets & answers (Play pack archived, not used) |
 
 ## Privacy
 

@@ -1,4 +1,8 @@
-# Google Play / F-Droid listing pack
+# Store listing pack (F-Droid / fastlane)
+
+> **Google Play is intentionally not used.** `PLAY_LISTING.md` and the data-safety answers are
+> kept only as an archive; nothing in the release process depends on them. See
+> [docs/DISTRIBUTION.md](../docs/DISTRIBUTION.md) for how the app actually ships.
 
 Everything needed to fill the store listing lives here or in `fastlane/`. No app code depends on
 this directory.

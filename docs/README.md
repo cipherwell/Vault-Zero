@@ -20,18 +20,18 @@ Start here. Documents are grouped by intent; every file is self-contained and li
 1. [BUILDING.md](BUILDING.md) — toolchain, dev flags, device tests.
 2. [TESTING.md](TESTING.md) — test matrix, commands, QA checklist.
 3. [ARCHITECTURE.md](ARCHITECTURE.md) / [REPO-MAP.md](REPO-MAP.md) — code layout and data flow.
-4. [RELEASING.md](RELEASING.md) — signing identity, versioning, Play/F-Droid/GitHub.
+4. [RELEASING.md](RELEASING.md) — signing identity, versioning, GitHub/F-Droid.
 5. [CONTRIBUTING.md](../CONTRIBUTING.md) — rules and PR checklist.
 
 ### I want to test the beta or run one
 1. [BETA.md](BETA.md) — tester guide, install and verification steps, known limits, how to report.
 2. [SOCIAL-BETA-POST.md](SOCIAL-BETA-POST.md) — announcement drafts (EN/ES) and pinned-comment template.
-3. [PLAY-INTERNAL-TESTING.md](PLAY-INTERNAL-TESTING.md) — maintainer checklist for Play internal testing.
+3. [DISTRIBUTION.md](DISTRIBUTION.md) — install/update without Google: GitHub Releases, Obtainium, F-Droid; why Play is intentionally not used.
 
 ### I want design/branding assets
 - [DESIGN.md](DESIGN.md) — One UI-inspired tokens, typography, screen inventory, icon.
 - [SCREENSHOTS.md](SCREENSHOTS.md) — current screenshots and archive.
-- [store/README.md](../store/README.md) — Play listing pack; [fastlane/](../fastlane) — store metadata.
+- [store/README.md](../store/README.md) — listing assets (Play pack archived); [fastlane/](../fastlane) — F-Droid metadata.
 
 ## Complete index
 
@@ -45,7 +45,7 @@ Start here. Documents are grouped by intent; every file is self-contained and li
 | [BACKUP-FORMAT.md](BACKUP-FORMAT.md) | Envelope schema, import/export semantics, compatibility |
 | [BUILDING.md](BUILDING.md) | Build prerequisites, commands, dev flags, device tests |
 | [TESTING.md](TESTING.md) | JVM/device test inventory, commands, manual QA matrix |
-| [RELEASING.md](RELEASING.md) | Versioning, signing, GitHub/Play/F-Droid release steps |
+| [RELEASING.md](RELEASING.md) | Versioning, signing, GitHub/F-Droid release steps |
 | [DESIGN.md](DESIGN.md) | Design language, tokens, typography, app icon |
 | [FAQ.md](FAQ.md) | Common questions |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Fixes for install/backup/biometric issues |

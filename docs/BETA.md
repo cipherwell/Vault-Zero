@@ -28,7 +28,7 @@ us, not anyone.
 
 | Area | Limitation |
 | --- | --- |
-| Distribution | APK from GitHub Releases; **no auto-update**. You must install each new build manually. Play Store / F-Droid are not available yet. |
+| Distribution | APK from GitHub Releases; **no Play Store by design**. For automatic updates use [Obtainium](DISTRIBUTION.md) (watches this repo's releases). Manual installs work too — see [DISTRIBUTION.md](DISTRIBUTION.md). |
 | Reporting | No crash reporting or telemetry (by design). Testers can't screenshot inside the app because `FLAG_SECURE` is on; use **Settings → Copy diagnostics** plus another phone/camera for pictures. |
 | Device coverage | Tested on Android 14/17 emulator + Pixel 9 Pro XL (Android 17), where all 15 instrumentation tests pass including biometrics. Older Android versions (7–13) and some OEM skins may behave differently. |
 | Unlock speed | Argon2id takes ~1.2 s on a flagship (Pixel 9 Pro XL) and up to a few seconds on older devices; biometric unlock skips the KDF. |
@@ -49,9 +49,9 @@ us, not anyone.
    # certificate SHA-256 must be 6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7
    ```
 
-3. Allow installs from your browser/file manager when Android asks ("Install unknown apps"). Play
-   Protect may warn about an app it has not seen before — the certificate check above is what
-   matters.
+3. Allow installs from your browser/file manager when Android asks ("Install unknown apps").
+   Android's app scanner may warn about a build it has not seen before — the certificate check
+   above is what matters. VaultZero is not on Google Play, by design.
 4. Launch, create a **test** vault, write down the 12-word recovery kit on paper.
 5. Tell us the version you are on when you report anything (Settings footer shows it).
 

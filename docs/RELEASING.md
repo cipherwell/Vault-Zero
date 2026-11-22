@@ -20,7 +20,7 @@ place; migrate with an encrypted backup + recovery phrase. Never use `debug.keys
 ## 1. Prepare the version
 
 1. Bump `versionCode` (+1) and `versionName` (semver) in `app/build.gradle.kts`.
-2. Add `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (≤500 chars for Play).
+2. Add `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (F-Droid metadata).
 3. Update `fdroid/com.cipherwell.vaultzero.yml` (current version/code + new build entry with
    the git tag) and [releases/](../releases/README.md) with a new `v<version>.md`.
 4. Update [CHANGELOG.md](../CHANGELOG.md) and any docs with version-specific statements.
@@ -128,15 +128,11 @@ when configured:
   **Actions → Run workflow**. The workflow verifies the production certificate and refuses to run
   without the secrets; it never uses the debug keystore.
 
-### Google Play
-Follow [store/PLAY_LISTING.md](../store/PLAY_LISTING.md):
-1. Create the app (decide the permanent `applicationId` first; it cannot be changed later).
-2. Enrol in Play App Signing; keep the upload key safe.
-3. Upload the AAB to internal testing.
-4. Complete App content: privacy policy URL (GitHub Pages `/docs/privacy.html`), data safety, content
-   rating, target audience, ads=No.
-5. Fill listing assets/text from `store/` and `fastlane/`.
-6. Test the internal build, then promote.
+### Google Play — intentionally not used
+VaultZero does not ship through Google Play. It is a privacy-first, offline app with no Play
+Services dependency and no Google-held signing key; the Play listing pack in `store/` is archived.
+Distribution is GitHub Releases (+ Obtainium for updates) and F-Droid — see
+[DISTRIBUTION.md](DISTRIBUTION.md).
 
 ### F-Droid
 Push the tag, update `fdroid/com.cipherwell.vaultzero.yml` (build entry/tag), and open a merge
