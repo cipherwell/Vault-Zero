@@ -14,7 +14,7 @@
       }
     },
     "address": "https://cipherwell.github.io/Vault-Zero/fdroid/repo",
-    "timestamp": 1795364557000,
+    "timestamp": 1795368467000,
     "categories": {
       "Security": {
         "name": {
@@ -26,13 +26,13 @@
   "packages": {
     "com.cipherwell.vaultzero": {
       "metadata": {
-        "added": 1795364557000,
+        "added": 1795368467000,
         "categories": [
           "Security"
         ],
-        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.22.md",
+        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.23.md",
         "issueTracker": "https://github.com/cipherwell/Vault-Zero/issues",
-        "lastUpdated": 1795364557000,
+        "lastUpdated": 1795368467000,
         "license": "MIT",
         "sourceCode": "https://github.com/cipherwell/Vault-Zero",
         "webSite": "https://cipherwell.github.io/Vault-Zero/",
@@ -50,12 +50,12 @@
         "preferredSigner": "6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7"
       },
       "versions": {
-        "098067835b61a440239dc0b6fa24bc709740725c254d469d88d34b2ed708c352": {
-          "added": 1795364557000,
+        "7932b2f90e40a57f6ac38613ac96be1d9856ed6c72e734741507101294adb442": {
+          "added": 1795368467000,
           "file": {
-            "name": "/VaultZero-1.7.22.apk",
-            "sha256": "098067835b61a440239dc0b6fa24bc709740725c254d469d88d34b2ed708c352",
-            "size": 2235977
+            "name": "/VaultZero-1.7.23.apk",
+            "sha256": "7932b2f90e40a57f6ac38613ac96be1d9856ed6c72e734741507101294adb442",
+            "size": 2232309
           },
           "manifest": {
             "nativecode": [
@@ -64,8 +64,8 @@
               "x86",
               "x86_64"
             ],
-            "versionName": "1.7.22",
-            "versionCode": 31,
+            "versionName": "1.7.23",
+            "versionCode": 32,
             "usesSdk": {
               "minSdkVersion": 24,
               "targetSdkVersion": 36
