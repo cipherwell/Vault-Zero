@@ -7,15 +7,23 @@ AuthorEmail: cipherwell@proton.me
 WebSite: https://cipherwell.github.io/Vault-Zero/
 SourceCode: https://github.com/cipherwell/Vault-Zero
 IssueTracker: https://github.com/cipherwell/Vault-Zero/issues
-Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.1.md
+Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.2.md
 
 AutoName: VaultZero
 
 RepoType: git
 Repo: https://github.com/cipherwell/Vault-Zero.git
-Binaries: https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.1/VaultZero-v1.7.1.apk
+Binaries: https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.2/VaultZero-v1.7.2.apk
 
 Builds:
+  - versionName: 1.7.2
+    versionCode: 11
+    commit: 55b0065
+    subdir: app
+    gradle:
+      - yes
+
+# Previous version; kept so older tags can be rebuilt from the same recipe.
   - versionName: 1.7.1
     versionCode: 10
     commit: e8b93a5681b8cf09efdf89cad239dfdc26231975
@@ -49,7 +57,7 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.7.1
-CurrentVersionCode: 10
+CurrentVersion: 1.7.2
+CurrentVersionCode: 11
 
 AllowedAPKSigningKeys: 6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7
