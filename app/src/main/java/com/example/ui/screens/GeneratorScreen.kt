@@ -65,7 +65,6 @@ import com.example.ui.GeneratorConfig
 import com.example.ui.VaultViewModel
 import com.example.ui.components.StrengthMeter
 import com.example.ui.theme.CyberCyan
-import com.example.core.GeneratedCredential
 import com.example.core.Haptics
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.JetBrainsMonoFamily
@@ -79,14 +78,12 @@ fun GeneratorScreen(
     val config by viewModel.generatorConfig.collectAsState()
     val password by viewModel.generatedPassword.collectAsState()
     val strength by viewModel.passwordStrength.collectAsState()
-    val history by viewModel.generatorHistory.collectAsState()
     val context = LocalContext.current
     var lastHapticLength by remember { mutableStateOf(config.length) }
     var lastHapticWords by remember { mutableStateOf(config.passphraseWords) }
 
     // Hoisted because copySecurely runs from non-composable click handlers.
     val passwordClipboardLabel = stringResource(R.string.gen_clipboard_password)
-    val generatedClipboardLabel = stringResource(R.string.gen_clipboard_generated)
 
     Column(
         modifier = modifier
@@ -409,105 +406,8 @@ fun GeneratorScreen(
             }
         }
 
-        if (history.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(14.dp))
-            VaultCard(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.gen_history_title),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = stringResource(R.string.gen_history_subtitle),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        TextButton(onClick = { viewModel.clearGeneratorHistory() }) {
-                            Text(stringResource(R.string.common_clear), fontSize = 12.sp)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    history.forEach { entry ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                val relativeTimestamp = relativeTime(entry.createdAtMillis)
-                                Text(
-                                    text = if (entry.isPassphrase) {
-                                        pluralStringResource(
-                                            R.plurals.gen_history_passphrase,
-                                            entry.length,
-                                            entry.length
-                                        )
-                                    } else {
-                                        pluralStringResource(
-                                            R.plurals.gen_history_password,
-                                            entry.length,
-                                            entry.length
-                                        )
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = "••••••••••  $relativeTimestamp",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    viewModel.copySecurely(generatedClipboardLabel, entry.value, isSensitive = true)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = stringResource(R.string.gen_a11y_copy_generated),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }
-
-@Composable
-private fun relativeTime(createdAtMillis: Long): String {
-    val diffSeconds = ((System.currentTimeMillis() - createdAtMillis) / 1000).coerceAtLeast(0)
-    return when {
-        diffSeconds < 45 -> stringResource(R.string.gen_time_just_now)
-        diffSeconds < 60 * 60 -> {
-            val minutes = (diffSeconds / 60).toInt()
-            pluralStringResource(R.plurals.gen_time_minutes_ago, minutes, minutes)
-        }
-        else -> {
-            val hours = (diffSeconds / 3600).toInt()
-            pluralStringResource(R.plurals.gen_time_hours_ago, hours, hours)
-        }
-    }
-}
-
 @Composable
 private fun GeneratorToggleRow(
     title: String,

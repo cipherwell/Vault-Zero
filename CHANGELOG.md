@@ -3,6 +3,17 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.23] — 2026-11-22
+
+### Removed
+- **Session history in the generator.** The app now keeps only the current credential; nothing is
+  retained unless the user explicitly saves it to the vault. Removed the history UI, in-memory store,
+  timestamps, related strings and tests. Fixes the Spanish “HISTORIAL DE LA SESIÓN” header squeezing
+  the Clear button into a vertical stack of letters.
+
+### Notes
+- 133 JVM/Robolectric tests / 0 failures, lint 0.
+
 ## [1.7.22] — 2026-11-22
 
 ### Changed

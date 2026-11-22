@@ -140,8 +140,8 @@ Abre la pestaña **Generador**:
 - **Modo frase:** elige cuántas palabras y el separador; puedes capitalizar.
 - Pulsa **Copiar**, **regenerar** o **Guardar en la bóveda** para crear un inicio de sesión en un paso.
 
-El generador usa el generador seguro de números aleatorios del teléfono. El **historial de la sesión**
-muestra lo generado en esta sesión: vive solo en memoria y desaparece cuando la bóveda se bloquea.
+El generador usa el generador seguro de números aleatorios del teléfono. Solo se mantiene la credencial
+actual; no se guarda nada a menos que toques **Guardar en la bóveda**.
 
 ![Generador de contraseñas con fuerza en vivo](assets/es/05-generator.png)
 

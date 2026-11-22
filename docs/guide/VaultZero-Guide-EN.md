@@ -135,8 +135,8 @@ Open the **Generator** tab:
 - **Passphrase mode:** choose the number of words and the separator; capitalise if you like.
 - Tap **Copy**, **regenerate**, or **Save to Vault** to create a login in one step.
 
-The generator uses the phone's secure random number generator. **Session history** shows what you
-generated in this session — it lives in memory only and disappears when the vault locks.
+The generator uses the phone's secure random number generator. Only the current credential is kept;
+nothing is stored unless you tap **Save to Vault**.
 
 ![Password generator with live strength feedback](assets/05-generator.png)
 

@@ -7,7 +7,6 @@
     <string name="gen_result_label">GENERATED CREDENTIAL</string>
     <string name="gen_regenerate">Regenerate</string>
     <string name="gen_clipboard_password">Password</string>
-    <string name="gen_clipboard_generated">Generated credential</string>
     <string name="gen_save_to_vault">Save to Vault</string>
     <string name="gen_mode_password">Password</string>
     <string name="gen_mode_passphrase">Passphrase</string>
@@ -30,26 +29,6 @@
     <string name="gen_separator_space">space</string>
     <string name="gen_opt_capitalise">Capitalise Words</string>
     <string name="gen_passphrase_hint">Passphrases trade symbols for word entropy. Use a unique passphrase per account and store it here.</string>
-    <string name="gen_history_title">SESSION HISTORY</string>
-    <string name="gen_history_subtitle">In memory only · cleared when the vault locks</string>
-    <plurals name="gen_history_passphrase">
-        <item quantity="one">Passphrase · %1$d char</item>
-        <item quantity="other">Passphrase · %1$d chars</item>
-    </plurals>
-    <plurals name="gen_history_password">
-        <item quantity="one">Password · %1$d char</item>
-        <item quantity="other">Password · %1$d chars</item>
-    </plurals>
-    <string name="gen_time_just_now">just now</string>
-    <plurals name="gen_time_minutes_ago">
-        <item quantity="one">%1$d min ago</item>
-        <item quantity="other">%1$d min ago</item>
-    </plurals>
-    <plurals name="gen_time_hours_ago">
-        <item quantity="one">%1$d h ago</item>
-        <item quantity="other">%1$d h ago</item>
-    </plurals>
-    <string name="gen_a11y_copy_generated">Copy generated credential</string>
 
     <!-- Security audit -->
     <string name="audit_title">Security Audit</string>

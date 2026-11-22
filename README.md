@@ -33,7 +33,7 @@ Everything is encrypted on the device with a random 256-bit vault key, wrapped b
 password and a 12-word recovery phrase. Backups are encrypted files written through Android's
 system file picker — there is no account, cloud sync, analytics or remote service.
 
-> **Status:** **v1.7.22** (`versionCode 31`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
+> **Status:** **v1.7.23** (`versionCode 32`, package `com.cipherwell.vaultzero`). Self-tested and pentested; an
 > independent audit is still recommended before relying on it for high-risk secrets.
 
 ## Table of contents
@@ -116,11 +116,11 @@ Detailed design: [docs/CRYPTO-SPEC.md](docs/CRYPTO-SPEC.md) · controls & eviden
 
 ## Download & install
 
-Latest release: **[GitHub Releases → v1.7.22](https://github.com/cipherwell/Vault-Zero/releases/latest)**
+Latest release: **[GitHub Releases → v1.7.23](https://github.com/cipherwell/Vault-Zero/releases/latest)**
 
 | Artifact | Size | SHA-256 |
 | --- | --- | --- |
-| `VaultZero-v1.7.22.apk` (sideload) | 2,235,977 B | `098067835b61a440239dc0b6fa24bc709740725c254d469d88d34b2ed708c352` |
+| `VaultZero-v1.7.23.apk` (sideload) | 2,232,309 B | `7932b2f90e40a57f6ac38613ac96be1d9856ed6c72e734741507101294adb442` |
 
 Beta tester? Read [docs/BETA.md](docs/BETA.md) first — test data only, and how to verify the APK.
 

@@ -15,10 +15,8 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.crypto.BiometricKeyManager
-import com.example.core.GeneratedCredential
 import com.example.core.Haptics
 import com.example.core.ThemeMode
-import com.example.core.GeneratorHistory
 import com.example.core.AuditFilter
 import com.example.core.AuditIndex
 import com.example.core.SearchQuery
@@ -161,9 +159,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
-    private val generatorHistoryStore = GeneratorHistory()
-    private val _generatorHistory = MutableStateFlow<List<GeneratedCredential>>(emptyList())
-    val generatorHistory: StateFlow<List<GeneratedCredential>> = _generatorHistory.asStateFlow()
     private val _favoritesOnly = MutableStateFlow(false)
     val sortOption: StateFlow<VaultSortOption> = _sortOption.asStateFlow()
     val favoritesOnly: StateFlow<Boolean> = _favoritesOnly.asStateFlow()
@@ -689,8 +684,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         if (autoLocked && _lockState.value != VaultLockState.UNLOCKED) return
         repository.lock()
         clearSelection()
-        generatorHistoryStore.clear()
-        _generatorHistory.value = emptyList()
         _editFocus.value = null
         _lockState.value = VaultLockState.LOCKED
         _viewingItem.value = null
@@ -1277,14 +1270,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
         _generatedPassword.value = password
         _passwordStrength.value = VaultCrypto.calculateStrength(password)
-        generatorHistoryStore.add(
-            GeneratedCredential(
-                value = password,
-                isPassphrase = config.isPassphraseMode,
-                createdAtMillis = System.currentTimeMillis(),
-            )
-        )
-        _generatorHistory.value = generatorHistoryStore.snapshot()
     }
 
     // -------------------------------------------------------------------------
@@ -1294,12 +1279,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
         repository.setThemeMode(mode.storage)
-        onUserInteraction()
-    }
-
-    fun clearGeneratorHistory() {
-        generatorHistoryStore.clear()
-        _generatorHistory.value = emptyList()
         onUserInteraction()
     }
 

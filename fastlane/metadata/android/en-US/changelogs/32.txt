@@ -1,0 +1,4 @@
+VaultZero v1.7.23:
+• Removed the generator session history
+• Only the current credential is kept until you save it
+• Fixes the Spanish history header spacing

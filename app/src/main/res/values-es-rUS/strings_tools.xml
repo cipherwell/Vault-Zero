@@ -7,7 +7,6 @@
     <string name="gen_result_label">CREDENCIAL GENERADA</string>
     <string name="gen_regenerate">Regenerar</string>
     <string name="gen_clipboard_password">Contraseña</string>
-    <string name="gen_clipboard_generated">Credencial generada</string>
     <string name="gen_save_to_vault">Guardar en la bóveda</string>
     <string name="gen_mode_password">Contraseña</string>
     <string name="gen_mode_passphrase">Frase de contraseña</string>
@@ -32,30 +31,6 @@
     <string name="gen_separator_space">espacio</string>
     <string name="gen_opt_capitalise">Capitalizar palabras</string>
     <string name="gen_passphrase_hint">Las frases de contraseña cambian símbolos por entropía de palabras. Usa una frase de contraseña única por cuenta y guárdala aquí.</string>
-    <string name="gen_history_title">HISTORIAL DE LA SESIÓN</string>
-    <string name="gen_history_subtitle">Solo en memoria · se borra cuando la bóveda se bloquea</string>
-    <plurals name="gen_history_passphrase">
-        <item quantity="one">Frase de contraseña · %1$d carácter</item>
-        <item quantity="other">Frase de contraseña · %1$d caracteres</item>
-    <item quantity="many">Frase de contraseña · %1$d caracteres</item>
-    </plurals>
-    <plurals name="gen_history_password">
-        <item quantity="one">Contraseña · %1$d carácter</item>
-        <item quantity="other">Contraseña · %1$d caracteres</item>
-    <item quantity="many">Contraseña · %1$d caracteres</item>
-    </plurals>
-    <string name="gen_time_just_now">hace un momento</string>
-    <plurals name="gen_time_minutes_ago">
-        <item quantity="one">hace %1$d min</item>
-        <item quantity="other">hace %1$d min</item>
-    <item quantity="many">hace %1$d min</item>
-    </plurals>
-    <plurals name="gen_time_hours_ago">
-        <item quantity="one">hace %1$d h</item>
-        <item quantity="other">hace %1$d h</item>
-    <item quantity="many">hace %1$d h</item>
-    </plurals>
-    <string name="gen_a11y_copy_generated">Copiar credencial generada</string>
 
     <!-- Auditoría de seguridad -->
     <string name="audit_title">Auditoría de seguridad</string>
