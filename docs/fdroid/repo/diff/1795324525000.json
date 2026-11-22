@@ -1,22 +1,22 @@
 {
   "repo": {
-    "timestamp": 1795325820000
+    "timestamp": 1795327093000
   },
   "packages": {
     "com.cipherwell.vaultzero": {
       "metadata": {
-        "added": 1795325820000,
-        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.17.md",
-        "lastUpdated": 1795325820000
+        "added": 1795327093000,
+        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.18.md",
+        "lastUpdated": 1795327093000
       },
       "versions": {
         "bc79837eda7767710cdb768a32ebaa0597fd3cc46b67d4ee6039649d342ae5e2": null,
-        "93fd319f200404ce56ae1d5aee74779fc24cdba7f638aabbd8e3f820d3655599": {
-          "added": 1795325820000,
+        "437ae896d9a6f23637778ea7c0d443708c7ca5756196ee764b6ef73ee7e62724": {
+          "added": 1795327093000,
           "file": {
-            "name": "/VaultZero-1.7.17.apk",
-            "sha256": "93fd319f200404ce56ae1d5aee74779fc24cdba7f638aabbd8e3f820d3655599",
-            "size": 2212693
+            "name": "/VaultZero-1.7.18.apk",
+            "sha256": "437ae896d9a6f23637778ea7c0d443708c7ca5756196ee764b6ef73ee7e62724",
+            "size": 2233877
           },
           "manifest": {
             "nativecode": [
@@ -25,8 +25,8 @@
               "x86",
               "x86_64"
             ],
-            "versionName": "1.7.17",
-            "versionCode": 26,
+            "versionName": "1.7.18",
+            "versionCode": 27,
             "usesSdk": {
               "minSdkVersion": 24,
               "targetSdkVersion": 36
