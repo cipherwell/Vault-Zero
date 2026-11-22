@@ -1,0 +1,5 @@
+VaultZero v1.7.11:
+• Subtle elevation: cards now separate from the background
+• Soft shadow in light theme, faint rim in dark theme
+• Shared VaultCard container across all screens
+• No functional or cryptographic changes

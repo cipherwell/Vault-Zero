@@ -58,6 +58,7 @@ import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
+import com.example.ui.theme.VaultCard
 
 @Composable
 fun AuditScreen(
@@ -102,7 +103,7 @@ fun AuditScreen(
 
         // Hero Score Card
         item {
-            Card(
+            VaultCard(
                 shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -226,7 +227,7 @@ fun AuditScreen(
 
         if (report.vulnerabilities.isEmpty()) {
             item {
-                Card(
+                VaultCard(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = CyberEmerald.copy(alpha = 0.08f)
@@ -338,7 +339,7 @@ private fun VulnerabilityCard(
         Severity.INFO -> Pair(Icons.Default.Info, CyberCyan)
     }
 
-    Card(
+    VaultCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)

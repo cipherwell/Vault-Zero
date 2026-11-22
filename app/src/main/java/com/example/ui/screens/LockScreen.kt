@@ -90,6 +90,7 @@ import com.example.ui.theme.CyberEmeraldMuted
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
+import com.example.ui.theme.VaultCard
 import kotlinx.coroutines.launch
 
 @Composable
@@ -275,7 +276,7 @@ private fun SetupMasterKeyScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -737,7 +738,7 @@ private fun RecoveryKitDisplayModal(
         Spacer(modifier = Modifier.height(20.dp))
 
         // 12-Word Grid Card
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
@@ -907,7 +908,7 @@ private fun UnlockVaultScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)

@@ -3,6 +3,20 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.11] — 2026-11-21
+
+### Changed
+- **Subtle elevation across the app.** All 19 card containers (8 screens, including dialogs) now go
+  through a single `VaultCard`: a 10 dp soft drop shadow in the light theme and a faint white rim in
+  the dark theme, where a black shadow would vanish against true black. Hairline borders stay the
+  primary edge, so nothing turns heavy.
+- Light shadow: ambient black 10%, spot black 16%. Dark rim: white 12% / 18%, measured ≈6/255 at the
+  card edge and fading over ~35 px — visible as separation, not as a glow.
+- Buttons, chips and list rows deliberately cast no shadow.
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.10] — 2026-11-21
 
 ### Fixed

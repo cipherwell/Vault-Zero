@@ -86,6 +86,7 @@ import com.example.ui.i18n.asString
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.WarningAmber
+import com.example.ui.theme.VaultCard
 
 @Composable
 fun SettingsScreen(
@@ -206,7 +207,7 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         // Vault identity: one flat panel; the fingerprint is the only mono accent.
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             border = androidx.compose.foundation.BorderStroke(
@@ -291,7 +292,7 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
         )
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -317,7 +318,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -591,7 +592,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -755,7 +756,7 @@ fun SettingsScreen(
         )
         Spacer(modifier = Modifier.height(10.dp))
         val diagnosticsLabel = stringResource(R.string.settings_copy_diagnostics)
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer

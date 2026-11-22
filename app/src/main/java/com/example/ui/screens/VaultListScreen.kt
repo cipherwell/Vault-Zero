@@ -107,6 +107,7 @@ import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.VaultCard
 import kotlinx.coroutines.delay
 
 @Composable
@@ -657,7 +658,7 @@ private fun OneUiVaultCard(
 ) {
     // One UI groups rows into one generously rounded container with hairline
     // dividers instead of a stack of separate cards.
-    Card(
+    VaultCard(
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier.fillMaxWidth()
@@ -867,7 +868,7 @@ private fun CreateTypeSelectorDialog(
     onDismiss: () -> Unit
 ) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = androidx.compose.foundation.BorderStroke(

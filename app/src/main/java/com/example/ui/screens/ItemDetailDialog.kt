@@ -73,6 +73,7 @@ import com.example.ui.i18n.localizedPluralName
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.VaultCard
 
 @Composable
 fun ItemDetailDialog(
@@ -104,7 +105,7 @@ fun ItemDetailDialog(
                         indication = null,
                     ) { onDismiss() }
             )
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             border = null,

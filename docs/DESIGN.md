@@ -82,3 +82,16 @@ History and current screenshots: [SCREENSHOTS.md](SCREENSHOTS.md).
 - Text contrast uses theme tokens (avoid alpha-only fixes).
 - Touch targets: nav items and icon buttons at least 40–48 dp where layout allows.
 - TalkBack passes are part of the manual QA checklist; see [TESTING.md](TESTING.md).
+
+## Elevation & separation (v1.7.11)
+
+Every card-shaped container uses `ui/theme/VaultCard.kt`; no screen calls `Card` directly.
+
+| Mode | Treatment | Why |
+| --- | --- | --- |
+| Light | 10 dp drop shadow, ambient black 10%, spot black 16% | On `#FAFAFA` a shadow is the natural separation cue |
+| Dark | 9 dp halo, ambient white 12%, spot white 18% | A black shadow is invisible on `#000000`; a low-alpha white halo reads as a soft rim (measured ≈6/255 at the card edge, fading over ~35 px) |
+| Both | 1 dp hairline border at 55% outline, One UI shapes 16–30 dp | The border stays the primary edge; elevation is secondary |
+
+Rules: shadows only on panels (cards, dialogs), never on buttons, chips or list rows; elevation stays
+below 10 dp so chrome never competes with content; dark-mode separation is a rim, not a glow.

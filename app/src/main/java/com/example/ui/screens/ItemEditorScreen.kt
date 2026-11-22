@@ -65,6 +65,7 @@ import com.example.ui.components.StrengthMeter
 import com.example.ui.components.VaultTypeIcon
 import com.example.ui.i18n.localizedSingularName
 import com.example.ui.theme.CyberEmerald
+import com.example.ui.theme.VaultCard
 
 @Composable
 fun ItemEditorDialog(
@@ -182,7 +183,7 @@ fun ItemEditorDialog(
         onDismissRequest = { requestClose() },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(30.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = androidx.compose.foundation.BorderStroke(

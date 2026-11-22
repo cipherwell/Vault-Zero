@@ -46,6 +46,7 @@ import com.example.model.VaultItem
 import com.example.model.VaultType
 import com.example.ui.components.VaultTypeIcon
 import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.VaultCard
 
 /**
  * One-screen overview of every live TOTP code in the vault. Codes are computed on
@@ -74,7 +75,7 @@ fun TotpDashboardDialog(
     }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(30.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             modifier = Modifier

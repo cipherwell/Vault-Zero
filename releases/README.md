@@ -4,20 +4,20 @@ Compiled binaries are distributed through
 [**GitHub Releases**](https://github.com/cipherwell/Vault-Zero/releases). The source tree stays clean
 for F-Droid/IzzyOnDroid; store uploads use the same source and are signed with the production key.
 
-## ⬇️ Latest: `v1.7.10` (Spanish biometric layout fix)
+## ⬇️ Latest: `v1.7.11` (subtle elevation)
 
 | Asset | File | Size | SHA-256 |
 | --- | --- | ---: | --- |
-| **APK (direct)** | [`VaultZero-v1.7.10.apk`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.10/VaultZero-v1.7.10.apk) | 2,206,757 B | `94747699eaa95a7a536e0a6ceacc30e97d281e79aa25398ffa0a6eb4134c95cd` |
-| **Checksums** | `VaultZero-v1.7.10.apk.sha256` | — | full digest |
-| **Release notes** | [`v1.7.10.md`](v1.7.10.md) | — | Spanish biometric fix, checksums |
+| **APK (direct)** | [`VaultZero-v1.7.11.apk`](https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.11/VaultZero-v1.7.11.apk) | 2,206,757 B | `4ea4dbdba3f7eb8a94e8f3c92635f781a02ac58a781820cc5e16fecc1a7031d0` |
+| **Checksums** | `VaultZero-v1.7.11.apk.sha256` | — | full digest |
+| **Release notes** | [`v1.7.11.md`](v1.7.11.md) | — | elevation, checksums |
 
 **Application ID:** `com.cipherwell.vaultzero`  
 **Signing certificate:** `6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7`
 
 ```bash
-sha256sum -c VaultZero-v1.7.10.apk.sha256
-apksigner verify --print-certs VaultZero-v1.7.10.apk
+sha256sum -c VaultZero-v1.7.11.apk.sha256
+apksigner verify --print-certs VaultZero-v1.7.11.apk
 ```
 
 ### Upgrading

@@ -64,6 +64,7 @@ import com.example.ui.theme.CyberCyan
 import com.example.core.GeneratedCredential
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.VaultCard
 
 @Composable
 fun GeneratorScreen(
@@ -99,7 +100,7 @@ fun GeneratorScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         // Result Display Card
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -230,7 +231,7 @@ fun GeneratorScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Options Card
-        Card(
+        VaultCard(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
@@ -383,7 +384,7 @@ fun GeneratorScreen(
 
         if (history.isNotEmpty()) {
             Spacer(modifier = Modifier.height(14.dp))
-            Card(
+            VaultCard(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = androidx.compose.foundation.BorderStroke(
