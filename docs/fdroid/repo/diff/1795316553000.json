@@ -1,0 +1,55 @@
+{
+  "repo": {
+    "timestamp": 1795317468000
+  },
+  "packages": {
+    "com.cipherwell.vaultzero": {
+      "metadata": {
+        "added": 1795317468000,
+        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.11.md",
+        "lastUpdated": 1795317468000
+      },
+      "versions": {
+        "94747699eaa95a7a536e0a6ceacc30e97d281e79aa25398ffa0a6eb4134c95cd": null,
+        "4ea4dbdba3f7eb8a94e8f3c92635f781a02ac58a781820cc5e16fecc1a7031d0": {
+          "added": 1795317468000,
+          "file": {
+            "name": "/VaultZero-1.7.11.apk",
+            "sha256": "4ea4dbdba3f7eb8a94e8f3c92635f781a02ac58a781820cc5e16fecc1a7031d0",
+            "size": 2206757
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86",
+              "x86_64"
+            ],
+            "versionName": "1.7.11",
+            "versionCode": 20,
+            "usesSdk": {
+              "minSdkVersion": 24,
+              "targetSdkVersion": 36
+            },
+            "signer": {
+              "sha256": [
+                "6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.USE_BIOMETRIC"
+              },
+              {
+                "name": "android.permission.USE_FINGERPRINT"
+              },
+              {
+                "name": "com.cipherwell.vaultzero.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
