@@ -7,13 +7,13 @@ AuthorEmail: cipherwell@proton.me
 WebSite: https://cipherwell.github.io/Vault-Zero/
 SourceCode: https://github.com/cipherwell/Vault-Zero
 IssueTracker: https://github.com/cipherwell/Vault-Zero/issues
-Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.21.md
+Changelog: https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.22.md
 
 AutoName: VaultZero
 
 RepoType: git
 Repo: https://github.com/cipherwell/Vault-Zero.git
-Binaries: https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.21/VaultZero-v1.7.21.apk
+Binaries: https://github.com/cipherwell/Vault-Zero/releases/download/v1.7.22/VaultZero-v1.7.22.apk
 
 Builds:
   - versionName: 1.7.19
@@ -185,7 +185,7 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.7.21
-CurrentVersionCode: 30
+CurrentVersion: 1.7.22
+CurrentVersionCode: 31
 
 AllowedAPKSigningKeys: 6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7
