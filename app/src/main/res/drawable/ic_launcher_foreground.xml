@@ -1,22 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher foreground: zero-shaped keyhole inside the 66dp adaptive safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- One UI squircle -->
     <path
-        android:fillColor="#4DA6FF"
-        android:pathData="M21,40 C21,29 29,21 40,21 L68,21 C79,21 87,29 87,40 L87,68 C87,79 79,87 68,87 L40,87 C29,87 21,79 21,68 Z" />
-    <!-- keyhole head ring (blue zero inside) -->
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M28.00,50.00 a26.0,26.0 0 1,0 52.0,0 a26.0,26.0 0 1,0 -52.0,0 Z M37.50,50.00 a16.5,16.5 0 1,1 33.0,0 a16.5,16.5 0 1,1 -33.0,0 Z" />
     <path
-        android:fillColor="#05070A"
-        android:pathData="M54,28.6 A13.4,13.4 0 1 0 54,55.4 A13.4,13.4 0 1 0 54,28.6 Z" />
-    <path
-        android:fillColor="#4DA6FF"
-        android:pathData="M54,34.5 A7.1,7.1 0 1 0 54,48.7 A7.1,7.1 0 1 0 54,34.5 Z" />
-    <!-- stem -->
-    <path
-        android:fillColor="#05070A"
-        android:pathData="M49,50 L59,50 L59,74 C59,76.2 57,78 54,78 C51,78 49,76.2 49,74 Z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M47.50,58.50 L60.50,58.50 L59.00,78.50 a5.0,5.0 0 0,1 -5.0,5.0 a5.0,5.0 0 0,1 -5.0,-5.0 L49.00,78.50 Z" />
 </vector>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon monochrome: zero-shaped keyhole inside the 66dp adaptive safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M28.00,50.00 a26.0,26.0 0 1,0 52.0,0 a26.0,26.0 0 1,0 -52.0,0 Z M37.50,50.00 a16.5,16.5 0 1,1 33.0,0 a16.5,16.5 0 1,1 -33.0,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M47.50,58.50 L60.50,58.50 L59.00,78.50 a5.0,5.0 0 0,1 -5.0,5.0 a5.0,5.0 0 0,1 -5.0,-5.0 L49.00,78.50 Z" />
+</vector>

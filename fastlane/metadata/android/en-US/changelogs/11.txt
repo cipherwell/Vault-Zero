@@ -1,0 +1,5 @@
+VaultZero v1.7.2:
+• New launcher icon: adaptive layers + monochrome for themed icons
+• Works with any launcher mask and icon pack; crisp at every size
+• Matching feature graphic and store artwork
+• No functional or cryptographic changes

@@ -41,11 +41,22 @@ chevrons. Title high, controls (floating pill nav, header actions) within thumb 
 **Motion:** short (~150–250 ms) fades/slides; the large `Vault` title collapses to 20 sp past a
 ~56 px scroll threshold while search/chips stay pinned; reveal/undo animations are brief.
 
-## App icon (v1.1.0)
+## App icon (v1.7.2)
 
-Black ground, a 19%-radius One UI squircle in accent blue, with a keyhole whose head is hollowed
-into a blue "zero": lock + Zero in three overlapping shapes. Assets:
-`store/play-icon-512.png`, adaptive `res/drawable/ic_launcher_foreground.xml`, legacy mipmaps.
+The mark is a **zero-shaped keyhole**: a fitted ring (the zero of zero-knowledge) merged into a
+rounded stem. Source: `design/icon/` (geometry script + SVGs + preview sheet).
+
+| Spec | Value |
+| --- | --- |
+| Adaptive canvas | 108 × 108 dp; glyph inside the 66 dp safe circle |
+| Background | full-bleed linear gradient `#2F6BFF → #0A2366` (135°) + soft white corner glow |
+| Foreground | keyhole glyph, pure `#FFFFFF`, two paths (even-odd ring + stem) |
+| Monochrome | separate `ic_launcher_monochrome` silhouette for Android 13+ themed icons |
+| Legacy | squircle (`ic_launcher`) and round (`ic_launcher_round`) PNGs, mdpi–xxxhdpi |
+| Store artwork | 512 px full-bleed icon, 1024 × 500 feature graphic |
+
+Why this shape: keyhole = vault, ring = zero-knowledge, no lettering or gradient-dependent detail,
+so it survives every launcher mask, icon pack, monochrome tint and 24 px render.
 
 ## Screen inventory
 

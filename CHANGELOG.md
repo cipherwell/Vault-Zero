@@ -3,6 +3,22 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.2] — 2026-11-21
+
+### Changed
+- **New launcher icon.** A zero-shaped keyhole drawn as proper adaptive layers: full-bleed gradient
+  background, a foreground glyph kept inside Android's 66 dp safe zone (so no launcher mask clips
+  it), and a dedicated single-colour **monochrome layer** for Android 13+ themed icons. Legacy
+  squircle/round PNGs at every density and a 512 px store icon were regenerated from the same
+  vector source. The previous icon baked a squircle into the foreground and reused the coloured
+  layer as its monochrome mask.
+- Matching feature graphic, F-Droid repository icon and fastlane artwork.
+- `design/icon/` holds the source geometry generator, SVGs and a preview sheet, so the mark can be
+  regenerated deterministically.
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.1] — 2026-11-21
 
 ### Added
