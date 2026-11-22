@@ -3,6 +3,18 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.21] — 2026-11-22
+
+### Added
+- **Subtle haptics, on by default.** Short 7 ms low-amplitude ticks for toggles, settings option chips,
+  filter chips, bottom navigation and generator sliders; a slightly fuller 12 ms pulse on successful
+  unlock (password, biometric or setup completion). Haptics can be disabled in **Settings → Subtle
+  haptics** and the preference persists.
+- Added the normal `VIBRATE` permission; no network or sensitive permission is introduced.
+
+### Notes
+- 139 JVM/Robolectric tests / 0 failures, lint 0.
+
 ## [1.7.20] — 2026-11-22
 
 ### Fixed

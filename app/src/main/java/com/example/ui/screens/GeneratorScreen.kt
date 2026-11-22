@@ -42,6 +42,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,6 +66,7 @@ import com.example.ui.VaultViewModel
 import com.example.ui.components.StrengthMeter
 import com.example.ui.theme.CyberCyan
 import com.example.core.GeneratedCredential
+import com.example.core.Haptics
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.VaultCard
@@ -75,6 +80,9 @@ fun GeneratorScreen(
     val password by viewModel.generatedPassword.collectAsState()
     val strength by viewModel.passwordStrength.collectAsState()
     val history by viewModel.generatorHistory.collectAsState()
+    val context = LocalContext.current
+    var lastHapticLength by remember { mutableStateOf(config.length) }
+    var lastHapticWords by remember { mutableStateOf(config.passphraseWords) }
 
     // Hoisted because copySecurely runs from non-composable click handlers.
     val passwordClipboardLabel = stringResource(R.string.gen_clipboard_password)
@@ -124,7 +132,10 @@ fun GeneratorScreen(
                     )
 
                     IconButton(
-                        onClick = { viewModel.regeneratePassword() },
+                        onClick = {
+                            Haptics.tick(context)
+                            viewModel.regeneratePassword()
+                        },
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
@@ -199,7 +210,10 @@ fun GeneratorScreen(
         ) {
             FilterChip(
                 selected = !config.isPassphraseMode,
-                onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = false)) },
+                onClick = {
+                    Haptics.tick(context)
+                    viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = false))
+                },
                 label = { Text(stringResource(R.string.gen_mode_password), fontSize = 13.sp) },
                 shape = CircleShape,
                 border = null,
@@ -214,7 +228,10 @@ fun GeneratorScreen(
 
             FilterChip(
                 selected = config.isPassphraseMode,
-                onClick = { viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = true)) },
+                onClick = {
+                    Haptics.tick(context)
+                    viewModel.updateGeneratorConfig(config.copy(isPassphraseMode = true))
+                },
                 label = { Text(stringResource(R.string.gen_mode_passphrase), fontSize = 13.sp) },
                 shape = CircleShape,
                 border = null,
@@ -266,7 +283,12 @@ fun GeneratorScreen(
                     Slider(
                         value = config.length.toFloat(),
                         onValueChange = {
-                            viewModel.updateGeneratorConfig(config.copy(length = it.toInt()))
+                            val next = it.toInt()
+                            if (next != lastHapticLength) {
+                                lastHapticLength = next
+                                Haptics.tick(context)
+                            }
+                            viewModel.updateGeneratorConfig(config.copy(length = next))
                         },
                         valueRange = 8f..64f,
                         steps = 56,
@@ -327,7 +349,12 @@ fun GeneratorScreen(
                     Slider(
                         value = config.passphraseWords.toFloat(),
                         onValueChange = {
-                            viewModel.updateGeneratorConfig(config.copy(passphraseWords = it.toInt()))
+                            val next = it.toInt()
+                            if (next != lastHapticWords) {
+                                lastHapticWords = next
+                                Haptics.tick(context)
+                            }
+                            viewModel.updateGeneratorConfig(config.copy(passphraseWords = next))
                         },
                         valueRange = 3f..8f,
                         steps = 4,
@@ -487,6 +514,7 @@ private fun GeneratorToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -497,7 +525,10 @@ private fun GeneratorToggleRow(
         Text(text = title, style = MaterialTheme.typography.bodyMedium)
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = {
+                Haptics.tick(context)
+                onCheckedChange(it)
+            },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = CyberEmerald,
                 checkedTrackColor = CyberEmerald.copy(alpha = 0.3f)

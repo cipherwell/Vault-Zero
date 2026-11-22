@@ -159,4 +159,6 @@
     <string name="settings_section_about">ACERCA DE</string>
     <string name="settings_copy_diagnostics">Copiar diagnóstico</string>
     <string name="settings_copy_diagnostics_desc">Versión, dispositivo y estado de la bóveda para reportar errores. Nunca incluye secretos, títulos ni material de claves.</string>
+    <string name="settings_haptics_title">Vibración sutil</string>
+    <string name="settings_haptics_desc">Toques suaves al cambiar opciones, deslizar controles o desbloquear.</string>
 </resources>

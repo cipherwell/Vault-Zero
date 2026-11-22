@@ -225,6 +225,11 @@ class VaultPreferences(
     }
 
     /** True while a freshly created vault has not had its Recovery Kit confirmed by the user. */
+    /** App-wide subtle haptics; on by default. */
+    var hapticsEnabled: Boolean
+        get() = prefs.getBoolean("haptics_enabled", true)
+        set(value) = prefs.edit(commit = true) { putBoolean("haptics_enabled", value) }
+
     var setupKitPending: Boolean
         get() = prefs.getBoolean("setup_kit_pending", false)
         private set(value) = prefs.edit(commit = true) { putBoolean("setup_kit_pending", value) }

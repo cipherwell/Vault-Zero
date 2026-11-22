@@ -179,6 +179,7 @@ fuerte y única.
 | --- | --- |
 | **Huella de la clave maestra** | Una huella pública corta de esta bóveda. Se puede compartir con soporte; no revela la clave. |
 | **Apariencia** | Tema Sistema, Claro u Oscuro. |
+| **Vibración sutil** | Vibraciones cortas al cambiar opciones, deslizar controles y un pulso suave al desbloquear. Activada por defecto; se apaga aquí. |
 | **Idioma** | Inglés o español, independiente del idioma del teléfono. |
 | **Bloqueo automático por inactividad** | Bloquea tras 30 s, 1, 5 o 15 minutos sin interacción. |
 | **Bloquear en segundo plano** | Bloquea 15 s, 30 s o 1 minuto después de salir de la app; también al apagar la pantalla. |

@@ -59,6 +59,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.core.Haptics
 import com.example.core.ThemeMode
 import com.example.ui.BiometricPurpose
 import com.example.crypto.BiometricKeyManager
@@ -70,6 +71,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -410,7 +412,10 @@ class MainActivity : FragmentActivity() {
                     val authenticated = result.cryptoObject?.cipher
                     when (purpose) {
                         BiometricPurpose.UNLOCK -> viewModel.onBiometricVerified(authenticated)
-                        BiometricPurpose.ENROLL -> viewModel.onBiometricEnrollmentVerified(authenticated)
+                        BiometricPurpose.ENROLL -> {
+                            Haptics.success(this@MainActivity)
+                            viewModel.onBiometricEnrollmentVerified(authenticated)
+                        }
                     }
                 }
 
@@ -610,6 +615,7 @@ fun VaultBottomNavigationBar(
     currentTab: VaultNavTab,
     onTabSelected: (VaultNavTab) -> Unit
 ) {
+    val context = LocalContext.current
     // One UI 7/8: the bottom bar floats as a rounded container instead of sitting
     // edge-to-edge on the screen bottom.
     Box(
@@ -633,15 +639,19 @@ fun VaultBottomNavigationBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             OneUiNavItem(stringResource(R.string.nav_vault), Icons.Default.VpnKey, currentTab == VaultNavTab.VAULT, Modifier.weight(1f)) {
+                Haptics.tick(context)
                 onTabSelected(VaultNavTab.VAULT)
             }
             OneUiNavItem(stringResource(R.string.nav_generator), Icons.Default.AutoAwesome, currentTab == VaultNavTab.GENERATOR, Modifier.weight(1f)) {
+                Haptics.tick(context)
                 onTabSelected(VaultNavTab.GENERATOR)
             }
             OneUiNavItem(stringResource(R.string.nav_audit), Icons.Default.Shield, currentTab == VaultNavTab.AUDIT, Modifier.weight(1f)) {
+                Haptics.tick(context)
                 onTabSelected(VaultNavTab.AUDIT)
             }
             OneUiNavItem(stringResource(R.string.nav_settings), Icons.Default.Settings, currentTab == VaultNavTab.SETTINGS, Modifier.weight(1f)) {
+                Haptics.tick(context)
                 onTabSelected(VaultNavTab.SETTINGS)
             }
         }

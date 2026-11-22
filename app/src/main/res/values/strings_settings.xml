@@ -153,4 +153,6 @@
     <string name="settings_section_about">ABOUT</string>
     <string name="settings_copy_diagnostics">Copy diagnostics</string>
     <string name="settings_copy_diagnostics_desc">Version, device and vault state for bug reports. Never includes secrets, titles or key material.</string>
+    <string name="settings_haptics_title">Subtle haptics</string>
+    <string name="settings_haptics_desc">Gentle ticks when toggling options, dragging sliders or unlocking.</string>
 </resources>

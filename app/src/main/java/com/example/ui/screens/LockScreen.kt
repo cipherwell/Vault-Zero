@@ -89,6 +89,7 @@ import com.example.ui.i18n.LocalLanguageController
 import com.example.ui.i18n.LockScreenLanguageButton
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import com.example.core.Haptics
 import com.example.crypto.VaultCrypto
 import com.example.ui.VaultLockState
 import com.example.ui.backup.BackupPickerChannel
@@ -347,6 +348,7 @@ private fun SetupMasterKeyScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(
                                 onClick = {
+                                    Haptics.tick(context)
                                     val generated = VaultCrypto.generatePassword(
                                         length = 20,
                                         includeUpper = true,
@@ -555,7 +557,10 @@ private fun SetupMasterKeyScreen(
                     }
                     Switch(
                         checked = enableBiometrics && biometricsAvailable,
-                        onCheckedChange = { enableBiometrics = it },
+                        onCheckedChange = {
+                            Haptics.tick(context)
+                            enableBiometrics = it
+                        },
                         enabled = biometricsAvailable && !isAuthenticating,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = MaterialTheme.colorScheme.onPrimary,

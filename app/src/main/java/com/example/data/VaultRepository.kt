@@ -59,6 +59,10 @@ class VaultRepository(
     val isSetupKitPending: Boolean
         get() = prefs.setupKitPending
 
+    var hapticsEnabled: Boolean
+        get() = prefs.hapticsEnabled
+        set(value) { prefs.hapticsEnabled = value }
+
     fun markSetupKitConfirmed() = prefs.markSetupKitConfirmed()
 
     val keyFingerprint: String

@@ -1,0 +1,4 @@
+VaultZero v1.7.21:
+• Subtle haptics on toggles, sliders, filters and navigation
+• Gentle pulse on successful unlock
+• On by default; disable in Settings → Subtle haptics

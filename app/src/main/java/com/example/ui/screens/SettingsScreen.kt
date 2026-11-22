@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import com.example.BuildConfig
 import com.example.R
 import com.example.core.DiagnosticsReport
+import com.example.core.Haptics
 import com.example.core.ThemeMode
 import com.example.ui.backup.BackupPickerChannel
 import androidx.compose.foundation.clickable
@@ -109,6 +110,7 @@ fun SettingsScreen(
     var pendingExportPhraseOnly by remember { mutableStateOf(false) }
     val importPrompt by viewModel.importVerificationPrompt.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
+    val hapticsEnabled by viewModel.hapticsEnabled.collectAsState()
     val autoLockSeconds by viewModel.autoLockSeconds.collectAsState()
     val clipboardSeconds by viewModel.clipboardTimeoutSeconds.collectAsState()
     val backupBusy by viewModel.backupBusy.collectAsState()
@@ -267,7 +269,10 @@ fun SettingsScreen(
             ThemeMode.entries.forEach { mode ->
                 FilterChip(
                     selected = themeMode == mode,
-                    onClick = { viewModel.setThemeMode(mode) },
+                    onClick = {
+                        Haptics.tick(context)
+                        viewModel.setThemeMode(mode)
+                    },
                     label = { Text(themeLabel(mode), fontSize = 13.sp) },
                     shape = CircleShape,
                     border = null,
@@ -278,6 +283,47 @@ fun SettingsScreen(
                         selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
                         selectedLabelColor = MaterialTheme.colorScheme.primary
                     )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        VaultCard(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_haptics_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_haptics_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Switch(
+                    checked = hapticsEnabled,
+                    onCheckedChange = { viewModel.setHapticsEnabled(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    ),
                 )
             }
         }
@@ -490,7 +536,10 @@ fun SettingsScreen(
                     val biometricEnabled by viewModel.biometricEnabled.collectAsState()
                     Switch(
                         checked = biometricEnabled,
-                        onCheckedChange = { viewModel.toggleBiometric(it) },
+                        onCheckedChange = {
+                            Haptics.tick(context)
+                            viewModel.toggleBiometric(it)
+                        },
                         colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.onPrimary, checkedTrackColor = MaterialTheme.colorScheme.primary)
                     )
                 }
@@ -535,7 +584,10 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable { viewModel.lockVault() }
+                        .clickable {
+                            Haptics.tick(context)
+                            viewModel.lockVault()
+                        }
                         .padding(vertical = 10.dp)
                         .testTag("lock_now_row"),
                     verticalAlignment = Alignment.CenterVertically
@@ -1353,6 +1405,7 @@ private fun SecurityOptionChip(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .height(34.dp)
@@ -1364,7 +1417,10 @@ private fun SecurityOptionChip(
             .selectable(
                 selected = selected,
                 role = Role.RadioButton,
-                onClick = onClick,
+                onClick = {
+                    Haptics.tick(context)
+                    onClick()
+                },
             ),
         contentAlignment = Alignment.Center
     ) {

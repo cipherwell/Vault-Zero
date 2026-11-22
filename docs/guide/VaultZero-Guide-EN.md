@@ -1,6 +1,6 @@
 # VaultZero — your private vault
 
-**Beta user guide · v1.7.20 · November 2026**
+**Beta user guide · v1.7.21 · November 2026**
 
 VaultZero is an offline password vault for Android. It keeps your logins, cards, notes and
 recovery codes encrypted on your phone — with **no account, no cloud and no internet permission**.
@@ -173,6 +173,7 @@ The score starts at 100 and drops for each issue. Grades are **A+ / A / B / C / 
 | --- | --- |
 | **Master key fingerprint** | A short public fingerprint of this vault. Safe to share when you need support; it does not reveal the key. |
 | **Appearance** | System, Light or Dark theme. |
+| **Subtle haptics** | Short vibrations for toggles, sliders and a gentle pulse on unlock. On by default; switch off here. |
 | **Language** | English or Spanish, independent of the phone language. |
 | **Auto-Lock Inactivity** | Locks after 30 s, 1, 5 or 15 minutes without interaction. |
 | **Lock In Background** | Locks 15 s, 30 s or 1 minute after you leave the app; also locks when the screen turns off. |

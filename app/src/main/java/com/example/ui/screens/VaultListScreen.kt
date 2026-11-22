@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.foundation.background
@@ -45,6 +46,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
+import com.example.core.Haptics
 import com.example.core.VaultGrouping
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -127,6 +129,7 @@ fun VaultListScreen(
     val selectedIds by viewModel.selectedIds.collectAsState()
     val groupByType by viewModel.groupByType.collectAsState()
     val allVaultItems by viewModel.allItems.collectAsState()
+    val context = LocalContext.current
     val copy2faCodeLabel = stringResource(R.string.vault_2fa_code)
 
     var showCreateMenu by remember { mutableStateOf(false) }
@@ -400,6 +403,7 @@ fun VaultListScreen(
                 FilterChip(
                     selected = selectedType == null && !favoritesOnly,
                     onClick = {
+                        Haptics.tick(context)
                         viewModel.setTypeFilter(null)
                         if (favoritesOnly) viewModel.toggleFavoritesFilter()
                     },
@@ -417,7 +421,10 @@ fun VaultListScreen(
                 // Favorites Chip
                 FilterChip(
                     selected = favoritesOnly,
-                    onClick = { viewModel.toggleFavoritesFilter() },
+                    onClick = {
+                        Haptics.tick(context)
+                        viewModel.toggleFavoritesFilter()
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = if (favoritesOnly) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -440,7 +447,10 @@ fun VaultListScreen(
                 for (type in VaultType.values()) {
                     FilterChip(
                         selected = selectedType == type,
-                        onClick = { viewModel.setTypeFilter(if (selectedType == type) null else type) },
+                        onClick = {
+                            Haptics.tick(context)
+                            viewModel.setTypeFilter(if (selectedType == type) null else type)
+                        },
                         label = { Text(stringResource(vaultTypeChipLabelRes(type)), fontSize = 12.sp) },
                         shape = CircleShape,
                     border = null,
@@ -469,6 +479,7 @@ fun VaultListScreen(
                             .clickable(
                                 onClickLabel = stringResource(R.string.vault_filter_more),
                             ) {
+                                Haptics.tick(context)
                                 filterScope.launch {
                                     filterScroll.animateScrollTo(
                                         (filterScroll.value + 240).coerceAtMost(filterScroll.maxValue)

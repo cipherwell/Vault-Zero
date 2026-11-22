@@ -16,6 +16,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.crypto.BiometricKeyManager
 import com.example.core.GeneratedCredential
+import com.example.core.Haptics
 import com.example.core.ThemeMode
 import com.example.core.GeneratorHistory
 import com.example.core.AuditFilter
@@ -183,6 +184,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _setupIncomplete = MutableStateFlow(false)
     val setupIncomplete: StateFlow<Boolean> = _setupIncomplete.asStateFlow()
 
+    private val _hapticsEnabled = MutableStateFlow(true)
+    val hapticsEnabled: StateFlow<Boolean> = _hapticsEnabled.asStateFlow()
+
     private val _clipboardStatus = MutableStateFlow<UiText?>(null)
     val clipboardStatus: StateFlow<UiText?> = _clipboardStatus.asStateFlow()
 
@@ -275,6 +279,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             _lockState.value = VaultLockState.LOCKED
         }
         _setupIncomplete.value = repository.isSetupKitPending
+        _hapticsEnabled.value = repository.hapticsEnabled
+        Haptics.enabled = repository.hapticsEnabled
 
         _themeMode.value = ThemeMode.fromStorage(repository.themeMode())
         // A legacy (non-auth-gated) wrap or a key invalidated by re-enrolment
@@ -413,6 +419,19 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _authError.value = null
     }
 
+    fun setHapticsEnabled(enabled: Boolean) {
+        if (enabled) {
+            Haptics.enabled = true
+            Haptics.tick(getApplication())
+        } else {
+            // Give the tap that turns it off one last subtle confirmation.
+            Haptics.tick(getApplication())
+            Haptics.enabled = false
+        }
+        repository.hapticsEnabled = enabled
+        _hapticsEnabled.value = enabled
+    }
+
     fun setupMasterPassword(
         password: String,
         confirm: String,
@@ -447,6 +466,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun completeSetupAndEnterVault() {
+        Haptics.success(getApplication())
         repository.markSetupKitConfirmed()
         _setupIncomplete.value = false
         _newRecoveryPhrase.value = null
@@ -465,6 +485,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      * user cannot end up with a vault whose only kit was lost with the process.
      */
     private fun enterAfterUnlock() {
+        Haptics.success(getApplication())
         if (repository.isSetupKitPending) {
             val phrase = repository.getDecryptedRecoveryPhrase()
             if (phrase.isNotBlank()) {
@@ -945,6 +966,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         pendingBiometricEnrollment = false
         _setupIncomplete.value = false
         _newRecoveryPhrase.value = null
+        _hapticsEnabled.value = true
+        Haptics.enabled = true
         viewModelScope.launch {
             BiometricKeyManager.clearBiometricKey(getApplication())
             clearSensitiveClipboardIfOwned()
