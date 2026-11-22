@@ -1,0 +1,4 @@
+VaultZero v1.7.19:
+• Filter chips scroll sideways again with a subtle chevron hint
+• Chip backgrounds match the Settings buttons
+• Chevron disappears when you reach the last filter

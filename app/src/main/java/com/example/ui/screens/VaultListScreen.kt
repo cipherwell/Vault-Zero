@@ -19,8 +19,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -78,11 +76,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -111,8 +111,8 @@ import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.VaultCard
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VaultListScreen(
     viewModel: VaultViewModel,
@@ -382,14 +382,20 @@ fun VaultListScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Filter Chips Row
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
+            // Filter Chips Row: scrolls sideways; the edge arrow signals that there is more.
+            val filterScroll = rememberScrollState()
+            val filterScope = rememberCoroutineScope()
+            val showMoreFilters = filterScroll.value < filterScroll.maxValue
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 48.dp)
+                        .horizontalScroll(filterScroll)
+                        .padding(start = 20.dp, end = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                 // All Chip
                 FilterChip(
                     selected = selectedType == null && !favoritesOnly,
@@ -401,8 +407,10 @@ fun VaultListScreen(
                     shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        selectedLabelColor = CyberEmerald
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        selectedLabelColor = MaterialTheme.colorScheme.primary,
                     )
                 )
 
@@ -421,8 +429,10 @@ fun VaultListScreen(
                     shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        selectedLabelColor = CyberEmerald
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        selectedLabelColor = MaterialTheme.colorScheme.primary,
                     )
                 )
 
@@ -435,12 +445,58 @@ fun VaultListScreen(
                         shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
                             labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            selectedLabelColor = CyberEmerald
+                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            selectedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
+                }
+                }
+                if (showMoreFilters) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .width(60.dp)
+                            .height(40.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    0f to Color.Transparent,
+                                    0.5f to MaterialTheme.colorScheme.background,
+                                    1f to MaterialTheme.colorScheme.background,
+                                )
+                            )
+                            .clickable(
+                                onClickLabel = stringResource(R.string.vault_filter_more),
+                            ) {
+                                filterScope.launch {
+                                    filterScroll.animateScrollTo(
+                                        (filterScroll.value + 240).coerceAtMost(filterScroll.maxValue)
+                                    )
+                                }
+                            },
+                        contentAlignment = Alignment.CenterEnd,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                    CircleShape,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowRight,
+                                contentDescription = stringResource(R.string.vault_filter_more),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
                 }
             }
 

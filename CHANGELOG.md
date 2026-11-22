@@ -3,6 +3,17 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.19] — 2026-11-22
+
+### Changed
+- **Filter chips are a single horizontally scrolling row again** (as originally intended), with a
+  subtle circular chevron in a right-hand gutter that signals more filters and scrolls on tap. The
+  chevron disappears at the end of the row. Chips use the same filled backgrounds as the Settings
+  segmented buttons (surface container, tinted primary when selected).
+
+### Notes
+- Reverts the two-row wrap from 1.7.18. 137 JVM tests / 0 failures, lint 0.
+
 ## [1.7.18] — 2026-11-22
 
 ### Added

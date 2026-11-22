@@ -91,4 +91,5 @@
     <string name="vault_chip_login">Logins</string>
     <string name="vault_chip_card">Cards</string>
     <string name="vault_chip_notes">Notes</string>
+    <string name="vault_filter_more">Show more filters</string>
 </resources>
