@@ -1,0 +1,61 @@
+{
+  "repo": {
+    "icon": {
+      "en-US": {
+        "sha256": "d0f1809bf3b10271bce1f7e6a27e8a05d86905ebae85cf318cd1e3e42c4a79bb",
+        "size": 44808
+      }
+    },
+    "timestamp": 1795314199000
+  },
+  "packages": {
+    "com.cipherwell.vaultzero": {
+      "metadata": {
+        "added": 1795314199000,
+        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.5.md",
+        "lastUpdated": 1795314199000
+      },
+      "versions": {
+        "4c05ab8ee705bf9cb1281718d68a09564b716fb10dfcb26dc547884ebe459869": null,
+        "cdbcfb64b841e7ca517fca2abea3c98bd3ada2679387317a618ce0ad8a270bbc": {
+          "added": 1795314199000,
+          "file": {
+            "name": "/VaultZero-1.7.5.apk",
+            "sha256": "cdbcfb64b841e7ca517fca2abea3c98bd3ada2679387317a618ce0ad8a270bbc",
+            "size": 2165601
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86",
+              "x86_64"
+            ],
+            "versionName": "1.7.5",
+            "versionCode": 14,
+            "usesSdk": {
+              "minSdkVersion": 24,
+              "targetSdkVersion": 36
+            },
+            "signer": {
+              "sha256": [
+                "6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.USE_BIOMETRIC"
+              },
+              {
+                "name": "android.permission.USE_FINGERPRINT"
+              },
+              {
+                "name": "com.cipherwell.vaultzero.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
