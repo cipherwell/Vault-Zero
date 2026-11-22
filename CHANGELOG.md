@@ -3,6 +3,20 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.9] — 2026-11-21
+
+### Changed
+- **Samsung One UI-inspired icon.** Vertical gradient, a single white glyph and a **diffuse shadow**
+  replace the flat offset shadow and sparkles. The V is now a clean background-coloured cutout, and
+  the Z bit is smaller (13 × 14, 5.5 stroke) so it sits in proportion with the bow and shaft.
+- Shadow is a pre-blurred 432 px bitmap under the vector key (`layer-list` foreground), so it stays
+  soft at every density instead of scaling as a hard edge.
+- The V cutout is backfilled with the exact background gradient, so the shadow cannot bleed through
+  the hole and turn it muddy.
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.7] — 2026-11-21
 
 ### Fixed

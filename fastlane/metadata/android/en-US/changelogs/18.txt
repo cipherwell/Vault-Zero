@@ -1,0 +1,5 @@
+VaultZero v1.7.9:
+• Samsung One UI-inspired icon: soft vertical gradient, one white glyph, diffuse shadow
+• Sparkles removed, V is a clean cutout, Z scaled down to fit the key
+• Adaptive layers + monochrome themed-icon layer
+• No functional or cryptographic changes

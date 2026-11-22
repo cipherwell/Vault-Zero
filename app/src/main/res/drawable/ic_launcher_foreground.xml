@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Living key: V bow, Z tip, flat offset shadow, cyan V and sparkles. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <group android:rotation="0.0" android:scaleX="0.95" android:scaleY="0.95" android:pivotX="54" android:pivotY="54">
-    <group android:translateX="1.2" android:translateY="1.7">
-        <path android:fillColor="#0B2F7A" android:fillType="evenOdd" android:pathData="M42.5,33.5 a11.5,11.5 0 1,0 23.0,0 a11.5,11.5 0 1,0 -23.0,0 Z M47.5,27.5 L60.5,27.5 L54.0,41.0 Z" />
-        <path android:fillColor="#00000000" android:strokeColor="#0B2F7A" android:strokeWidth="7.5" android:strokeLineCap="round" android:pathData="M54.0,44.0 L54.0,66.5" />
-        <path android:fillColor="#00000000" android:strokeColor="#0B2F7A" android:strokeWidth="5.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M46.0,65.5 L62.0,65.5 L46.0,83.5 L62.0,83.5" />
-    </group>
-        <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M42.5,33.5 a11.5,11.5 0 1,0 23.0,0 a11.5,11.5 0 1,0 -23.0,0 Z M47.5,27.5 L60.5,27.5 L54.0,41.0 Z" />
-        <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="7.5" android:strokeLineCap="round" android:pathData="M54.0,44.0 L54.0,66.5" />
-        <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="5.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M46.0,65.5 L62.0,65.5 L46.0,83.5 L62.0,83.5" />
-    <path android:fillColor="#6FE3FF" android:pathData="M47.5,27.5 L60.5,27.5 L54.0,41.0 Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M64.0,22.9 C64.792,25.708 64.792,25.708 67.6,26.5 C64.792,27.292 64.792,27.292 64.0,30.1 C63.208,27.292 63.208,27.292 60.4,26.5 C63.208,25.708 63.208,25.708 64.0,22.9 Z" />
-    <path android:fillColor="#6FE3FF" android:pathData="M71.0,33.8 C71.484,35.516 71.484,35.516 73.2,36.0 C71.484,36.484 71.484,36.484 71.0,38.2 C70.516,36.484 70.516,36.484 68.8,36.0 C70.516,35.516 70.516,35.516 71.0,33.8 Z" />
-    </group>
-</vector>
+<!-- Soft blurred shadow (bitmap) under the vector key: Samsung-style depth. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="fill" android:drawable="@drawable/ic_launcher_shadow" />
+    <item android:gravity="fill" android:drawable="@drawable/ic_launcher_key" />
+</layer-list>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <defs>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.6"/>
+    </filter>
+  </defs>
+  <g transform="translate(2.70,2.70) scale(0.95)">
+    <g transform="translate(1.7,2.8)" filter="url(#soft)" opacity="0.5">
+      <path d="M42.5,33.5 a11.5,11.5 0 1,0 23.0,0 a11.5,11.5 0 1,0 -23.0,0 Z M47.5,27.5 L60.5,27.5 L54.0,41.0 Z" fill="#071C4A" fill-rule="evenodd"/><path d="M54.0,44.0 L54.0,68.5" fill="none" stroke="#071C4A" stroke-width="7.5" stroke-linecap="round"/><path d="M47.5,67.5 L60.5,67.5 L47.5,81.5 L60.5,81.5" fill="none" stroke="#071C4A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
