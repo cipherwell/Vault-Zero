@@ -41,16 +41,16 @@ chevrons. Title high, controls (floating pill nav, header actions) within thumb 
 **Motion:** short (~150–250 ms) fades/slides; the large `Vault` title collapses to 20 sp past a
 ~56 px scroll threshold while search/chips stay pinned; reveal/undo animations are brief.
 
-## App icon (v1.7.6)
+## App icon (v1.7.7)
 
 The mark is a **living key**: the bow (the part you hold) is a loop with a **V-shaped opening**, the
 bit is a **Z**, tilted and lit like a product logo rather than a pictogram.
 
 | Spec | Value |
 | --- | --- |
-| Adaptive canvas | 108 × 108 dp; all glyph geometry inside the 66 dp safe circle (0.92 scale) |
+| Adaptive canvas | 108 × 108 dp; all glyph geometry inside the 66 dp safe circle (0.95 scale) |
 | Background | full-bleed linear gradient `#2F6BFF → #0A2366` (135°) + soft corner glow |
-| Foreground | white key, flat offset shadow `#0B2F7A` (1.2, 1.7), cyan `#6FE3FF` V, two sparkles |
+| Foreground | white key (bow Ø 23, shaft 23, bit 16 × 18), flat offset shadow `#0B2F7A` (1.2, 1.7), cyan `#6FE3FF` V, two sparkles |
 | Monochrome | separate layer: key silhouette with the V as a real hole + sparkle |
 | Legacy | squircle (`ic_launcher`) and round (`ic_launcher_round`) PNGs, mdpi–xxxhdpi |
 | Store/social | 512 px full-bleed icon + rebuilt 1024 × 500 feature graphic |

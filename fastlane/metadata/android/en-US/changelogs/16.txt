@@ -1,0 +1,5 @@
+VaultZero v1.7.7:
+• Key icon proportions fixed: longer shaft, smaller bow, taller Z bit
+• The Z now reads as a letter, not a stripe
+• Everything stays inside the 66dp safe circle
+• No functional or cryptographic changes

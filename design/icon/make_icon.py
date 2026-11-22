@@ -21,18 +21,18 @@ INK = "#FFFFFF"
 SHADOW = "#0B2F7A"
 ACCENT = "#6FE3FF"
 TILT = 0.0
-SCALE = 0.92
+SCALE = 0.95
 
-BOW_C = (54.0, 35.0)
-BOW_R = 13.0
-V_HOLE = ((47.0, 28.0), (61.0, 28.0), (54.0, 43.0))
-SHAFT = (54.0, 45.0, 54.0, 70.0)
-SHAFT_W = 8.0
-Z_PTS = ((38.0, 70.0), (70.0, 70.0), (38.0, 83.5), (70.0, 83.5))
-Z_W = 6.5
+BOW_C = (54.0, 33.5)
+BOW_R = 11.5
+V_HOLE = ((47.5, 27.5), (60.5, 27.5), (54.0, 41.0))
+SHAFT = (54.0, 44.0, 54.0, 66.5)
+SHAFT_W = 7.5
+Z_PTS = ((46.0, 65.5), (62.0, 65.5), (46.0, 83.5), (62.0, 83.5))
+Z_W = 5.5
 OFFSET = (1.2, 1.7)
-SPARKLE_BIG = (65.5, 27.5, 4.0)
-SPARKLE_SMALL = (72.5, 35.0, 2.3)
+SPARKLE_BIG = (64.0, 26.5, 3.6)
+SPARKLE_SMALL = (71.0, 36.0, 2.2)
 
 
 def bow_path() -> str:
@@ -208,7 +208,7 @@ def svg(shape: str, monochrome: bool = False) -> str:
   <g clip-path="url(#mask)">
     <rect width="108" height="108" fill="url(#bg)"/>
     <rect width="108" height="108" fill="url(#glow)"/>
-    <g transform="translate(4.32,4.32) scale({SCALE})">
+    <g transform="translate(2.7,2.7) scale({SCALE})">
 {glyph_svg(monochrome)}
     </g>
   </g>

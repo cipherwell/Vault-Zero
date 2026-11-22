@@ -3,6 +3,16 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.7] — 2026-11-21
+
+### Fixed
+- **Key icon proportions.** The 1.7.6 bit was a 32 × 13.5 stripe; it is now a 16 × 18 Z with a longer
+  shaft and a smaller bow, matching a real key (and a real capital Z). Everything still fits inside
+  the 66 dp safe circle.
+
+### Notes
+- No functional or cryptographic changes.
+
 ## [1.7.6] — 2026-11-21
 
 ### Changed
