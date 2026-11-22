@@ -9,12 +9,12 @@
     "icon": {
       "en-US": {
         "name": "/icons/repo-icon.png",
-        "sha256": "47547cb82a30c7a6ec08ceb06db55e840861cd7350ccca97db053eef674deaa1",
-        "size": 52115
+        "sha256": "6edd882e4c51a88f3cdf6596be7b900796c76988db83204010de8e35bbc48a82",
+        "size": 46869
       }
     },
     "address": "https://cipherwell.github.io/Vault-Zero/fdroid/repo",
-    "timestamp": 1795315010000,
+    "timestamp": 1795315854000,
     "categories": {
       "Security": {
         "name": {
@@ -26,13 +26,13 @@
   "packages": {
     "com.cipherwell.vaultzero": {
       "metadata": {
-        "added": 1795315010000,
+        "added": 1795315854000,
         "categories": [
           "Security"
         ],
-        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.7.md",
+        "changelog": "https://github.com/cipherwell/Vault-Zero/blob/main/releases/v1.7.9.md",
         "issueTracker": "https://github.com/cipherwell/Vault-Zero/issues",
-        "lastUpdated": 1795315010000,
+        "lastUpdated": 1795315854000,
         "license": "MIT",
         "sourceCode": "https://github.com/cipherwell/Vault-Zero",
         "webSite": "https://cipherwell.github.io/Vault-Zero/",
@@ -50,12 +50,12 @@
         "preferredSigner": "6292a1fc630c200e7ec5342248ba7a6ae30a893fd882b2ad4188f699bbb607e7"
       },
       "versions": {
-        "2ef78918dce040c006610f8877ba3261af37218263782fb414ebf0c3f4b60bff": {
-          "added": 1795315010000,
+        "a3a6b91eb7a1849b028fb1bd0afa9d99971d9adb4c2a4821b0e1a4f470bcec50": {
+          "added": 1795315854000,
           "file": {
-            "name": "/VaultZero-1.7.7.apk",
-            "sha256": "2ef78918dce040c006610f8877ba3261af37218263782fb414ebf0c3f4b60bff",
-            "size": 2176705
+            "name": "/VaultZero-1.7.9.apk",
+            "sha256": "a3a6b91eb7a1849b028fb1bd0afa9d99971d9adb4c2a4821b0e1a4f470bcec50",
+            "size": 2206773
           },
           "manifest": {
             "nativecode": [
@@ -64,8 +64,8 @@
               "x86",
               "x86_64"
             ],
-            "versionName": "1.7.7",
-            "versionCode": 16,
+            "versionName": "1.7.9",
+            "versionCode": 18,
             "usesSdk": {
               "minSdkVersion": 24,
               "targetSdkVersion": 36
