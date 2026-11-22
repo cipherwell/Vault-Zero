@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -71,6 +72,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -97,6 +99,7 @@ import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.CyberEmeraldMuted
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.JetBrainsMonoFamily
+import kotlin.math.min
 import com.example.ui.theme.WarningAmber
 import com.example.ui.theme.VaultCard
 import kotlinx.coroutines.launch
@@ -929,38 +932,59 @@ private fun RecoveryKitDisplayModal(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                for (row in 0 until 4) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        for (col in 0 until 3) {
-                            val idx = row * 3 + col
-                            if (idx < words.size) {
-                                Row(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
-                                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "${idx + 1}.",
-                                        fontSize = 11.sp,
-                                        fontFamily = JetBrainsMonoFamily,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = words[idx],
-                                        fontSize = 12.sp,
-                                        fontFamily = JetBrainsMonoFamily,
-                                        fontWeight = FontWeight.Bold,
-                                        color = CyberEmerald
-                                    )
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    // Three columns read best on phones. Instead of wrapping/breaking a
+                    // word, size the word text to the cell (accounting for the system
+                    // font scale); only very small screens fall back to two columns.
+                    val columns = if (maxWidth < 300.dp) 2 else 3
+                    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+                    val spacing = 6.dp
+                    val cellWidth = (maxWidth - spacing * (columns - 1)) / columns
+                    val wordWidth = (cellWidth - 32.dp).coerceAtLeast(34.dp)
+                    // BIP-39 English words are at most 8 characters; monospace advance ~0.62 em.
+                    val wordFont = min(12f, wordWidth.value / (8f * 0.62f * fontScale))
+                        .coerceAtLeast(8.5f).sp
+                    val indexFont = min(10f, wordFont.value - 1f).coerceAtLeast(8f).sp
+                    val rows = (words.size + columns - 1) / columns
+                    Column {
+                        repeat(rows) { row ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(spacing)
+                            ) {
+                                repeat(columns) { col ->
+                                    val idx = row * columns + col
+                                    if (idx < words.size) {
+                                        Row(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
+                                                .padding(horizontal = 6.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "${idx + 1}.",
+                                                fontSize = indexFont,
+                                                fontFamily = JetBrainsMonoFamily,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                            Text(
+                                                text = words[idx],
+                                                fontSize = wordFont,
+                                                fontFamily = JetBrainsMonoFamily,
+                                                fontWeight = FontWeight.Bold,
+                                                color = CyberEmerald,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                            )
+                                        }
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
                                 }
                             }
                         }
@@ -987,9 +1011,13 @@ private fun RecoveryKitDisplayModal(
             onClick = onDismiss,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .heightIn(min = 48.dp)
                 .testTag("confirm_recovery_backup_button"),
             shape = RoundedCornerShape(12.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                horizontal = 16.dp,
+                vertical = 12.dp,
+            ),
             colors = ButtonDefaults.buttonColors(
                 containerColor = CyberEmerald,
                 contentColor = Color.Black
@@ -997,7 +1025,13 @@ private fun RecoveryKitDisplayModal(
         ) {
             Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.lock_saved_kit), fontWeight = FontWeight.Bold)
+            Text(
+                text = stringResource(R.string.lock_saved_kit),
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f, fill = false),
+            )
         }
     }
 }

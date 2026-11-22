@@ -3,6 +3,19 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.17] — 2026-11-22
+
+### Fixed
+- **Spanish recovery-kit button clipped.** “Ya guardé mi kit de recuperación — Abrir bóveda” wrapped to
+  two lines but the button was fixed at 48 dp, cutting off “Abrir bóveda”. The button now grows with
+  its label (`heightIn(min = 48 dp)`), wraps to two lines with centred text, and keeps the full label.
+- **12-word grid spacing.** Long words could break mid-word (“together” → “togethe”/“r”) on narrow
+  screens or larger system fonts. The grid keeps three columns and now sizes each word to its cell
+  (accounting for font scale), with single-line words and even spacing.
+
+### Notes
+- No cryptographic or data changes. 137 JVM tests / 0 failures, lint 0 errors.
+
 ## [1.7.16] — 2026-11-22
 
 ### Added

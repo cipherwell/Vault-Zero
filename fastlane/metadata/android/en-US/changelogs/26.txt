@@ -1,0 +1,4 @@
+VaultZero v1.7.17:
+• Fix: Spanish recovery-kit button no longer clipped
+• Fix: 12-word grid keeps words intact on narrow screens/large fonts
+• No cryptographic or data changes

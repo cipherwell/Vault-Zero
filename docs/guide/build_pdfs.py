@@ -59,7 +59,7 @@ def render(md_path: Path, out_pdf: Path, lang: str):
       <img src="assets/icon.png" alt="VaultZero icon">
       <h1>VaultZero</h1>
       <div class="sub">{'Your private vault — beta user guide' if lang == 'en' else 'Tu bóveda privada — guía del usuario beta'}</div>
-      <div class="meta">v1.7.16 · November 2026 · Android 7.0+<br>
+      <div class="meta">v1.7.17 · November 2026 · Android 7.0+<br>
       {'No account · No cloud · No internet permission' if lang == 'en' else 'Sin cuenta · Sin nube · Sin permiso de internet'}</div>
     </section>
     """
