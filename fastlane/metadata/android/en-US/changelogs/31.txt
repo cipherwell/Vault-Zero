@@ -1,0 +1,4 @@
+VaultZero v1.7.22:
+• Stronger, more noticeable haptics
+• Lighter dedicated tick for generator sliders
+• Firmer confirmation pulse on unlock

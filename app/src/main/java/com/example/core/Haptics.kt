@@ -16,11 +16,17 @@ object Haptics {
     @Volatile
     var enabled: Boolean = true
 
-    /** Very short tick for toggles, chips, sliders and tab changes. */
-    fun tick(context: Context) = vibrate(context, durationMs = 7L, amplitude = 35)
+    /** Tick for toggles, chips and tab changes. Noticeably firmer than v1.7.21. */
+    fun tick(context: Context) = vibrate(context, durationMs = 10L, amplitude = 100)
 
-    /** Slightly fuller confirmation, used sparingly (unlock / save success). */
-    fun success(context: Context) = vibrate(context, durationMs = 12L, amplitude = 55)
+    /**
+     * Lighter tick for continuous controls (sliders). Still stronger than v1.7.21,
+     * but avoids a buzzing motor when dragging across many steps.
+     */
+    fun sliderTick(context: Context) = vibrate(context, durationMs = 7L, amplitude = 70)
+
+    /** Fuller confirmation, used sparingly (unlock / save success). */
+    fun success(context: Context) = vibrate(context, durationMs = 18L, amplitude = 170)
 
     private fun vibrate(context: Context, durationMs: Long, amplitude: Int) {
         if (!enabled) return

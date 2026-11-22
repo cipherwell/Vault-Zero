@@ -3,6 +3,16 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.22] — 2026-11-22
+
+### Changed
+- **Stronger haptics.** Toggle/chip/navigation ticks are now 10 ms at 39% amplitude (was 7 ms at 14%);
+  unlock success is 18 ms at 67% (was 12 ms at 22%). Generator sliders use a dedicated 7 ms, 27%
+  tick so long drags stay controlled instead of buzzing.
+
+### Notes
+- 139 JVM/Robolectric tests / 0 failures, lint 0.
+
 ## [1.7.21] — 2026-11-22
 
 ### Added

@@ -286,7 +286,7 @@ fun GeneratorScreen(
                             val next = it.toInt()
                             if (next != lastHapticLength) {
                                 lastHapticLength = next
-                                Haptics.tick(context)
+                                Haptics.sliderTick(context)
                             }
                             viewModel.updateGeneratorConfig(config.copy(length = next))
                         },
@@ -352,7 +352,7 @@ fun GeneratorScreen(
                             val next = it.toInt()
                             if (next != lastHapticWords) {
                                 lastHapticWords = next
-                                Haptics.tick(context)
+                                Haptics.sliderTick(context)
                             }
                             viewModel.updateGeneratorConfig(config.copy(passphraseWords = next))
                         },
