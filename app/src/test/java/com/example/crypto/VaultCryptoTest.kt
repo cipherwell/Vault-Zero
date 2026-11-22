@@ -179,9 +179,13 @@ class VaultCryptoTest {
         assertEquals(12, phrase.trim().split(Regex("\\s+")).size)
         assertTrue(VaultCrypto.validateRecoveryPhrase(phrase))
 
-        val words = phrase.trim().split(Regex("\\s+")).toMutableList()
-        words[3] = if (words[3] == "abandon") "ability" else "abandon"
-        val tampered = words.joinToString(" ")
+        // Deterministic BIP-39 test vector (all-zero entropy): "... abandon about".
+        // A single word substitution must break the checksum; a random phrase cannot be
+        // used here because one in sixteen substitutions remains checksum-valid.
+        val valid = "abandon abandon abandon abandon abandon abandon abandon abandon " +
+            "abandon abandon abandon about"
+        assertTrue(VaultCrypto.validateRecoveryPhrase(valid, enforceChecksum = true))
+        val tampered = valid.replaceFirst("abandon", "ability")
         assertFalse(
             "a single wrong word must fail the 12th-word checksum",
             VaultCrypto.validateRecoveryPhrase(tampered, enforceChecksum = true),

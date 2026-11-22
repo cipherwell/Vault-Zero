@@ -3,6 +3,23 @@
 VaultZero is now maintained under the **Cipherwell** identity. Earlier release history was
 intentionally removed during the identity migration.
 
+## [1.7.18] — 2026-11-22
+
+### Added
+- **Reset vault from the lock screen.** A low-emphasis “Reset vault” link opens a destructive
+  confirmation explaining that every record, key and biometric enrolment is erased permanently, and
+  that it is only for the case where both the Master Password and the Recovery Kit are lost. Spanish
+  and English.
+
+### Changed (UI audit)
+- Vault filter chips wrap into two even rows instead of scrolling off-screen; compact labels
+  (Logins / Cards / APIs / Wallets / Notes / IDs · Accesos / Tarjetas / APIs / Billeteras / Notas / IDs).
+- Vault and audit lists get bottom padding so the last row/card clears the navigation bar.
+- 2FA row separates the timer with “·” for readability.
+
+### Notes
+- 137 JVM tests / 0 failures, lint 0 errors. UI audit report in `docs/design/UI-AUDIT-2026-11-22.md`.
+
 ## [1.7.17] — 2026-11-22
 
 ### Fixed

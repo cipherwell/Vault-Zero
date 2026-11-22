@@ -172,7 +172,8 @@ fun LockScreen(
                     onUnlock = { viewModel.unlockVault(it) },
                     onBiometric = { viewModel.requestBiometricUnlock() },
                     onClearError = { viewModel.clearAuthError() },
-                    onStartRecovery = { viewModel.setLockState(VaultLockState.RECOVERING) }
+                    onStartRecovery = { viewModel.setLockState(VaultLockState.RECOVERING) },
+                    onResetVault = { viewModel.clearVault() }
                 )
             }
             VaultLockState.RECOVERING -> {
@@ -1045,10 +1046,12 @@ private fun UnlockVaultScreen(
     onUnlock: (String) -> Unit,
     onBiometric: () -> Unit,
     onClearError: () -> Unit,
-    onStartRecovery: () -> Unit
+    onStartRecovery: () -> Unit,
+    onResetVault: () -> Unit
 ) {
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -1277,6 +1280,48 @@ private fun UnlockVaultScreen(
                 text = stringResource(R.string.lock_forgot_password),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp
+            )
+        }
+
+        // Deliberately low-emphasis: only useful when both credentials are lost.
+        TextButton(
+            onClick = { showResetDialog = true },
+            modifier = Modifier.testTag("reset_vault_button")
+        ) {
+            Text(
+                text = stringResource(R.string.lock_reset_vault),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                fontSize = 11.sp,
+            )
+        }
+
+        if (showResetDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetDialog = false },
+                icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = DangerRed) },
+                title = { Text(stringResource(R.string.lock_reset_title)) },
+                text = {
+                    Text(
+                        text = stringResource(R.string.lock_reset_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showResetDialog = false
+                            onResetVault()
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = DangerRed),
+                    ) {
+                        Text(stringResource(R.string.lock_reset_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetDialog = false }) {
+                        Text(stringResource(R.string.common_cancel))
+                    }
+                },
             )
         }
     }

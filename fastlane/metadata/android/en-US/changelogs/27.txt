@@ -1,0 +1,4 @@
+VaultZero v1.7.18:
+• New: subtle "Reset vault" on the lock screen, with a clear destructive warning
+• UI audit fixes: filter chips wrap neatly, list bottom padding, 2FA spacing
+• English & Spanish

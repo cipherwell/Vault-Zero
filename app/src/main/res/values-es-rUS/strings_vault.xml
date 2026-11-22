@@ -89,4 +89,10 @@
     <string name="totp_close_codes">Cerrar códigos 2FA</string>
     <string name="totp_empty">Ningún inicio de sesión tiene un secreto 2FA todavía. Agrega uno desde el editor de una entrada para ver los códigos activos aquí.</string>
     <string name="totp_copy_code_for">Copiar código 2FA de %1$s</string>
+    <string name="vault_chip_api">APIs</string>
+    <string name="vault_chip_wallets">Billeteras</string>
+    <string name="vault_chip_ids">IDs</string>
+    <string name="vault_chip_login">Accesos</string>
+    <string name="vault_chip_card">Tarjetas</string>
+    <string name="vault_chip_notes">Notas</string>
 </resources>

@@ -1,6 +1,6 @@
 # VaultZero — your private vault
 
-**Beta user guide · v1.7.17 · November 2026**
+**Beta user guide · v1.7.18 · November 2026**
 
 VaultZero is an offline password vault for Android. It keeps your logins, cards, notes and
 recovery codes encrypted on your phone — with **no account, no cloud and no internet permission**.

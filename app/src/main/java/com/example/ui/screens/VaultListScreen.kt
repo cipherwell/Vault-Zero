@@ -19,6 +19,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -110,6 +112,7 @@ import com.example.ui.theme.JetBrainsMonoFamily
 import com.example.ui.theme.VaultCard
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VaultListScreen(
     viewModel: VaultViewModel,
@@ -380,13 +383,12 @@ fun VaultListScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Filter Chips Row
-            Row(
+            FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 // All Chip
                 FilterChip(
@@ -429,7 +431,7 @@ fun VaultListScreen(
                     FilterChip(
                         selected = selectedType == type,
                         onClick = { viewModel.setTypeFilter(if (selectedType == type) null else type) },
-                        label = { Text(stringResource(vaultTypeLabelRes(type)), fontSize = 12.sp) },
+                        label = { Text(stringResource(vaultTypeChipLabelRes(type)), fontSize = 12.sp) },
                         shape = CircleShape,
                     border = null,
                     colors = FilterChipDefaults.filterChipColors(
@@ -529,7 +531,7 @@ fun VaultListScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 40.dp)
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 110.dp)
                 ) {
                     if (groupByType) {
                         VaultGrouping.group(items).forEach { section ->
@@ -790,7 +792,7 @@ private fun OneUiVaultRow(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "${totp.remainingSeconds}s",
+                            text = "· ${totp.remainingSeconds}s",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -928,6 +930,16 @@ private fun CreateTypeSelectorDialog(
             }
         }
     }
+}
+
+/** Short labels for the filter chips so all five fit on a phone without clipping. */
+private fun vaultTypeChipLabelRes(type: VaultType): Int = when (type) {
+    VaultType.LOGIN -> R.string.vault_chip_login
+    VaultType.CARD -> R.string.vault_chip_card
+    VaultType.API_SECRET -> R.string.vault_chip_api
+    VaultType.CRYPTO_WALLET -> R.string.vault_chip_wallets
+    VaultType.NOTE -> R.string.vault_chip_notes
+    VaultType.IDENTITY -> R.string.vault_chip_ids
 }
 
 private fun vaultTypeLabelRes(type: VaultType): Int = when (type) {

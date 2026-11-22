@@ -85,4 +85,10 @@
     <string name="totp_close_codes">Close 2FA codes</string>
     <string name="totp_empty">No logins have a 2FA secret yet. Add one from an item\'s editor to see live codes here.</string>
     <string name="totp_copy_code_for">Copy 2FA code for %1$s</string>
+    <string name="vault_chip_api">APIs</string>
+    <string name="vault_chip_wallets">Wallets</string>
+    <string name="vault_chip_ids">IDs</string>
+    <string name="vault_chip_login">Logins</string>
+    <string name="vault_chip_card">Cards</string>
+    <string name="vault_chip_notes">Notes</string>
 </resources>

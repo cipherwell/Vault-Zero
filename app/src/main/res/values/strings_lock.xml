@@ -55,4 +55,8 @@
     <string name="setup_biometric_unavailable">Add a fingerprint or face unlock in Android settings first.</string>
     <string name="setup_generated_confirm">I saved this password in a safe place</string>
     <string name="setup_generated_banner">Keep this password safe. If you lose it, only your 12-word Recovery Kit can restore the vault.</string>
+    <string name="lock_reset_vault">Reset vault</string>
+    <string name="lock_reset_title">Erase this vault?</string>
+    <string name="lock_reset_body">This permanently deletes every record, key and biometric enrolment on this device. It cannot be undone. Only do this if you have lost both the Master Password and the 12-word Recovery Kit — otherwise use the kit to recover. Once erased, the data is gone forever.</string>
+    <string name="lock_reset_confirm">Erase everything</string>
 </resources>
